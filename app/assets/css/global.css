@@ -1,0 +1,31 @@
+/* ===========================
+   Global Theme & Base Styles
+   =========================== */
+
+:root {
+  --brand: #0ea5e9;
+  --brand-dark: #0284c7;
+  --bg-main: #FFF5C9;
+  --text-main: #111827;
+  --text-sub: #4b5563;
+}
+
+/* base */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  color: var(--text-main);
+  background-color: var(--bg-main);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+
+/* link */
+a {
+  color: var(--brand);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--brand-dark);
+}
+
