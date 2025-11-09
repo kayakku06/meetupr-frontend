@@ -1,13 +1,9 @@
 <script setup>
-// このページで使うアイコンだけを直接インポート
-import { AlignHorizontalJustifyEnd, User, Settings } from 'lucide-vue-next';
+// Root app shell should render page components with <NuxtPage />.
 </script>
+
 <template>
   <div>
-    <h1 class="text-3xl font-bold underline">
-    </h1>
-    <AlignHorizontalJustifyEnd />
-    <User />
-    <Settings />
+    <NuxtPage />
   </div>
 </template>
