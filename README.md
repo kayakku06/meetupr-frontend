@@ -1,6 +1,46 @@
-# Nuxt Minimal Starter
+# MeetUpr Frontend
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Nuxt 4ベースのフロントエンドアプリケーション
+
+## Auth0認証設定
+
+このプロジェクトではAuth0を使用した認証機能を実装しています。
+
+### 環境変数の設定
+
+プロジェクトルートに`.env`ファイルを作成し、以下の環境変数を設定してください：
+
+```env
+AUTH0_DOMAIN=your-auth0-domain.auth0.com
+AUTH0_CLIENT_ID=your-auth0-client-id
+AUTH0_AUDIENCE=your-auth0-api-audience  # オプション: APIを使用する場合のみ必要
+```
+
+**必須の環境変数:**
+- `AUTH0_DOMAIN`: Auth0ドメイン（例: `your-tenant.auth0.com`）
+- `AUTH0_CLIENT_ID`: Auth0アプリケーションのClient ID
+
+**オプションの環境変数:**
+- `AUTH0_AUDIENCE`: API Audience（バックエンドAPIと連携する場合のみ必要）
+
+### Auth0の設定手順
+
+1. [Auth0 Dashboard](https://manage.auth0.com/)にログイン
+2. 新しいアプリケーションを作成（**Single Page Application**タイプを選択）
+3. アプリケーション設定から以下を取得：
+   - **Domain**: アプリケーション設定ページの上部に表示
+   - **Client ID**: アプリケーション設定ページに表示
+4. **Allowed Callback URLs**に`http://localhost:3000`を追加
+5. **Allowed Logout URLs**に`http://localhost:3000`を追加
+6. **Allowed Web Origins**に`http://localhost:3000`を追加（推奨）
+
+### API Audienceの設定（オプション）
+
+バックエンドAPIと連携する場合のみ必要です：
+
+1. Auth0 Dashboardで「APIs」メニューを開く
+2. 新しいAPIを作成（または既存のAPIを選択）
+3. **Identifier**（Audience）をコピーして`.env`の`AUTH0_AUDIENCE`に設定
 
 ## Setup
 
