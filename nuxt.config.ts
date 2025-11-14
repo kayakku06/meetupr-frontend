@@ -15,7 +15,8 @@ export default defineNuxtConfig({
       auth0Audience: process.env.AUTH0_AUDIENCE || '',
       auth0Connection: process.env.AUTH0_CONNECTION || 'Username-Password-Authentication',
       wsHost: process.env.NUXT_PUBLIC_WS_HOST || 'localhost:8080',
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8080',
+      allowTestEmails: process.env.NUXT_PUBLIC_ALLOW_TEST_EMAILS === 'true' || false
     }
   }
 });
