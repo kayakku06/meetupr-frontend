@@ -79,13 +79,34 @@
         <div class="flex flex-col gap-2">
           <div class="text-xs text-amber-900">趣味</div>
           <div class="flex gap-2 flex-wrap">
-            <button type="button" class="bg-white border-2 border-orange-400 px-2.5 py-1.5 rounded-full text-xs text-amber-900 cursor-pointer hover:bg-orange-50 transition" v-for="(h, i) in form.hobbies" :key="i" @click="removeHobby(i)" v-if="editing">{{ h }} ×</button>
-            <span class="bg-white border-2 border-orange-400 px-2.5 py-1.5 rounded-full text-xs text-amber-900 inline-block" v-for="(h, i) in form.hobbies" :key="'rh'+i" v-if="!editing">{{ h }}</span>
+            <!-- 統合したタグ表示: 選択・入力どちらでもここに追加され、×で削除可能にする -->
+            <template v-for="(h, i) in form.hobbies" :key="h + '-' + i">
+              <div class="flex items-center bg-white border-2 border-orange-400 px-2.5 py-1.5 rounded-full text-xs text-amber-900">
+                <span class="select-none">{{ h }}</span>
+                  <button v-if="editing" type="button" @click="removeHobby(h)" class="ml-2 text-[11px] text-gray-500 hover:text-gray-800">×</button>
+              </div>
+            </template>
           </div>
           <div class="flex gap-2 items-center mt-1.5" v-if="editing">
-            <input v-model="newHobby" class="flex-1 border-2 border-orange-400 p-2 rounded bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200" placeholder="趣味を入力してEnter" @keyup.enter="addHobby" />
-            <button type="button" class="bg-orange-400 text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition" @click="addHobby">追加</button>
+            <input v-model="newHobby" class="flex-1 border-2 border-orange-400 p-2 rounded bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200" placeholder="趣味を入力してEnter" @keyup.enter="addHobby()" />
+            <button type="button" class="bg-orange-400 text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition" @click="addHobby()">追加</button>
           </div>
+        </div>
+
+     <div v-if="editing">
+       <label class="text-xs text-amber-900 mb-1 block">既存の選択肢</label>
+             <div class="bg-white p-3 border-[3px] border-[#FEBC6E] rounded-md">
+                <div class="flex gap-4 pb-3 border-b border-[#FEBC6E] mb-3">
+                  <span v-for="category in choiceCategories" :key="category.name" @click="activeTab = category.name" :class="activeTab === category.name ? 'text-[#FEBC6E] font-bold border-b-2 border-[#FEBC6E]' : 'text-gray-600 font-medium'">
+                    {{ category.name }}
+                  </span>
+                </div>
+                <div v-for="category in choiceCategories" :key="category.name" v-show="activeTab === category.name" class="flex flex-wrap gap-2">
+                  <button v-for="tag in category.tags" :key="tag" type="button" @click="toggleHobby(tag)" :disabled="false" :class="form.hobbies.includes(tag) ? 'bg-[#FEBC6E] text-gray-400 border border-[#FEBC6E] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[#FEBC6E] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
+                    {{ tag }}
+                  </button>
+               </div>
+             </div>
         </div>
 
         <label class="flex flex-col gap-2">
@@ -102,7 +123,7 @@
     </main>
 
     <!-- 固定フッター -->
-    <Footer />
+    <Footer class="fixed inset-x-0 bottom-0" />
   </div>
 </template>
 
@@ -111,7 +132,29 @@ import { ref } from 'vue'
 import Footer from '~/components/Footer.vue'
 
 const editing = ref(false)
-const activeTab = ref('')
+
+// ★ 既存の選択肢のデータ（サンプル）
+const choiceCategories = ref([
+  {
+    name: 'スポーツ',
+    tags: ['野球', 'サッカー', 'バスケ', 'テニス', 'ゴルフ']
+  },
+  {
+    name: '音楽',
+    tags: ['J-POP', 'ロック', 'クラシック', 'ジャズ', 'K-POP']
+  },
+  {
+    name: '食べ物',
+    tags: ['寿司', 'ラーメン', '焼肉', 'イタリアン', '中華']
+  },
+  {
+    name: '国',
+    tags: ['日本', '中国', '韓国', 'アメリカ', 'イギリス']
+  },
+])
+
+// ★ 現在選択されているタブ（初期は最初のカテゴリ）
+const activeTab = ref(choiceCategories.value[0].name)
 
 const form = ref({
   name: 'なまえ',
@@ -144,16 +187,32 @@ function removeLanguage(i) {
   // languages プロパティが存在しないため、この関数は削除
 }
 
-function addHobby() {
-  const v = newHobby.value.trim()
-  if (v) {
+// addHobby: 入力からの追加（既存のボタン挙動）か、引数で名前を渡しての追加の両方に対応
+function addHobby(hobby) {
+  const v = hobby !== undefined ? String(hobby).trim() : newHobby.value.trim()
+  if (v && !form.value.hobbies.includes(v)) {
     form.value.hobbies.push(v)
-    newHobby.value = ''
+  }
+  // 引数がない場合は入力フィールドをクリア
+  if (hobby === undefined) newHobby.value = ''
+}
+
+// removeHobby: インデックス指定（既存の編集UI）か、名前指定の両方に対応
+function removeHobby(target) {
+  if (typeof target === 'number') {
+    form.value.hobbies.splice(target, 1)
+  } else {
+    form.value.hobbies = form.value.hobbies.filter(h => h !== target)
   }
 }
 
-function removeHobby(i) {
-  form.value.hobbies.splice(i, 1)
+// toggleHobby: 指定した名前があれば削除、なければ追加
+function toggleHobby(hobbyName) {
+  if (form.value.hobbies.includes(hobbyName)) {
+    removeHobby(hobbyName)
+  } else {
+    addHobby(hobbyName)
+  }
 }
 
 function save() {
@@ -167,4 +226,5 @@ function cancel() {
   Object.assign(form.value, JSON.parse(JSON.stringify(original)))
   editing.value = false
 }
+
 </script>
