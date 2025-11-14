@@ -70,11 +70,13 @@ const handleSignUp = () => {
                 <!-- ロゴエリア -->
                 <div class="flex justify-center mb-4">
                     <div class="w-52 h-52 rounded-full p-6 bg-white shadow-md overflow-hidden">
-                        <img 
-                            src="/icon.png" 
-                            alt="MeetUp+R ロゴ" 
-                            class="w-full h-full rounded-full object-cover"
-                        />
+                        <div class="w-full h-full rounded-full overflow-hidden">
+                            <img 
+                                src="/icon.png" 
+                                alt="MeetUp+R ロゴ" 
+                                class="w-full h-full object-cover"
+                            />
+                        </div>
                     </div>
                 </div>
                 <h1 class="text-4xl font-bold text-gray-800">
