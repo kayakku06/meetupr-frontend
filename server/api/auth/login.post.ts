@@ -39,16 +39,24 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     // エラーの詳細を取得
     const errorData = error?.data || error?.response?.data || {}
-    let errorMessage = errorData.error_description || errorData.error || 'Invalid email or password'
+    let errorMessage = errorData.error_description || errorData.error || errorData.message || 'Invalid email or password'
+    
+    // デバッグ用: 実際のエラーレスポンスをログに出力
+    console.error('Auth0 Login Error:', {
+      error,
+      errorData,
+      connection: config.public.auth0Connection,
+      domain: config.public.auth0Domain
+    })
     
     // ROPCが許可されていない場合のエラーメッセージを改善
     if (errorMessage.includes('Grant type') && errorMessage.includes('not allowed')) {
       errorMessage = 'Resource Owner Password Grantが有効になっていません。Auth0 Dashboardで設定を確認してください。'
     }
     
-    // デフォルト接続が設定されていない場合のエラーメッセージを改善
-    if (errorMessage.includes('default connection')) {
-      errorMessage = 'Auth0の認証サーバーにデフォルト接続が設定されていません。Auth0 Dashboardで「Username-Password-Authentication」接続を確認してください。'
+    // 接続関連のエラーメッセージを改善
+    if (errorMessage.includes('default connection') || errorMessage.includes('connection') || errorMessage.includes('Connection')) {
+      errorMessage = `接続エラー: ${errorMessage}。使用中の接続名: "${config.public.auth0Connection}"。Auth0 Dashboardで接続が存在し、アプリケーションに有効化されているか確認してください。`
     }
     
     throw createError({
