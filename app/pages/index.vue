@@ -40,11 +40,13 @@ const handleSignUp = () => {
         <div class="w-full max-w-md space-y-8">
             <!-- ロゴとタイトル -->
             <div class="text-center space-y-4">
-                <!-- ロゴエリア（後で画像を追加） -->
+                <!-- ロゴエリア -->
                 <div class="flex justify-center mb-4">
-                    <div class="w-24 h-24 bg-primary rounded-full flex items-center justify-center">
-                        <span class="text-white text-2xl font-bold">M</span>
-                    </div>
+                    <img 
+                        src="/icon.png" 
+                        alt="MeetUp+R ロゴ" 
+                        class="w-40 h-40 rounded-full object-cover"
+                    />
                 </div>
                 <h1 class="text-4xl font-bold text-gray-800">
                     MeetUp+R
