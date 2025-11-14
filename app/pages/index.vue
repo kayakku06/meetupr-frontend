@@ -36,24 +36,8 @@ watch(email, () => {
 // 認証成功後のリダイレクト処理
 watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
   if (!loading && authenticated && route.path === '/') {
-    // Auth0のappStateからtargetUrlを取得
-    if (import.meta.client) {
-      try {
-        const auth0 = useAuth0()
-        const appState = auth0.appState?.value
-        if (appState?.targetUrl) {
-          navigateTo(appState.targetUrl)
-          return
-        }
-      } catch (error) {
-        // Auth0が初期化されていない場合は無視
-      }
-    }
-    // appStateにtargetUrlが設定されていない場合、デフォルトで/homeにリダイレクト
-    const redirectPath = typeof route.query.redirect === 'string' 
-      ? route.query.redirect 
-      : '/home'
-    navigateTo(redirectPath)
+    // ログイン成功後は常に/homeにリダイレクト
+    navigateTo('/home')
   }
 }, { immediate: true })
 
@@ -69,13 +53,9 @@ const handleLogin = async () => {
   
   // Authorization Code Flow with PKCEを使用してAuth0のログインページにリダイレクト
   // login_hintでメールアドレスを事前入力
-  const redirectPath = typeof route.query.redirect === 'string' 
-    ? route.query.redirect 
-    : '/home'
-  
   await login({
     appState: {
-      targetUrl: redirectPath
+      targetUrl: '/home'
     },
     authorizationParams: {
       login_hint: email.value,
