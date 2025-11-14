@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
         grant_type: 'password',
         username: email,
         password: password,
-        connection: 'Username-Password-Authentication', // Auth0のデフォルト接続
+        connection: config.public.auth0Connection, // Auth0の接続名（環境変数で設定可能）
         scope: 'openid profile email'
       }
     })

@@ -14,6 +14,7 @@ Nuxt 4ベースのフロントエンドアプリケーション
 AUTH0_DOMAIN=your-auth0-domain.auth0.com
 AUTH0_CLIENT_ID=your-auth0-client-id
 AUTH0_CLIENT_SECRET=your-auth0-client-secret
+AUTH0_CONNECTION=Username-Password-Authentication  # オプション: 接続名（デフォルト: Username-Password-Authentication）
 AUTH0_AUDIENCE=your-auth0-api-audience  # オプション: APIを使用する場合のみ必要
 ```
 
@@ -23,6 +24,7 @@ AUTH0_AUDIENCE=your-auth0-api-audience  # オプション: APIを使用する場
 - `AUTH0_CLIENT_SECRET`: Auth0アプリケーションのClient Secret（新規登録機能に必要）
 
 **オプションの環境変数:**
+- `AUTH0_CONNECTION`: Auth0の接続名（デフォルト: `Username-Password-Authentication`）
 - `AUTH0_AUDIENCE`: API Audience（バックエンドAPIと連携する場合のみ必要）
 
 ### Auth0の設定手順
@@ -42,10 +44,18 @@ AUTH0_AUDIENCE=your-auth0-api-audience  # オプション: APIを使用する場
    - 「Advanced Settings」を開く
    - 「Grant Types」タブで「Password」にチェックを入れる
    - 「Save Changes」をクリック
-8. **デフォルト接続（Database Connection）を確認**：
+8. **デフォルト接続（Database Connection）を確認・作成**：
    - Auth0 Dashboard → Authentication → Database
    - 「Username-Password-Authentication」接続が存在し、有効になっていることを確認
-   - 存在しない場合は、新規作成するか、既存の接続名を確認してコード内の接続名を更新
+   - 存在しない場合：
+     - 「Create Database Connection」をクリック
+     - 「Username-Password-Authentication」を選択
+     - 「Create」をクリック
+   - 接続名が異なる場合は、`.env`ファイルの`AUTH0_CONNECTION`に正しい接続名を設定
+9. **接続をアプリケーションに有効化**：
+   - Auth0 Dashboard → Applications → あなたのアプリケーション → Connections タブ
+   - 「Username-Password-Authentication」（または設定した接続名）にチェックを入れる
+   - 「Save」をクリック
 
 ### API Audienceの設定（オプション）
 

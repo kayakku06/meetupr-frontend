@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
         client_id: config.public.auth0ClientId,
         email: email,
         password: password,
-        connection: 'Username-Password-Authentication', // Auth0のデフォルト接続
+        connection: config.public.auth0Connection, // Auth0の接続名（環境変数で設定可能）
         user_metadata: {}
       }
     })
