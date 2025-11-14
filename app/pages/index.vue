@@ -96,8 +96,8 @@ const handleSignUp = () => {
                             type="email"
                             placeholder="example@ed.ritsumei.ac.jp"
                             :class="[
-                                'w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
-                                emailError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary'
+                                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
+                                emailError ? 'border-red-500 focus:ring-red-500' : 'border-[#FEBC6E] focus:ring-[#FEBC6E]'
                             ]"
                         />
                         <p v-if="emailError" class="mt-1 text-sm text-red-500">
@@ -115,7 +115,7 @@ const handleSignUp = () => {
                             v-model="password"
                             type="password"
                             placeholder="パスワードを入力"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                            class="w-full px-4 py-3 border-[3px] border-[#FEBC6E] rounded-md focus:outline-none focus:ring-2 focus:ring-[#FEBC6E] focus:border-transparent"
                             required
                         />
                     </div>
@@ -123,7 +123,7 @@ const handleSignUp = () => {
                     <!-- ログインボタン -->
                     <button
                         type="submit"
-                        class="w-full bg-primary text-white py-3 rounded-md font-semibold hover:bg-blue-600 transition-colors"
+                        class="w-full bg-selected text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
                     >
                         ログイン
                     </button>
