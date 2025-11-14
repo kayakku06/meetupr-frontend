@@ -69,7 +69,12 @@ export const useChat = () => {
       if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
         error.value = `バックエンドサーバーに接続できません。\n${config.public.apiBaseUrl} が起動しているか確認してください。`
       } else if (err.statusCode === 401) {
-        error.value = '認証に失敗しました。再度ログインしてください。'
+        const errorDetail = err.data?.error || err.message || ''
+        if (errorDetail.includes('invalid number of segments')) {
+          error.value = 'トークンの形式が正しくありません。Auth0のAPI Audienceが設定されているか確認してください。\n\n設定方法:\n1. Auth0 Dashboard → APIs → 新しいAPIを作成\n2. Identifier (Audience) をコピー\n3. .envファイルに AUTH0_AUDIENCE=コピーしたIdentifier を追加'
+        } else {
+          error.value = `認証に失敗しました (${errorDetail})。再度ログインしてください。`
+        }
       } else if (err.statusCode === 404) {
         error.value = 'APIエンドポイントが見つかりません。バックエンドサーバーの設定を確認してください。'
       } else if (err.statusCode) {

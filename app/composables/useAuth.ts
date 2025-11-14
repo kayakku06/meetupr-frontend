@@ -86,12 +86,26 @@ export const useAuth = () => {
     await auth0.logout(options)
   }
 
-  const getAccessToken = async () => {
+  const getAccessToken = async (options?: { audience?: string }) => {
     if (!auth0) {
       return null
     }
     try {
-      return await auth0.getAccessTokenSilently()
+      const config = useRuntimeConfig()
+      // audienceが指定されている場合、または設定されている場合に使用
+      const audience = options?.audience || config.public.auth0Audience
+      
+      if (audience) {
+        // audienceを指定することで、JWT形式のトークンを取得
+        return await auth0.getAccessTokenSilently({
+          authorizationParams: {
+            audience: audience
+          }
+        })
+      } else {
+        // audienceが設定されていない場合は、デフォルトの方法で取得
+        return await auth0.getAccessTokenSilently()
+      }
     } catch (error) {
       console.error('Error getting access token:', error)
       return null

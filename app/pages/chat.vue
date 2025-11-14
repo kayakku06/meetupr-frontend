@@ -131,7 +131,13 @@ const connectWebSocket = async () => {
     ws.onerror = (error) => {
       console.error('WebSocket error:', error)
       connectionStatus.value = 'error'
-      errorMessage.value = '接続エラーが発生しました'
+      // WebSocketのエラー詳細を取得
+      const errorDetail = (error as any)?.message || '接続エラーが発生しました'
+      if (errorDetail.includes('Authorization header required')) {
+        errorMessage.value = 'WebSocket認証エラー: バックエンドがクエリパラメータからトークンを取得できていません。バックエンドの実装を確認してください。'
+      } else {
+        errorMessage.value = `接続エラー: ${errorDetail}`
+      }
     }
 
     ws.onclose = (event) => {
