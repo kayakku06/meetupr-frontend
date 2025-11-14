@@ -1,5 +1,6 @@
 <template>
-  <div class="flex items-center justify-between p-3 border-b border-gray-200 hover:bg-gray-50 transition zen-maru">
+  <div class="flex items-center justify-between p-3 border-b border-gray-200 hover:bg-gray-50 transition zen-maru"
+  @click="goProfile">
     <!-- 左側（アイコン＋名前＋メッセージ） -->
     <div class="flex items-center space-x-3">
       <!-- アバター -->
@@ -18,24 +19,20 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
 defineProps({
-  name: {
-    type: String,
-    default: 'ユーザー１'
-  },
-  message: {
-    type: String,
-    default: 'メッセージ'
-  },
-  date: {
-    type: String,
-    default: '11/3'
-  },
-  avatarColor: {
-    type: String,
-    default: 'bg-teal-600'
-  }
+  name: String,
+  message: String,
+  date: String,
+  avatarColor: String
 })
+
+// クリックしたら other-profile に飛ぶ
+const goProfile = () => {
+  router.push('/other-profile')
+}
 </script>
 
 <style scoped>
