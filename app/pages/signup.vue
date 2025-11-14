@@ -1,7 +1,31 @@
 <script setup>
 import { ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import { useAuth0 } from '@auth0/auth0-vue';
 
-const { login } = useAuth()
+const { login, isAuthenticated, isLoading } = useAuth()
+const route = useRoute()
+
+// 認証成功後のリダイレクト処理
+watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
+  if (!loading && authenticated && route.path === '/signup') {
+    // Auth0のappStateからtargetUrlを取得
+    if (import.meta.client) {
+      try {
+        const auth0 = useAuth0()
+        const appState = auth0.appState?.value
+        if (appState?.targetUrl) {
+          navigateTo(appState.targetUrl)
+          return
+        }
+      } catch (error) {
+        // Auth0が初期化されていない場合は無視
+      }
+    }
+    // appStateにtargetUrlが設定されていない場合、デフォルトで/make-profileにリダイレクト
+    navigateTo('/make-profile')
+  }
+}, { immediate: true })
 
 const email = ref('')
 const password = ref('')

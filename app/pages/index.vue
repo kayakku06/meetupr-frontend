@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useAuth0 } from '@auth0/auth0-vue';
 
 const { isAuthenticated, isLoading, login } = useAuth()
 const route = useRoute()
@@ -32,14 +33,27 @@ watch(email, () => {
   }
 })
 
-// ログインページでは、認証済みの場合は/homeにリダイレクト（appStateのtargetUrlはapp.vueで処理）
+// 認証成功後のリダイレクト処理
 watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
   if (!loading && authenticated && route.path === '/') {
-    // appStateにtargetUrlが設定されていない場合のみ、デフォルトで/homeにリダイレクト
+    // Auth0のappStateからtargetUrlを取得
+    if (import.meta.client) {
+      try {
+        const auth0 = useAuth0()
+        const appState = auth0.appState?.value
+        if (appState?.targetUrl) {
+          navigateTo(appState.targetUrl)
+          return
+        }
+      } catch (error) {
+        // Auth0が初期化されていない場合は無視
+      }
+    }
+    // appStateにtargetUrlが設定されていない場合、デフォルトで/homeにリダイレクト
     const redirectPath = typeof route.query.redirect === 'string' 
       ? route.query.redirect 
-      : '/home';
-    navigateTo(redirectPath);
+      : '/home'
+    navigateTo(redirectPath)
   }
 }, { immediate: true })
 
