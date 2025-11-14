@@ -4,7 +4,8 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss'
   ],
   css: [
-    '~/assets/css/global.css' // プロジェクトの assets/global.css を参照
+    '~/assets/css/global.css', // ← カンマを追加
+    'flag-icons/css/flag-icons.min.css'
   ],
   runtimeConfig: {
     auth0ClientSecret: process.env.AUTH0_CLIENT_SECRET || '',
@@ -16,3 +17,7 @@ export default defineNuxtConfig({
     }
   }
 });
+
+
+
+
