@@ -46,7 +46,13 @@ export default defineEventHandler(async (event) => {
     })
     
     // 接続関連のエラーメッセージを改善
-    if (errorMessage.includes('default connection') || errorMessage.includes('connection') || errorMessage.includes('Connection')) {
+    if (errorMessage.includes('default connection') || errorMessage.includes('Authorization server not configured')) {
+      errorMessage = `認証サーバーにデフォルト接続が設定されていません。以下の手順を確認してください：
+1. Auth0 Dashboard → Authentication → Database で「Username-Password-Authentication」接続が存在し有効になっているか確認
+2. Auth0 Dashboard → Applications → あなたのアプリケーション → Connections タブで「Username-Password-Authentication」にチェックが入っているか確認
+3. 接続名が異なる場合は、.envファイルのAUTH0_CONNECTIONに正しい接続名を設定
+現在の接続名: "${config.public.auth0Connection}"`
+    } else if (errorMessage.includes('connection') || errorMessage.includes('Connection')) {
       errorMessage = `接続エラー: ${errorMessage}。使用中の接続名: "${config.public.auth0Connection}"。Auth0 Dashboardで接続が存在し、アプリケーションに有効化されているか確認してください。`
     }
     
