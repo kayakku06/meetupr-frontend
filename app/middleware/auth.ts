@@ -1,7 +1,12 @@
 export default defineNuxtRouteMiddleware((to, from) => {
+  // クライアントサイドでのみ実行
+  if (import.meta.server) {
+    return
+  }
+
   const { isAuthenticated, isLoading } = useAuth()
 
-  // ローディング中は待機
+  // ローディング中は待機（Auth0の初期化を待つ）
   if (isLoading.value) {
     return
   }
