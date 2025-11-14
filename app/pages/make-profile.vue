@@ -111,6 +111,10 @@
 </template>
 
 <script setup>
+definePageMeta({
+  middleware: 'auth'
+})
+
 import { ref } from 'vue';
 
 // フォームデータをrefで管理
