@@ -35,7 +35,12 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     // エラーの詳細を取得
     const errorData = error?.data || error?.response?.data || {}
-    const errorMessage = errorData.error_description || errorData.error || errorData.message || 'Failed to create user'
+    let errorMessage = errorData.error_description || errorData.error || errorData.message || 'Failed to create user'
+    
+    // デフォルト接続が設定されていない場合のエラーメッセージを改善
+    if (errorMessage.includes('default connection')) {
+      errorMessage = 'Auth0の認証サーバーにデフォルト接続が設定されていません。Auth0 Dashboardで「Username-Password-Authentication」接続を確認してください。'
+    }
     
     throw createError({
       statusCode: errorData.statusCode || 400,

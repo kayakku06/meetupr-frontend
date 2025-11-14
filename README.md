@@ -42,6 +42,10 @@ AUTH0_AUDIENCE=your-auth0-api-audience  # オプション: APIを使用する場
    - 「Advanced Settings」を開く
    - 「Grant Types」タブで「Password」にチェックを入れる
    - 「Save Changes」をクリック
+8. **デフォルト接続（Database Connection）を確認**：
+   - Auth0 Dashboard → Authentication → Database
+   - 「Username-Password-Authentication」接続が存在し、有効になっていることを確認
+   - 存在しない場合は、新規作成するか、既存の接続名を確認してコード内の接続名を更新
 
 ### API Audienceの設定（オプション）
 
