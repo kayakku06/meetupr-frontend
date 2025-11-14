@@ -1,19 +1,19 @@
 <script setup>
-import { onMounted } from 'vue';
+import { watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 const { isAuthenticated, isLoading } = useAuth()
 const route = useRoute()
 
-onMounted(async () => {
-  // ローディングが完了し、認証済みの場合はリダイレクト
-  if (!isLoading.value && isAuthenticated.value) {
+// isLoadingがfalseになったら、認証状態をチェックしてリダイレクト
+watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
+  if (!loading && authenticated) {
     const redirectPath = typeof route.query.redirect === 'string' 
       ? route.query.redirect 
       : '/home';
-    await navigateTo(redirectPath);
+    navigateTo(redirectPath);
   }
-})
+}, { immediate: true })
 </script>
 
 <template>
