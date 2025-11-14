@@ -20,12 +20,39 @@ export const useChatVerification = () => {
         firstPart: tokenParts[0]?.substring(0, 20) + '...'
       })
 
-      const response = await $fetch(`${config.public.apiBaseUrl}/api/v1/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      // まず /api/v1/chats でトークンを検証（このエンドポイントは動作している）
+      try {
+        const response = await $fetch(`${config.public.apiBaseUrl}/api/v1/chats`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        // チャット一覧が取得できれば、トークンは有効
+        return true
+      } catch (chatsError: any) {
+        // /api/v1/chats で失敗した場合、/api/v1/users/me を試す
+        if (chatsError.statusCode === 401) {
+          console.warn('Token verification via /api/v1/chats failed with 401, trying /api/v1/users/me')
+          try {
+            const userResponse = await $fetch(`${config.public.apiBaseUrl}/api/v1/users/me`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            })
+            return !!userResponse
+          } catch (userError: any) {
+            console.error('Token verification failed on both endpoints:', {
+              chatsError: chatsError.statusCode,
+              userError: userError.statusCode,
+              message: userError?.message || chatsError?.message
+            })
+            return false
+          }
         }
-      })
-      return !!response
+        // 401以外のエラー（404など）は、エンドポイントが存在しない可能性がある
+        console.warn('Token verification endpoint may not exist:', chatsError.statusCode)
+        return false
+      }
     } catch (error: any) {
       console.error('Token verification failed:', {
         error,
@@ -202,11 +229,16 @@ export const useChatVerification = () => {
     console.log('2. トークンの取得と検証...')
     const token = await getAccessToken()
     if (token) {
-      const isValid = await verifyToken(token)
+      // チャット一覧の取得が成功している場合、トークンは有効とみなす
+      // （チャット一覧の取得確認で検証済み）
+      const chatsResult = await checkChatsEndpoint()
+      const isValid = chatsResult.success || await verifyToken(token)
       results.push({
         name: 'トークンの検証',
         success: isValid,
-        message: isValid ? 'トークンは有効です' : 'トークンが無効です'
+        message: isValid 
+          ? 'トークンは有効です（チャット一覧の取得で確認済み）' 
+          : 'トークンが無効です。ただし、チャット一覧の取得は成功しているため、エンドポイントの問題の可能性があります。'
       })
     } else {
       results.push({
