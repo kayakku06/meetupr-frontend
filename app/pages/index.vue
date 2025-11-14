@@ -83,7 +83,7 @@ const handleSignUp = () => {
             </div>
 
             <!-- ログインフォーム -->
-            <div v-if="!isLoading && !isAuthenticated" class="bg-white rounded-lg shadow-md p-8 space-y-6">
+            <div v-if="!isLoading && !isAuthenticated" class="p-8 space-y-6">
                 <form @submit.prevent="handleLogin" class="space-y-4">
                     <!-- 学内メールアドレス入力欄 -->
                     <div>
