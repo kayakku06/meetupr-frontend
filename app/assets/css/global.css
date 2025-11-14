@@ -1,31 +1,30 @@
-/* ===========================
-   Global Theme & Base Styles
-   =========================== */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --brand: #0ea5e9;
-  --brand-dark: #0284c7;
-  --bg-main: #FFF5C9;
-  --text-main: #111827;
-  --text-sub: #4b5563;
+  --container-border-color: #FEBC6E;
 }
 
-/* base */
-html, body {
+/* 最小限の global 基本設定 */
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  background-color: #f3f4f6; /* gray-100 */
   margin: 0;
-  padding: 0;
-  height: 100%;
-  color: var(--text-main);
-  background-color: var(--bg-main);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
 
-/* link */
-a {
-  color: var(--brand);
-  text-decoration: none;
-}
-a:hover {
-  color: var(--brand-dark);
+/* select のカスタム矢印（Tailwind のみだと微調整が必要なため残す） */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2212%22%20height%3D%228%22%20viewBox%3D%220%200%2012%208%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M1.41%200.589996L6%205.17L10.59%200.589996L12%202L6%208L0%202L1.41%200.589996Z%22%20fill%3D%22%23555%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 30px;
 }
 
+/* 必要に応じて追加の legacy スタイルをここに残します */
