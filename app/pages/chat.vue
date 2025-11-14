@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Smile, Send } from 'lucide-vue-next'
@@ -9,6 +9,15 @@ const router = useRouter()
 const config = useRuntimeConfig()
 const { user, getAccessToken } = useAuth()
 
+// メッセージの型定義
+interface Message {
+  id?: number
+  content: string
+  chat_id?: number
+  sender_id: string
+  sent_at?: string
+}
+
 // チャットIDをルートパラメータまたはクエリパラメータから取得
 const chatId = computed(() => {
   const id = route.params.id || route.query.chatId
@@ -18,15 +27,6 @@ const chatId = computed(() => {
   }
   return id ? Number(id) : null
 })
-
-// メッセージの型定義
-interface Message {
-  id?: number
-  content: string
-  chat_id?: number
-  sender_id: string
-  sent_at?: string
-}
 
 const message = ref('')
 const messages = ref<Message[]>([])
