@@ -32,9 +32,10 @@ watch(email, () => {
   }
 })
 
-// isLoadingがfalseになったら、認証状態をチェックしてリダイレクト
+// ログインページでは、認証済みの場合は/homeにリダイレクト（appStateのtargetUrlはapp.vueで処理）
 watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
-  if (!loading && authenticated) {
+  if (!loading && authenticated && route.path === '/') {
+    // appStateにtargetUrlが設定されていない場合のみ、デフォルトで/homeにリダイレクト
     const redirectPath = typeof route.query.redirect === 'string' 
       ? route.query.redirect 
       : '/home';
