@@ -1,5 +1,6 @@
 <script setup>
 import ChatIcon from '~/components/ChatIcon.vue'
+import Footer from '~/components/Footer.vue'
 </script>
 
 <!-- public/index.html の <head> の中に追加 -->
@@ -22,7 +23,11 @@ import ChatIcon from '~/components/ChatIcon.vue'
       avatarColor="bg-teal-600"
     />
   </div>
+  <Footer class="fixed inset-x-0 bottom-0"/>
+
 </template>
+
+
 
 <style scoped>
 /* 必要ならスタイルをここに追加 */
