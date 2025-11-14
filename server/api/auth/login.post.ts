@@ -35,10 +35,11 @@ export default defineEventHandler(async (event) => {
       idToken: response.id_token,
       expiresIn: response.expires_in
     }
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error?.data?.error_description || 'Invalid email or password'
     throw createError({
       statusCode: 401,
-      message: error.data?.error_description || 'Invalid email or password'
+      message: errorMessage
     })
   }
 })

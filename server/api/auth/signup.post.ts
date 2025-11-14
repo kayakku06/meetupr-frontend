@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
       }
     })
     managementToken = tokenResponse.access_token
-  } catch (error: any) {
+  } catch (error) {
     throw createError({
       statusCode: 500,
       message: 'Failed to get management token'
@@ -54,10 +54,11 @@ export default defineEventHandler(async (event) => {
       success: true,
       user: userResponse
     }
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error?.data?.message || 'Failed to create user'
     throw createError({
       statusCode: 400,
-      message: error.data?.message || 'Failed to create user'
+      message: errorMessage
     })
   }
 })
