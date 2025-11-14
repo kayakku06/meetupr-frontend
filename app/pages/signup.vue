@@ -9,20 +9,7 @@ const route = useRoute()
 // 認証成功後のリダイレクト処理
 watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
   if (!loading && authenticated && route.path === '/signup') {
-    // Auth0のappStateからtargetUrlを取得
-    if (import.meta.client) {
-      try {
-        const auth0 = useAuth0()
-        const appState = auth0.appState?.value
-        if (appState?.targetUrl) {
-          navigateTo(appState.targetUrl)
-          return
-        }
-      } catch (error) {
-        // Auth0が初期化されていない場合は無視
-      }
-    }
-    // appStateにtargetUrlが設定されていない場合、デフォルトで/make-profileにリダイレクト
+    // 新規登録成功後は常に/make-profileにリダイレクト
     navigateTo('/make-profile')
   }
 }, { immediate: true })
