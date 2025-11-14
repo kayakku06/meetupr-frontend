@@ -10,7 +10,9 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@auth0/auth0-vue": "^2.4.0",
     "@tailwindcss/vite": "^4.1.17",
+    "flag-icons": "^7.5.0",
     "lucide-vue-next": "^0.552.0",
     "nuxt": "^4.2.0",
     "vue": "^3.5.22",

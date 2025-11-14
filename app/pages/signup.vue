@@ -3,12 +3,23 @@ import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuth0 } from '@auth0/auth0-vue';
 
-const { isAuthenticated, isLoading, login } = useAuth()
+const { login, isAuthenticated, isLoading } = useAuth()
 const route = useRoute()
+
+// 認証成功後のリダイレクト処理
+watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
+  if (!loading && authenticated && route.path === '/signup') {
+    // 新規登録成功後は常に/make-profileにリダイレクト
+    navigateTo('/make-profile')
+  }
+}, { immediate: true })
 
 const email = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 const emailError = ref('')
+const passwordError = ref('')
+const confirmPasswordError = ref('')
 
 // 学内メールアドレスのバリデーション
 const validateEmail = (emailValue) => {
@@ -24,6 +35,34 @@ const validateEmail = (emailValue) => {
   return true
 }
 
+// パスワードのバリデーション
+const validatePassword = (passwordValue) => {
+  if (!passwordValue) {
+    passwordError.value = 'パスワードを入力してください'
+    return false
+  }
+  if (passwordValue.length < 8) {
+    passwordError.value = 'パスワードは8文字以上で入力してください'
+    return false
+  }
+  passwordError.value = ''
+  return true
+}
+
+// パスワード確認のバリデーション
+const validateConfirmPassword = (confirmPasswordValue) => {
+  if (!confirmPasswordValue) {
+    confirmPasswordError.value = 'パスワード確認を入力してください'
+    return false
+  }
+  if (confirmPasswordValue !== password.value) {
+    confirmPasswordError.value = 'パスワードが一致しません'
+    return false
+  }
+  confirmPasswordError.value = ''
+  return true
+}
+
 // メールアドレスの入力時にリアルタイムでバリデーション
 watch(email, () => {
   if (email.value && !email.value.endsWith('@ed.ritsumei.ac.jp')) {
@@ -33,40 +72,42 @@ watch(email, () => {
   }
 })
 
-// 認証成功後のリダイレクト処理
-watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
-  if (!loading && authenticated && route.path === '/') {
-    // ログイン成功後は常に/homeにリダイレクト
-    navigateTo('/home')
+// パスワード確認の入力時にリアルタイムでバリデーション
+watch(confirmPassword, () => {
+  if (confirmPassword.value && confirmPassword.value !== password.value) {
+    confirmPasswordError.value = 'パスワードが一致しません'
+  } else {
+    confirmPasswordError.value = ''
   }
-}, { immediate: true })
+})
 
-const handleLogin = async () => {
+const handleSignUp = async () => {
   // バリデーション
   if (!validateEmail(email.value)) {
     return
   }
-  if (!password.value) {
-    alert('パスワードを入力してください')
+  if (!validatePassword(password.value)) {
+    return
+  }
+  if (!validateConfirmPassword(confirmPassword.value)) {
     return
   }
   
-  // Authorization Code Flow with PKCEを使用してAuth0のログインページにリダイレクト
-  // login_hintでメールアドレスを事前入力
+  // Authorization Code Flow with PKCEを使用してAuth0のサインアップページにリダイレクト
+  // login_hintでメールアドレスを事前入力、screen_hintでサインアップ画面を表示
   await login({
     appState: {
-      targetUrl: '/home'
+      targetUrl: '/make-profile'
     },
     authorizationParams: {
       login_hint: email.value,
-      screen_hint: 'login'
+      screen_hint: 'signup'
     }
   })
 }
 
-const handleSignUp = () => {
-  // 新規登録ページに遷移（後で実装）
-  navigateTo('/signup')
+const handleBackToLogin = () => {
+  navigateTo('/')
 }
 </script>
 
@@ -90,9 +131,9 @@ const handleSignUp = () => {
                 </h1>
             </div>
 
-            <!-- ログインフォーム -->
-            <div v-if="!isLoading && !isAuthenticated" class="p-8 space-y-6">
-                <form @submit.prevent="handleLogin" class="space-y-4">
+            <!-- 新規登録フォーム -->
+            <div class="p-8 space-y-6">
+                <form @submit.prevent="handleSignUp" class="space-y-4">
                     <!-- 学内メールアドレス入力欄 -->
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
@@ -122,42 +163,63 @@ const handleSignUp = () => {
                             id="password"
                             v-model="password"
                             type="password"
-                            placeholder="パスワードを入力"
-                            class="w-full px-4 py-3 border-[3px] border-[#FEBC6E] rounded-md focus:outline-none focus:ring-2 focus:ring-[#FEBC6E] focus:border-transparent"
-                            required
+                            placeholder="8文字以上で入力"
+                            :class="[
+                                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
+                                passwordError ? 'border-red-500 focus:ring-red-500' : 'border-[#FEBC6E] focus:ring-[#FEBC6E]'
+                            ]"
                         />
+                        <p v-if="passwordError" class="mt-1 text-sm text-red-500">
+                            {{ passwordError }}
+                        </p>
                     </div>
 
-                    <!-- ログインボタン -->
+                    <!-- パスワード確認入力欄 -->
+                    <div>
+                        <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">
+                            パスワード確認
+                        </label>
+                        <input
+                            id="confirmPassword"
+                            v-model="confirmPassword"
+                            type="password"
+                            placeholder="パスワードを再入力"
+                            :class="[
+                                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
+                                confirmPasswordError ? 'border-red-500 focus:ring-red-500' : 'border-[#FEBC6E] focus:ring-[#FEBC6E]'
+                            ]"
+                        />
+                        <p v-if="confirmPasswordError" class="mt-1 text-sm text-red-500">
+                            {{ confirmPasswordError }}
+                        </p>
+                    </div>
+
+                    <!-- 新規登録ボタン -->
                     <button
                         type="submit"
                         class="w-full bg-selected text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
                     >
-                        ログイン
+                        新規登録
                     </button>
                 </form>
 
                 <!-- 区切り線 -->
                 <div class="border-t border-gray-300"></div>
 
-                <!-- 新規登録セクション -->
+                <!-- ログインセクション -->
                 <div class="text-center space-y-3">
                     <p class="text-sm text-gray-600">
-                        初めての方はこちら
+                        既にアカウントをお持ちの方はこちら
                     </p>
                     <button
-                        @click="handleSignUp"
+                        @click="handleBackToLogin"
                         class="w-full bg-selected text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
                     >
-                        新規登録
+                        ログイン
                     </button>
                 </div>
-            </div>
-
-            <!-- 読み込み中 -->
-            <div v-if="isLoading" class="text-center text-gray-500">
-                読み込み中...
             </div>
         </div>
     </div>
 </template>
+
