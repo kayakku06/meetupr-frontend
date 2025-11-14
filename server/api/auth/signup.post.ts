@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
       success: true,
       user: response
     }
-  } catch (error) {
+  } catch (error: any) {
     // エラーの詳細を取得
     const errorData = error?.data || error?.response?.data || {}
     let errorMessage = errorData.error_description || errorData.error || errorData.message || 'Failed to create user'
@@ -46,14 +46,28 @@ export default defineEventHandler(async (event) => {
     })
     
     // 接続関連のエラーメッセージを改善
+    const connectionValue = config.public.auth0Connection || ''
+    const isConnectionId = connectionValue.startsWith('con_')
+    
     if (errorMessage.includes('default connection') || errorMessage.includes('Authorization server not configured')) {
-      errorMessage = `認証サーバーにデフォルト接続が設定されていません。以下の手順を確認してください：
-1. Auth0 Dashboard → Authentication → Database で「Username-Password-Authentication」接続が存在し有効になっているか確認
-2. Auth0 Dashboard → Applications → あなたのアプリケーション → Connections タブで「Username-Password-Authentication」にチェックが入っているか確認
-3. 接続名が異なる場合は、.envファイルのAUTH0_CONNECTIONに正しい接続名を設定
-現在の接続名: "${config.public.auth0Connection}"`
+      let connectionHelp = ''
+      if (isConnectionId) {
+        connectionHelp = `⚠️ 重要: 現在の接続値 "${connectionValue}" は接続IDです。接続名（Connection Name）を使用する必要があります。
+接続名の確認方法: Auth0 Dashboard → Authentication → Database → 接続をクリック → 接続名を確認（通常は「Username-Password-Authentication」）
+.envファイルのAUTH0_CONNECTIONを接続名に変更してください（例: AUTH0_CONNECTION=Username-Password-Authentication）\n\n`
+      }
+      
+      errorMessage = `${connectionHelp}認証サーバーにデフォルト接続が設定されていません。以下の手順を確認してください：
+1. Auth0 Dashboard → Authentication → Database で接続が存在し有効になっているか確認
+2. Auth0 Dashboard → Applications → あなたのアプリケーション → Connections タブで接続にチェックが入っているか確認
+3. .envファイルのAUTH0_CONNECTIONに接続名（接続IDではなく）を設定
+現在の接続値: "${connectionValue}"${isConnectionId ? ' (これは接続IDです。接続名に変更してください)' : ''}`
     } else if (errorMessage.includes('connection') || errorMessage.includes('Connection')) {
-      errorMessage = `接続エラー: ${errorMessage}。使用中の接続名: "${config.public.auth0Connection}"。Auth0 Dashboardで接続が存在し、アプリケーションに有効化されているか確認してください。`
+      let connectionHelp = ''
+      if (isConnectionId) {
+        connectionHelp = `⚠️ 接続値が接続IDになっています。接続名を使用してください。\n`
+      }
+      errorMessage = `${connectionHelp}接続エラー: ${errorMessage}。使用中の接続値: "${connectionValue}"。Auth0 Dashboardで接続が存在し、アプリケーションに有効化されているか確認してください。`
     }
     
     throw createError({

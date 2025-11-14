@@ -25,6 +25,8 @@ AUTH0_AUDIENCE=your-auth0-api-audience  # オプション: APIを使用する場
 
 **オプションの環境変数:**
 - `AUTH0_CONNECTION`: Auth0の接続名（デフォルト: `Username-Password-Authentication`）
+  - **重要**: 接続ID（`con_`で始まる）ではなく、接続名（Connection Name）を使用してください
+  - 接続名の確認方法: Auth0 Dashboard → Authentication → Database → 接続をクリック → 接続名を確認
 - `AUTH0_AUDIENCE`: API Audience（バックエンドAPIと連携する場合のみ必要）
 
 ### Auth0の設定手順
