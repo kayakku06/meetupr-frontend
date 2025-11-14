@@ -3,12 +3,12 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const isLoginPage = computed(() => route.path === '/')
+const isAuthPage = computed(() => route.path === '/' || route.path === '/signup')
 </script>
 
 <template>
   <div>
-    <Header v-if="!isLoginPage" />
+    <Header v-if="!isAuthPage" />
     <NuxtPage />
   </div>
 </template>
