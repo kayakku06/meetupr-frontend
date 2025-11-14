@@ -2,8 +2,9 @@
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
-const { isAuthenticated, isLoading, login } = useAuth()
+const { isAuthenticated, isLoading } = useAuth()
 const route = useRoute()
+const config = useRuntimeConfig()
 
 const email = ref('')
 const password = ref('')
@@ -52,8 +53,37 @@ const handleLogin = async () => {
     return
   }
   
-  // Auth0のログインにリダイレクト（実際の実装では、バックエンドAPIと連携する必要があります）
-  await login()
+  try {
+    // サーバーAPI経由でAuth0にログイン
+    const response = await $fetch('/api/auth/login', {
+      method: 'POST',
+      body: {
+        email: email.value,
+        password: password.value
+      }
+    })
+
+    if (response.success && response.idToken) {
+      // Auth0のSDKが使用する形式でトークンを保存
+      const audience = config.public.auth0Audience || `https://${config.public.auth0Domain}/api/v2/`
+      const auth0CacheKey = `@@auth0spajs@@::${config.public.auth0ClientId}::${audience}::openid profile email`
+      const cacheData = {
+        body: {
+          access_token: response.accessToken,
+          id_token: response.idToken,
+          expires_in: response.expiresIn,
+          token_type: 'Bearer'
+        },
+        expiresAt: Date.now() + (response.expiresIn * 1000)
+      }
+      localStorage.setItem(auth0CacheKey, JSON.stringify(cacheData))
+      
+      // ページをリロードしてAuth0の状態を更新
+      window.location.reload()
+    }
+  } catch (error: any) {
+    alert(error.data?.message || 'ログインに失敗しました')
+  }
 }
 
 const handleSignUp = () => {

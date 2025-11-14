@@ -13,12 +13,14 @@ Nuxt 4ベースのフロントエンドアプリケーション
 ```env
 AUTH0_DOMAIN=your-auth0-domain.auth0.com
 AUTH0_CLIENT_ID=your-auth0-client-id
+AUTH0_CLIENT_SECRET=your-auth0-client-secret
 AUTH0_AUDIENCE=your-auth0-api-audience  # オプション: APIを使用する場合のみ必要
 ```
 
 **必須の環境変数:**
 - `AUTH0_DOMAIN`: Auth0ドメイン（例: `your-tenant.auth0.com`）
 - `AUTH0_CLIENT_ID`: Auth0アプリケーションのClient ID
+- `AUTH0_CLIENT_SECRET`: Auth0アプリケーションのClient Secret（新規登録機能に必要）
 
 **オプションの環境変数:**
 - `AUTH0_AUDIENCE`: API Audience（バックエンドAPIと連携する場合のみ必要）
@@ -30,9 +32,15 @@ AUTH0_AUDIENCE=your-auth0-api-audience  # オプション: APIを使用する場
 3. アプリケーション設定から以下を取得：
    - **Domain**: アプリケーション設定ページの上部に表示
    - **Client ID**: アプリケーション設定ページに表示
+   - **Client Secret**: アプリケーション設定ページの「Show」ボタンをクリックして表示（新規登録機能に必要）
 4. **Allowed Callback URLs**に`http://localhost:3000`を追加
 5. **Allowed Logout URLs**に`http://localhost:3000`を追加
 6. **Allowed Web Origins**に`http://localhost:3000`を追加（推奨）
+7. **Resource Owner Password Grant**を有効化（ログイン機能に必要）：
+   - Auth0 Dashboard → Applications → あなたのアプリケーション → Settings
+   - 「Advanced Settings」を開く
+   - 「Grant Types」タブで「Password」にチェックを入れる
+   - 「Save Changes」をクリック
 
 ### API Audienceの設定（オプション）
 

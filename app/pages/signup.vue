@@ -80,10 +80,23 @@ const handleSignUp = async () => {
     return
   }
   
-  // 新規登録処理（実際の実装では、バックエンドAPIと連携する必要があります）
-  alert('新規登録機能は実装中です')
-  // 登録成功後、ログインページにリダイレクト
-  // navigateTo('/')
+  try {
+    // サーバーAPI経由でAuth0に新規登録
+    const response = await $fetch('/api/auth/signup', {
+      method: 'POST',
+      body: {
+        email: email.value,
+        password: password.value
+      }
+    })
+
+    if (response.success) {
+      alert('新規登録が完了しました。ログインページに移動します。')
+      navigateTo('/')
+    }
+  } catch (error: any) {
+    alert(error.data?.message || '新規登録に失敗しました')
+  }
 }
 
 const handleBackToLogin = () => {
