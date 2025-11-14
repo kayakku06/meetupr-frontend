@@ -4,6 +4,11 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss'
   ],
   css: [
-    '~/assets/css/global.css' // プロジェクトの assets/global.css を参照
+    '~/assets/css/global.css', // ← カンマを追加
+    'flag-icons/css/flag-icons.min.css'
   ]
 });
+
+
+
+

@@ -1,5 +1,5 @@
 <script setup>
-import ChatIcon from '~/components/ChatIcon.vue'
+import ChatIcon from '~/components/chaticon.vue'
 import Footer from '~/components/Footer.vue'
 </script>
 
