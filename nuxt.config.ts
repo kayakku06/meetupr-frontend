@@ -1,9 +1,9 @@
 export default defineNuxtConfig({
-  compatibilityDate: '2025-11-06', 
+  compatibilityDate: '2025-11-06',
   modules: [
-    '@nuxtjs/tailwindcss' // ← これがNuxtでの正しいTailwind導入方法です
+    '@nuxtjs/tailwindcss'
   ],
-  css: ['./app/assets/css/tailwind.css','~/assets/css/global.css'],
-  
-
+  css: [
+    '~/assets/css/global.css' // プロジェクトの assets/global.css を参照
+  ]
 });
