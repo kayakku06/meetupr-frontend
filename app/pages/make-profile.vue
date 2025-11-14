@@ -4,7 +4,7 @@
             プロフィール設定画面
         </header>
 
-        <main class="bg-[#FFF5C9] px-5 py-4">
+        <main class="bg-[var(--meetupr-main)] px-5 py-4">
             <nav class="flex items-center mb-6">
                 <span class="text-3xl font-bold text-gray-700 pr-4 cursor-pointer">‹</span>
                 <h1 class="text-lg font-bold flex-1 text-center pr-7">プロフィール登録</h1>
@@ -29,7 +29,7 @@
 
                 <div>
                     <label class="text-sm font-semibold text-gray-800 mb-1 block" for="faculty">学部</label>
-                    <select id="faculty" v-model="form.faculty" class="w-full px-3 py-3 rounded-md text-base bg-white border-[3px] border-[#FEBC6E] box-border">
+                    <select id="faculty" v-model="form.faculty" class="w-full px-3 py-3 rounded-md text-base bg-white border-[3px] border-[var(--meetupr-sub)] box-border">
                         <option value="" disabled selected></option>
                         <option value="engineering">工学部</option>
                         <option value="economics">経済学部</option>
@@ -48,21 +48,21 @@
 
                 <div>
                     <label class="text-sm font-semibold text-gray-800 mb-1 block" for="origin">出身</label>
-                    <input type="text" id="origin" v-model="form.origin" class="w-full px-3 py-3 rounded-md text-base bg-white border-[3px] border-[#FEBC6E] box-border">
+                    <input type="text" id="origin" v-model="form.origin" class="w-full px-3 py-3 rounded-md text-base bg-white border-[3px] border-[var(--meetupr-sub)] box-border">
                 </div>
 
                 <div>
                     <label class="text-sm font-semibold text-gray-800 mb-1 block">言語</label>
                     <div class="flex flex-col gap-2">
-                        <select v-model="form.langNative" class="w-full px-3 py-3 rounded-md text-base bg-white border-[3px] border-[#FEBC6E] box-border">
+                        <select v-model="form.langNative" class="w-full px-3 py-3 rounded-md text-base bg-white border-[3px] border-[var(--meetupr-sub)] box-border">
                             <option value="native">ネイティブ</option>
                         </select>
-                        <select v-model="form.langSpoken" class="w-full px-3 py-3 rounded-md text-base bg-white border-[3px] border-[#FEBC6E] box-border">
+                        <select v-model="form.langSpoken" class="w-full px-3 py-3 rounded-md text-base bg-white border-[3px] border-[var(--meetupr-sub)] box-border">
                             <option value="">話せる言語</option>
                             <option value="en">英語</option>
                             <option value="cn">中国語</option>
                         </select>
-                        <select v-model="form.langLearning" class="w-full px-3 py-3 rounded-md text-base bg-white border-[3px] border-[#FEBC6E] box-border">
+                        <select v-model="form.langLearning" class="w-full px-3 py-3 rounded-md text-base bg-white border-[3px] border-[var(--meetupr-sub)] box-border">
                             <option value="">学びたい言語</option>
                             <option value="fr">フランス語</option>
                             <option value="es">スペイン語</option>
@@ -72,9 +72,9 @@
 
                 <div>
                     <label class="text-sm font-semibold text-gray-800 mb-1 block">趣味</label>
-                    <div class="flex flex-wrap gap-2 p-2 border-[3px] border-[#FEBC6E] rounded-md bg-white min-h-[46px] box-border">
+                    <div class="flex flex-wrap gap-2 p-2 border-[3px] border-[var(--meetupr-sub)] rounded-md bg-white min-h-[46px] box-border">
                         <span v-if="form.hobbies.length === 0" class="text-gray-400 text-base leading-6">下の選択肢から趣味を選んでください</span>
-                        <button v-for="hobby in form.hobbies" :key="hobby" type="button" @click="removeHobby(hobby)" class="bg-[#fceb96] text-gray-800 border border-[#FEBC6E] rounded-md px-3 py-1 text-sm">
+                        <button v-for="hobby in form.hobbies" :key="hobby" type="button" @click="removeHobby(hobby)" class="bg-[var(--meetupr-main)] text-gray-800 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm">
                             {{ hobby }} <span class="ml-1 font-bold opacity-70">×</span>
                         </button>
                     </div>
@@ -82,14 +82,14 @@
 
                 <div>
                     <label class="text-sm font-semibold text-gray-800 mb-1 block">既存の選択肢</label>
-                    <div class="bg-white p-3 border-[3px] border-[#FEBC6E] rounded-md">
-                        <div class="flex gap-4 pb-3 border-b border-[#FEBC6E] mb-3">
+                    <div class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+                        <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
                             <span v-for="category in choiceCategories" :key="category.name" @click="activeTab = category.name" :class="activeTab === category.name ? 'text-[#4a90e2] font-bold border-b-2 border-[#4a90e2]' : 'text-gray-600 font-medium'">
                                 {{ category.name }}
                             </span>
                         </div>
                         <div v-for="category in choiceCategories" :key="category.name" v-show="activeTab === category.name" class="flex flex-wrap gap-2">
-                            <button v-for="tag in category.tags" :key="tag" type="button" @click="toggleHobby(tag)" :disabled="false" :class="form.hobbies.includes(tag) ? 'bg-[#fceb96] text-gray-400 border border-[#FEBC6E] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[#FEBC6E] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
+                            <button v-for="tag in category.tags" :key="tag" type="button" @click="toggleHobby(tag)" :disabled="false" :class="form.hobbies.includes(tag) ? 'bg-[var(--meetupr-main)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
                                 {{ tag }}
                             </button>
                         </div>
@@ -98,7 +98,7 @@
 
                 <div>
                     <label class="text-sm font-semibold text-gray-800 mb-1 block" for="bio">一言 (50文字以内)</label>
-                    <textarea id="bio" v-model="form.bio" rows="3" class="w-full px-3 py-3 rounded-md text-base bg-white border-[3px] border-[#FEBC6E] box-border resize-y min-h-[60px]"></textarea>
+                    <textarea id="bio" v-model="form.bio" rows="3" class="w-full px-3 py-3 rounded-md text-base bg-white border-[3px] border-[var(--meetupr-sub)] box-border resize-y min-h-[60px]"></textarea>
                 </div>
 
                 <div class="text-center mt-2">
