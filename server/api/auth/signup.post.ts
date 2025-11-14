@@ -11,53 +11,34 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // まず、Auth0 Management APIのアクセストークンを取得
-  let managementToken
+  // Auth0のSign Up APIを使用（Management APIの代わりに）
+  // この方法は通常のSPAアプリケーションでも使用可能
   try {
-    const tokenResponse = await $fetch(`https://${config.public.auth0Domain}/oauth/token`, {
+    const response = await $fetch(`https://${config.public.auth0Domain}/dbconnections/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: {
         client_id: config.public.auth0ClientId,
-        client_secret: config.auth0ClientSecret,
-        audience: `https://${config.public.auth0Domain}/api/v2/`,
-        grant_type: 'client_credentials'
-      }
-    })
-    managementToken = tokenResponse.access_token
-  } catch (error) {
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to get management token'
-    })
-  }
-
-  // Auth0 Management APIを使用してユーザーを作成
-  try {
-    const userResponse = await $fetch(`https://${config.public.auth0Domain}/api/v2/users`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${managementToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: {
         email: email,
         password: password,
         connection: 'Username-Password-Authentication', // Auth0のデフォルト接続
-        email_verified: false
+        user_metadata: {}
       }
     })
 
     return {
       success: true,
-      user: userResponse
+      user: response
     }
   } catch (error) {
-    const errorMessage = error?.data?.message || 'Failed to create user'
+    // エラーの詳細を取得
+    const errorData = error?.data || error?.response?.data || {}
+    const errorMessage = errorData.error_description || errorData.error || errorData.message || 'Failed to create user'
+    
     throw createError({
-      statusCode: 400,
+      statusCode: errorData.statusCode || 400,
       message: errorMessage
     })
   }
