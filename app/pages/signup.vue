@@ -91,8 +91,8 @@ const handleSignUp = async () => {
     })
 
     if (response.success) {
-      alert('新規登録が完了しました。ログインページに移動します。')
-      navigateTo('/')
+      alert('新規登録が完了しました。プロフィール設定ページに移動します。')
+      navigateTo('/make-profile')
     }
   } catch (error) {
     const errorMessage = error?.data?.message || '新規登録に失敗しました'
