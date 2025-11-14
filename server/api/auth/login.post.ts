@@ -36,7 +36,15 @@ export default defineEventHandler(async (event) => {
       expiresIn: response.expires_in
     }
   } catch (error) {
-    const errorMessage = error?.data?.error_description || 'Invalid email or password'
+    // エラーの詳細を取得
+    const errorData = error?.data || error?.response?.data || {}
+    let errorMessage = errorData.error_description || errorData.error || 'Invalid email or password'
+    
+    // ROPCが許可されていない場合のエラーメッセージを改善
+    if (errorMessage.includes('Grant type') && errorMessage.includes('not allowed')) {
+      errorMessage = 'Resource Owner Password Grantが有効になっていません。Auth0 Dashboardで設定を確認してください。'
+    }
+    
     throw createError({
       statusCode: 401,
       message: errorMessage

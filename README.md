@@ -28,11 +28,12 @@ AUTH0_AUDIENCE=your-auth0-api-audience  # オプション: APIを使用する場
 ### Auth0の設定手順
 
 1. [Auth0 Dashboard](https://manage.auth0.com/)にログイン
-2. 新しいアプリケーションを作成（**Single Page Application**タイプを選択）
+2. 新しいアプリケーションを作成（**Regular Web Application**タイプを選択）
+   - **重要**: カスタムフォームからログインするには、SPAではなくRegular Web Applicationが必要です
 3. アプリケーション設定から以下を取得：
    - **Domain**: アプリケーション設定ページの上部に表示
    - **Client ID**: アプリケーション設定ページに表示
-   - **Client Secret**: アプリケーション設定ページの「Show」ボタンをクリックして表示（新規登録機能に必要）
+   - **Client Secret**: アプリケーション設定ページの「Show」ボタンをクリックして表示（必須）
 4. **Allowed Callback URLs**に`http://localhost:3000`を追加
 5. **Allowed Logout URLs**に`http://localhost:3000`を追加
 6. **Allowed Web Origins**に`http://localhost:3000`を追加（推奨）
