@@ -11,14 +11,28 @@ export const useChatVerification = () => {
   // トークンの有効性を確認
   const verifyToken = async (token: string): Promise<boolean> => {
     try {
+      // トークンの形式を確認（デバッグ用）
+      const tokenParts = token.split('.')
+      console.log('Token format check:', {
+        parts: tokenParts.length,
+        isJWT: tokenParts.length === 3,
+        isJWE: tokenParts.length === 5,
+        firstPart: tokenParts[0]?.substring(0, 20) + '...'
+      })
+
       const response = await $fetch(`${config.public.apiBaseUrl}/api/v1/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
       return !!response
-    } catch (error) {
-      console.error('Token verification failed:', error)
+    } catch (error: any) {
+      console.error('Token verification failed:', {
+        error,
+        statusCode: error?.statusCode,
+        message: error?.message,
+        data: error?.data
+      })
       return false
     }
   }
@@ -50,23 +64,40 @@ export const useChatVerification = () => {
         }
       }
 
-      const isValid = await verifyToken(token)
-      if (!isValid) {
+      // トークンの形式を確認
+      const tokenParts = token.split('.')
+      const isJWT = tokenParts.length === 3
+      const isJWE = tokenParts.length === 5
+
+      if (!isJWT && !isJWE) {
         return {
           success: false,
-          message: '認証トークンが無効です'
+          message: `トークンの形式が不正です（セグメント数: ${tokenParts.length}）`
         }
       }
 
-      const response = await $fetch(`${config.public.apiBaseUrl}/api/v1/chats`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      if (isJWE) {
+        console.warn('JWE形式のトークンが取得されました。バックエンドがJWT形式を期待している可能性があります。')
+      }
 
-      return {
-        success: true,
-        message: `チャット一覧の取得に成功しました（${Array.isArray(response) ? response.length : 0}件）`
+      // 直接チャット一覧を取得してみる（トークン検証をスキップ）
+      try {
+        const response = await $fetch(`${config.public.apiBaseUrl}/api/v1/chats`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        return {
+          success: true,
+          message: `チャット一覧の取得に成功しました（${Array.isArray(response) ? response.length : 0}件）`
+        }
+      } catch (apiError: any) {
+        const errorDetail = apiError?.data?.error || apiError?.message || '不明なエラー'
+        return {
+          success: false,
+          message: `チャット一覧の取得に失敗しました: ${errorDetail}${isJWE ? ' (JWE形式のトークンが原因の可能性があります)' : ''}`
+        }
       }
     } catch (error: any) {
       return {
@@ -216,4 +247,5 @@ export const useChatVerification = () => {
     runFullVerification
   }
 }
+
 

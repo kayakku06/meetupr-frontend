@@ -95,16 +95,42 @@ export const useAuth = () => {
       // audienceが指定されている場合、または設定されている場合に使用
       const audience = options?.audience || config.public.auth0Audience
       
+      console.log('Getting access token with audience:', audience)
+      
       if (audience) {
         // audienceを指定することで、JWT形式のトークンを取得
-        return await auth0.getAccessTokenSilently({
+        const token = await auth0.getAccessTokenSilently({
           authorizationParams: {
             audience: audience
           }
         })
+        
+        // トークンの形式を確認（デバッグ用）
+        const tokenParts = token.split('.')
+        console.log('Token received:', {
+          length: token.length,
+          parts: tokenParts.length,
+          isJWT: tokenParts.length === 3,
+          isJWE: tokenParts.length === 5,
+          preview: token.substring(0, 50) + '...'
+        })
+        
+        return token
       } else {
         // audienceが設定されていない場合は、デフォルトの方法で取得
-        return await auth0.getAccessTokenSilently()
+        const token = await auth0.getAccessTokenSilently()
+        
+        // トークンの形式を確認（デバッグ用）
+        const tokenParts = token.split('.')
+        console.log('Token received (no audience):', {
+          length: token.length,
+          parts: tokenParts.length,
+          isJWT: tokenParts.length === 3,
+          isJWE: tokenParts.length === 5,
+          preview: token.substring(0, 50) + '...'
+        })
+        
+        return token
       }
     } catch (error) {
       console.error('Error getting access token:', error)
