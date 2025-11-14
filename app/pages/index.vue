@@ -10,7 +10,7 @@ const password = ref('')
 const emailError = ref('')
 
 // 学内メールアドレスのバリデーション
-const validateEmail = (emailValue: string): boolean => {
+const validateEmail = (emailValue) => {
   if (!emailValue) {
     emailError.value = '学内メールアドレスを入力してください'
     return false
