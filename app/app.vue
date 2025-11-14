@@ -1,10 +1,14 @@
 <script setup>
-// Root app shell should render page components with <NuxtPage />.
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const isLoginPage = computed(() => route.path === '/')
 </script>
 
 <template>
   <div>
-    <Header />
+    <Header v-if="!isLoginPage" />
     <NuxtPage />
   </div>
 </template>

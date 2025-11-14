@@ -17,7 +17,7 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <header class="bg-white shadow-md">
+  <header class="bg-white">
     <div class="container mx-auto px-4 py-4 flex justify-between items-center">
       <div class="flex items-center space-x-4">
         <NuxtLink to="/" class="text-2xl font-bold text-primary">
