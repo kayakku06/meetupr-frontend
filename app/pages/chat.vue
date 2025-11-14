@@ -3,11 +3,13 @@ import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Smile, Send } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
+import { useChatVerification } from '~/composables/useChatVerification'
 
 const route = useRoute()
 const router = useRouter()
 const config = useRuntimeConfig()
 const { user, getAccessToken } = useAuth()
+const { verifyToken } = useChatVerification()
 
 // メッセージの型定義
 interface Message {
@@ -83,6 +85,14 @@ const connectWebSocket = async () => {
     const token = await getAccessToken()
     if (!token) {
       errorMessage.value = '認証トークンを取得できませんでした'
+      connectionStatus.value = 'error'
+      return
+    }
+
+    // ドキュメントに沿って、接続前にトークンを検証
+    const isValid = await verifyToken(token)
+    if (!isValid) {
+      errorMessage.value = '認証トークンが無効です。再度ログインしてください。'
       connectionStatus.value = 'error'
       return
     }
