@@ -7,6 +7,30 @@ const route = useRoute()
 
 const email = ref('')
 const password = ref('')
+const emailError = ref('')
+
+// 学内メールアドレスのバリデーション
+const validateEmail = (emailValue: string): boolean => {
+  if (!emailValue) {
+    emailError.value = '学内メールアドレスを入力してください'
+    return false
+  }
+  if (!emailValue.endsWith('@ed.ritsumei.ac.jp')) {
+    emailError.value = '@ed.ritsumei.ac.jpで終わる学内メールアドレスを入力してください'
+    return false
+  }
+  emailError.value = ''
+  return true
+}
+
+// メールアドレスの入力時にリアルタイムでバリデーション
+watch(email, () => {
+  if (email.value && !email.value.endsWith('@ed.ritsumei.ac.jp')) {
+    emailError.value = '@ed.ritsumei.ac.jpで終わる学内メールアドレスを入力してください'
+  } else {
+    emailError.value = ''
+  }
+})
 
 // isLoadingがfalseになったら、認証状態をチェックしてリダイレクト
 watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
@@ -20,8 +44,11 @@ watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
 
 const handleLogin = async () => {
   // バリデーション
-  if (!email.value || !password.value) {
-    alert('学内メールアドレスとパスワードを入力してください')
+  if (!validateEmail(email.value)) {
+    return
+  }
+  if (!password.value) {
+    alert('パスワードを入力してください')
     return
   }
   
@@ -67,10 +94,15 @@ const handleSignUp = () => {
                             id="email"
                             v-model="email"
                             type="email"
-                            placeholder="example@university.ac.jp"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                            required
+                            placeholder="example@ed.ritsumei.ac.jp"
+                            :class="[
+                                'w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
+                                emailError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary'
+                            ]"
                         />
+                        <p v-if="emailError" class="mt-1 text-sm text-red-500">
+                            {{ emailError }}
+                        </p>
                     </div>
 
                     <!-- パスワード入力欄 -->
