@@ -13,7 +13,8 @@ export default defineNuxtConfig({
       auth0Domain: process.env.AUTH0_DOMAIN || '',
       auth0ClientId: process.env.AUTH0_CLIENT_ID || '',
       auth0Audience: process.env.AUTH0_AUDIENCE || '',
-      auth0Connection: process.env.AUTH0_CONNECTION || 'Username-Password-Authentication'
+      auth0Connection: process.env.AUTH0_CONNECTION || 'Username-Password-Authentication',
+      wsHost: process.env.NUXT_PUBLIC_WS_HOST || 'localhost:8080'
     }
   }
 });
