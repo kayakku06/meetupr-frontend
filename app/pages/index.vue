@@ -81,8 +81,9 @@ const handleLogin = async () => {
       // ページをリロードしてAuth0の状態を更新
       window.location.reload()
     }
-  } catch (error: any) {
-    alert(error.data?.message || 'ログインに失敗しました')
+  } catch (error) {
+    const errorMessage = error?.data?.message || 'ログインに失敗しました'
+    alert(errorMessage)
   }
 }
 

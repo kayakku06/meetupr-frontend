@@ -94,8 +94,9 @@ const handleSignUp = async () => {
       alert('新規登録が完了しました。ログインページに移動します。')
       navigateTo('/')
     }
-  } catch (error: any) {
-    alert(error.data?.message || '新規登録に失敗しました')
+  } catch (error) {
+    const errorMessage = error?.data?.message || '新規登録に失敗しました'
+    alert(errorMessage)
   }
 }
 
