@@ -54,15 +54,21 @@ AUTH0_AUDIENCE=your-auth0-api-audience  # オプション: APIを使用する場
      - 「Username-Password-Authentication」を選択
      - 「Create」をクリック
    - 接続名が異なる場合は、`.env`ファイルの`AUTH0_CONNECTION`に正しい接続名を設定
-9. **接続をアプリケーションに有効化**（重要）：
-   - Auth0 Dashboard → Applications → あなたのアプリケーション → Connections タブ
+9. **接続をアプリケーションに有効化**（最重要）：
+   - Auth0 Dashboard → Applications → あなたのアプリケーション → **Connections** タブ
    - 「Username-Password-Authentication」（または設定した接続名）にチェックを入れる
-   - 「Save」をクリック
+   - **「Save」をクリックして保存**
    - **重要**: この設定がないと「Authorization server not configured with default connection」エラーが発生します
-10. **認証サーバーの設定を確認**（エラーが続く場合）：
-    - Auth0 Dashboard → Branding → Universal Login
-    - 「Customize Login Page」で認証サーバーが正しく設定されているか確認
-    - または、Auth0 Dashboard → Settings → Advanced → Default Directory でデフォルト接続が設定されているか確認
+   - **最も一般的な原因は、この設定が完了していないことです**
+10. **接続が有効になっているか確認**：
+    - Auth0 Dashboard → Authentication → Database
+    - 「Username-Password-Authentication」接続をクリック
+    - 「Enabled」にチェックが入っているか確認
+    - 無効になっている場合は、有効化して保存
+11. **デフォルトディレクトリを設定**（エラーが続く場合）：
+    - Auth0 Dashboard → Settings → Advanced → Default Directory
+    - 「Username-Password-Authentication」（または設定した接続名）を選択
+    - 「Save」をクリック
 
 ### API Audienceの設定（オプション）
 

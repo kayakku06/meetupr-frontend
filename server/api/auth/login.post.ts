@@ -66,10 +66,23 @@ export default defineEventHandler(async (event) => {
 .envファイルのAUTH0_CONNECTIONを接続名に変更してください（例: AUTH0_CONNECTION=Username-Password-Authentication）\n\n`
       }
       
-      errorMessage = `${connectionHelp}認証サーバーにデフォルト接続が設定されていません。以下の手順を確認してください：
-1. Auth0 Dashboard → Authentication → Database で接続が存在し有効になっているか確認
-2. Auth0 Dashboard → Applications → あなたのアプリケーション → Connections タブで接続にチェックが入っているか確認
-3. .envファイルのAUTH0_CONNECTIONに接続名（接続IDではなく）を設定
+      errorMessage = `${connectionHelp}認証サーバーにデフォルト接続が設定されていません。以下の手順を順番に確認してください：
+
+【必須】1. 接続がアプリケーションに有効化されているか確認
+   - Auth0 Dashboard → Applications → あなたのアプリケーション → Connections タブ
+   - 「${connectionValue}」にチェックが入っているか確認
+   - チェックが入っていない場合は、チェックを入れて「Save」をクリック
+   - これが最も重要な設定です！
+
+2. 接続が存在し有効になっているか確認
+   - Auth0 Dashboard → Authentication → Database
+   - 「${connectionValue}」接続が存在し、有効になっているか確認
+   - 無効になっている場合は、接続をクリックして「Enabled」にチェックを入れる
+
+3. デフォルトディレクトリを設定（エラーが続く場合）
+   - Auth0 Dashboard → Settings → Advanced → Default Directory
+   - 「${connectionValue}」を選択して保存
+
 現在の接続値: "${connectionValue}"${isConnectionId ? ' (これは接続IDです。接続名に変更してください)' : ''}`
     } else if (errorMessage.includes('connection') || errorMessage.includes('Connection')) {
       let connectionHelp = ''
