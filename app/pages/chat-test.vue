@@ -171,8 +171,6 @@ const {
   runFullVerification
 } = useChatVerification()
 
-const { getAccessToken } = useAuth()
-
 const isRunning = ref(false)
 const results = ref<Array<{ name: string; success: boolean; message: string }>>([])
 const testChatId = ref<number | null>(null)
