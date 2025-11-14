@@ -11,19 +11,12 @@ const password = ref('')
 const emailError = ref('')
 
 // 学内メールアドレスのバリデーション
-const config = useRuntimeConfig()
 const validateEmail = (emailValue) => {
   if (!emailValue) {
-    emailError.value = 'メールアドレスを入力してください'
+    emailError.value = '学内メールアドレスを入力してください'
     return false
   }
-  
-  // テスト用メールアドレスを許可する設定がある場合
-  const allowTestEmails = config.public.allowTestEmails
-  const testEmailDomains = ['@example.com', '@test.com']
-  const isTestEmail = allowTestEmails && testEmailDomains.some(domain => emailValue.endsWith(domain))
-  
-  if (!emailValue.endsWith('@ed.ritsumei.ac.jp') && !isTestEmail) {
+  if (!emailValue.endsWith('@ed.ritsumei.ac.jp')) {
     emailError.value = '@ed.ritsumei.ac.jpで終わる学内メールアドレスを入力してください'
     return false
   }
@@ -33,16 +26,7 @@ const validateEmail = (emailValue) => {
 
 // メールアドレスの入力時にリアルタイムでバリデーション
 watch(email, () => {
-  if (!email.value) {
-    emailError.value = ''
-    return
-  }
-  
-  const allowTestEmails = config.public.allowTestEmails
-  const testEmailDomains = ['@example.com', '@test.com']
-  const isTestEmail = allowTestEmails && testEmailDomains.some(domain => email.value.endsWith(domain))
-  
-  if (!email.value.endsWith('@ed.ritsumei.ac.jp') && !isTestEmail) {
+  if (email.value && !email.value.endsWith('@ed.ritsumei.ac.jp')) {
     emailError.value = '@ed.ritsumei.ac.jpで終わる学内メールアドレスを入力してください'
   } else {
     emailError.value = ''
@@ -112,13 +96,13 @@ const handleSignUp = () => {
                     <!-- 学内メールアドレス入力欄 -->
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                            {{ config.public.allowTestEmails ? 'メールアドレス' : '学内メールアドレス' }}
+                            学内メールアドレス
                         </label>
                         <input
                             id="email"
                             v-model="email"
                             type="email"
-                            :placeholder="config.public.allowTestEmails ? 'example@ed.ritsumei.ac.jp または testuser@example.com' : 'example@ed.ritsumei.ac.jp'"
+                            placeholder="example@ed.ritsumei.ac.jp"
                             :class="[
                                 'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
                                 emailError ? 'border-red-500 focus:ring-red-500' : 'border-[#FEBC6E] focus:ring-[#FEBC6E]'
