@@ -63,7 +63,14 @@ export const useAuth = () => {
     return defaultIsLoading.value
   })
 
-  const login = async (options?: { appState?: { targetUrl?: string } }) => {
+  const login = async (options?: { 
+    appState?: { targetUrl?: string }
+    authorizationParams?: {
+      login_hint?: string
+      screen_hint?: 'login' | 'signup'
+      [key: string]: any
+    }
+  }) => {
     if (!auth0) {
       console.warn('Auth0 is not available. Make sure you are on the client side.')
       return

@@ -1,6 +1,8 @@
 <script setup>
 import { ref, watch } from 'vue';
 
+const { login } = useAuth()
+
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
@@ -80,24 +82,17 @@ const handleSignUp = async () => {
     return
   }
   
-  try {
-    // サーバーAPI経由でAuth0に新規登録
-    const response = await $fetch('/api/auth/signup', {
-      method: 'POST',
-      body: {
-        email: email.value,
-        password: password.value
-      }
-    })
-
-    if (response.success) {
-      alert('新規登録が完了しました。プロフィール設定ページに移動します。')
-      navigateTo('/make-profile')
+  // Authorization Code Flow with PKCEを使用してAuth0のサインアップページにリダイレクト
+  // login_hintでメールアドレスを事前入力、screen_hintでサインアップ画面を表示
+  await login({
+    appState: {
+      targetUrl: '/make-profile'
+    },
+    authorizationParams: {
+      login_hint: email.value,
+      screen_hint: 'signup'
     }
-  } catch (error) {
-    const errorMessage = error?.data?.message || '新規登録に失敗しました'
-    alert(errorMessage)
-  }
+  })
 }
 
 const handleBackToLogin = () => {
