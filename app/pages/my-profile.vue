@@ -12,7 +12,7 @@
 
         <div class="flex-1">
           <h2 class="m-0 mb-2 text-lg text-teal-900">{{ form.name || 'なまえ' }}</h2>
-          <button class="bg-teal-500 text-white px-2.5 py-1.5 rounded-full inline-flex gap-1.5 items-center text-xs hover:bg-teal-600 transition" @click="toggleEdit">
+          <button v-if="!editing" class="bg-teal-600 text-white px-2.5 py-1.5 rounded-full inline-flex gap-1.5 items-center text-xs hover:bg-teal-600 transition" @click="toggleEdit">
             <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="#fff"/></svg>
             プロフィール編集
           </button>
@@ -22,7 +22,7 @@
       <form class="flex flex-col gap-3" @submit.prevent>
         <label class="flex flex-col gap-1">
           <div class="text-sm text-yellow-900">学部</div>
-          <select :disabled="!editing" v-model="form.department" class="border-2 border-orange-400 p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
+          <select :disabled="!editing" v-model="form.department" class="border-2 border-orange-400 p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 appearance-none">
             <option value="" disabled>学部を選択</option>
             <option value="経営学部">経営学部</option>
             <option value="政策科学部">政策科学部</option>
@@ -116,7 +116,7 @@
         </label>
 
         <div class="flex gap-2 mt-1.5" v-if="editing">
-          <button type="button" class="bg-teal-500 text-white px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-teal-600 transition flex-1" @click="save">保存</button>
+          <button type="button" class="bg-teal-600 text-white px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-teal-600 transition flex-1" @click="save">保存</button>
           <button type="button" class="bg-gray-300 text-gray-800 px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-gray-400 transition flex-1" @click="cancel">キャンセル</button>
         </div>
       </form>
