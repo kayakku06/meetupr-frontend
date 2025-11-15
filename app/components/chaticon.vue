@@ -31,7 +31,7 @@ defineProps({
 
 // クリックしたら other-profile に飛ぶ
 const goProfile = () => {
-  router.push('/other-profile')
+  router.push('/chat')
 }
 </script>
 

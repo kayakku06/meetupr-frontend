@@ -16,7 +16,7 @@
         <div class="flex-1">
           <h2 class="m-0 mb-2 text-lg text-teal-900">{{ form.name || 'なまえ' }}</h2>
           <button v-if="!editing"
-            class="bg-teal-600 text-white px-2.5 py-1.5 rounded-full inline-flex gap-1.5 items-center text-xs hover:bg-teal-600 transition"
+            class="border-[var(--meetupr-color-3)] text-white px-2.5 py-1.5 rounded-full inline-flex gap-1.5 items-center text-xs hover:border-[var(--meetupr-color-3)] transition"
             @click="toggleEdit">
             <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden>
               <path
@@ -122,17 +122,17 @@
 
         <div v-if="editing">
           <label class="text-xs text-amber-900 mb-1 block">既存の選択肢</label>
-          <div class="bg-white p-3 border-[3px] border-[#FEBC6E] rounded-md">
-            <div class="flex gap-4 pb-3 border-b border-[#FEBC6E] mb-3">
+          <div class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+            <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
               <span v-for="category in choiceCategories" :key="category.name" @click="activeTab = category.name"
-                :class="activeTab === category.name ? 'text-[#FEBC6E] font-bold border-b-2 border-[#FEBC6E]' : 'text-gray-600 font-medium'">
+                :class="activeTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
                 {{ category.name }}
               </span>
             </div>
             <div v-for="category in choiceCategories" :key="category.name" v-show="activeTab === category.name"
               class="flex flex-wrap gap-2">
               <button v-for="tag in category.tags" :key="tag" type="button" @click="toggleHobby(tag)" :disabled="false"
-                :class="form.hobbies.includes(tag) ? 'bg-[#FEBC6E] text-gray-400 border border-[#FEBC6E] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[#FEBC6E] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
+                :class="form.hobbies.includes(tag) ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
                 {{ tag }}
               </button>
             </div>
@@ -149,7 +149,7 @@
 
         <div class="flex gap-2 mt-1.5" v-if="editing">
           <button type="button"
-            class="bg-teal-600 text-white px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-teal-600 transition flex-1"
+            class="border-[var(--meetupr-color-3)] text-white px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-teal-600 transition flex-1"
             @click="save">保存</button>
           <button type="button"
             class="bg-gray-300 text-gray-800 px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-gray-400 transition flex-1"

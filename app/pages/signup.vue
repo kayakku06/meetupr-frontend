@@ -112,7 +112,7 @@ const handleBackToLogin = () => {
 </script>
 
 <template>
-    <div class="min-h-screen flex flex-col items-center justify-center bg-basebg px-4">
+  <div class="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-color)] px-4">
         <div class="w-full max-w-md space-y-8">
             <!-- ロゴとタイトル -->
             <div class="text-center space-y-4">
@@ -144,10 +144,10 @@ const handleBackToLogin = () => {
                             v-model="email"
                             type="email"
                             placeholder="example@ed.ritsumei.ac.jp"
-                            :class="[
-                                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
-                                emailError ? 'border-red-500 focus:ring-red-500' : 'border-[#FEBC6E] focus:ring-[#FEBC6E]'
-                            ]"
+              :class="[
+                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
+                emailError ? 'border-red-500 focus:ring-red-500' : 'border-[var(--meetupr-sub)] focus:ring-[var(--meetupr-sub)]'
+              ]"
                         />
                         <p v-if="emailError" class="mt-1 text-sm text-red-500">
                             {{ emailError }}
@@ -164,10 +164,10 @@ const handleBackToLogin = () => {
                             v-model="password"
                             type="password"
                             placeholder="8文字以上で入力"
-                            :class="[
-                                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
-                                passwordError ? 'border-red-500 focus:ring-red-500' : 'border-[#FEBC6E] focus:ring-[#FEBC6E]'
-                            ]"
+              :class="[
+                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
+                passwordError ? 'border-red-500 focus:ring-red-500' : 'border-[var(--meetupr-sub)] focus:ring-[var(--meetupr-sub)]'
+              ]"
                         />
                         <p v-if="passwordError" class="mt-1 text-sm text-red-500">
                             {{ passwordError }}
@@ -184,10 +184,10 @@ const handleBackToLogin = () => {
                             v-model="confirmPassword"
                             type="password"
                             placeholder="パスワードを再入力"
-                            :class="[
-                                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
-                                confirmPasswordError ? 'border-red-500 focus:ring-red-500' : 'border-[#FEBC6E] focus:ring-[#FEBC6E]'
-                            ]"
+              :class="[
+                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
+                confirmPasswordError ? 'border-red-500 focus:ring-red-500' : 'border-[var(--meetupr-sub)] focus:ring-[var(--meetupr-sub)]'
+              ]"
                         />
                         <p v-if="confirmPasswordError" class="mt-1 text-sm text-red-500">
                             {{ confirmPasswordError }}
@@ -195,10 +195,10 @@ const handleBackToLogin = () => {
                     </div>
 
                     <!-- 新規登録ボタン -->
-                    <button
-                        type="submit"
-                        class="w-full bg-selected text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
-                    >
+          <button
+            type="submit"
+            class="w-full bg-[var(--meetupr-color-3)] text-white py-3 rounded-md font-semibold hover:bg-[var(--meetupr-color-3)] transition-colors"
+          >
                         新規登録
                     </button>
                 </form>
@@ -211,10 +211,10 @@ const handleBackToLogin = () => {
                     <p class="text-sm text-gray-600">
                         既にアカウントをお持ちの方はこちら
                     </p>
-                    <button
-                        @click="handleBackToLogin"
-                        class="w-full bg-selected text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
-                    >
+          <button
+            @click="handleBackToLogin"
+            class="w-full bg-[var(--meetupr-color-3))] text-white py-3 rounded-md font-semibold hover:bg-[(--meetupr-color-3))] transition-colors"
+          >
                         ログイン
                     </button>
                 </div>
