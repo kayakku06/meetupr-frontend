@@ -42,7 +42,8 @@ export default defineEventHandler(async (event: H3Event) => {
     const tokenUrl = `https://${auth0Domain}/oauth/token`
     
     // まず、username（ローカル部分）で試す
-    // audienceを指定することで、アプリケーションへの認可を明示的に行う
+    // 注意: ROPCでaudienceを指定する場合、そのAPIが正しく設定されている必要があります
+    // 接続エラーが発生する場合は、audienceを削除して試してください
     const auth0Audience = config.public.auth0Audience
     let tokenPayload: any = {
       client_id: auth0ClientId,
@@ -53,10 +54,11 @@ export default defineEventHandler(async (event: H3Event) => {
       scope: 'openid profile email'
     }
     
-    // audienceが設定されている場合、追加する（アプリケーションへの認可を明示的に行う）
-    if (auth0Audience) {
-      tokenPayload.audience = auth0Audience
-    }
+    // audienceが設定されている場合、追加する（ただし、接続エラーが発生する場合は削除）
+    // 注意: ROPCでaudienceを使用する場合、APIの設定が必要です
+    // if (auth0Audience) {
+    //   tokenPayload.audience = auth0Audience
+    // }
     
     console.log('[API] Calling Auth0 token endpoint:', tokenUrl)
     console.log('[API] Token payload (password hidden):', { ...tokenPayload, password: '***' })
@@ -94,10 +96,10 @@ export default defineEventHandler(async (event: H3Event) => {
           scope: 'openid profile email'
         }
         
-        // audienceが設定されている場合、追加する
-        if (auth0Audience) {
-          tokenPayload.audience = auth0Audience
-        }
+        // audienceが設定されている場合、追加する（ただし、接続エラーが発生する場合は削除）
+        // if (auth0Audience) {
+        //   tokenPayload.audience = auth0Audience
+        // }
         
         console.log('[API] Retry token payload (password hidden):', { ...tokenPayload, password: '***' })
         
