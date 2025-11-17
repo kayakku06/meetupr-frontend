@@ -14,9 +14,9 @@ watch([user, isAuthenticated], async ([currentUser, authenticated]) => {
         query: {
           user_id: currentUser.sub
         }
-      }) as { username?: string | null; error?: string }
+      })
       
-      if (response.username) {
+      if (response && typeof response === 'object' && 'username' in response && response.username) {
         username.value = response.username
       } else {
         // usernameが取得できない場合は、emailをフォールバック
