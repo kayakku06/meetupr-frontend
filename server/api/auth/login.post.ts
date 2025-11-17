@@ -1,0 +1,101 @@
+import { H3Event } from 'h3'
+
+export default defineEventHandler(async (event: H3Event) => {
+  try {
+    const body = await readBody(event)
+    const config = useRuntimeConfig()
+
+    console.log('[API] /api/auth/login POST received body:', JSON.stringify({ ...body, password: '***' }))
+
+    // ボディの存在確認
+    if (body == null) {
+      console.warn('[API] /api/auth/login POST empty body received (null/undefined)')
+      event.res.statusCode = 400
+      return { error: 'empty_body', message: 'Request body is required' }
+    }
+
+    // バリデーション
+    if (!body.email || !body.password) {
+      console.warn('[API] /api/auth/login POST missing email or password')
+      event.res.statusCode = 400
+      return { error: 'email and password are required', message: 'Email and password are required' }
+    }
+
+    // Auth0の設定を取得
+    const auth0Domain = config.public.auth0Domain
+    const auth0ClientId = config.public.auth0ClientId
+    const auth0Connection = config.public.auth0Connection || 'Username-Password-Authentication'
+
+    if (!auth0Domain || !auth0ClientId) {
+      event.res.statusCode = 500
+      return { error: 'Auth0 configuration is missing' }
+    }
+
+    // usernameはメールアドレスのローカル部分（@の前）を使用し、15文字に制限
+    const emailLocalPart = body.email.split('@')[0]
+    const username = emailLocalPart.substring(0, 15)
+
+    // Auth0の/oauth/tokenエンドポイントを使用してROPCでログイン
+    // 注意: ROPCはAuth0では非推奨ですが、ユーザーエクスペリエンスのために使用
+    const tokenUrl = `https://${auth0Domain}/oauth/token`
+    
+    const tokenPayload = {
+      client_id: auth0ClientId,
+      username: username,
+      password: body.password,
+      connection: auth0Connection,
+      grant_type: 'password',
+      scope: 'openid profile email'
+    }
+    
+    console.log('[API] Calling Auth0 token endpoint:', tokenUrl)
+    console.log('[API] Token payload (password hidden):', { ...tokenPayload, password: '***' })
+    
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(tokenPayload),
+    })
+
+    let data
+    try {
+      data = await response.json()
+    } catch (e) {
+      console.error('[API] Failed to parse Auth0 response as JSON:', e)
+      const text = await response.text()
+      console.error('[API] Auth0 response text:', text)
+      event.res.statusCode = 500
+      return { error: 'auth0_response_parse_error', message: 'Failed to parse Auth0 response' }
+    }
+    
+    console.log('[API] Auth0 response status:', response.status)
+    console.log('[API] Auth0 response data:', JSON.stringify({ ...data, access_token: data.access_token ? '***' : undefined, id_token: data.id_token ? '***' : undefined }))
+
+    if (!response.ok) {
+      // Auth0のエラーレスポンスをそのまま返す
+      event.res.statusCode = response.status
+      return { 
+        error: data.error || 'login_failed',
+        error_description: data.error_description || data.description || 'Failed to login',
+        code: data.code
+      }
+    }
+
+    // 成功した場合、トークン情報を返す
+    // 注意: 実際のトークンはクライアントで使用するため、返す必要があります
+    return {
+      success: true,
+      access_token: data.access_token,
+      id_token: data.id_token,
+      token_type: data.token_type,
+      expires_in: data.expires_in
+    }
+  } catch (err) {
+    console.error('Error in /api/auth/login handler:', err)
+    event.res.statusCode = 500
+    return { error: 'internal_server_error', message: err instanceof Error ? err.message : 'Unknown error' }
+  }
+})
+

@@ -135,16 +135,71 @@ const handleSignUp = async () => {
       localStorage.setItem('isNewSignup', 'true')
     }
 
-    // 登録成功後、Auth0のログインページにリダイレクトして、ログイン後に/make-profileに遷移
-    await login({
-      appState: {
-        targetUrl: '/make-profile'
-      },
-      authorizationParams: {
-        login_hint: email.value,
-        screen_hint: 'login'
+    // 登録成功後、同じパスワードでサーバーサイドのログインAPIを呼び出してトークンを取得
+    try {
+      const loginResponse = await $fetch<{ success?: boolean; access_token?: string; id_token?: string; error?: string; error_description?: string }>('/api/auth/login', {
+        method: 'POST',
+        body: {
+          email: email.value,
+          password: password.value
+        }
+      })
+
+      if ('error' in loginResponse && loginResponse.error) {
+        console.error('Login after signup failed:', loginResponse.error)
+        // ログインに失敗した場合は、通常のログインフローにフォールバック
+        await login({
+          appState: {
+            targetUrl: '/make-profile'
+          },
+          authorizationParams: {
+            login_hint: email.value,
+            screen_hint: 'login'
+          }
+        })
+        return
       }
-    })
+
+      // トークンを取得できた場合、Auth0のSDKにセッションを設定
+      // 注意: Auth0 Vue SDKはROPCを直接サポートしていないため、
+      // トークンをlocalStorageに保存して、SDKが認識できるようにする
+      if (loginResponse.access_token && loginResponse.id_token) {
+        const config = useRuntimeConfig()
+        // Auth0のSDKが使用するlocalStorageのキーにトークンを保存
+        // キーの形式: @@auth0spajs@@::{clientId}::{domain}::{scope}
+        const scope = 'openid profile email'
+        const auth0CacheKey = `@@auth0spajs@@::${config.public.auth0ClientId}::${config.public.auth0Domain}::${scope}`
+        const cacheData = {
+          body: {
+            access_token: loginResponse.access_token,
+            id_token: loginResponse.id_token,
+            expires_in: 86400, // 24時間
+            token_type: 'Bearer',
+            scope: scope
+          },
+          expiresAt: Math.floor(Date.now() / 1000) + 86400 // Unix timestamp
+        }
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(auth0CacheKey, JSON.stringify(cacheData))
+          // ページをリロードしてAuth0のSDKに状態を認識させる
+          window.location.href = '/make-profile'
+          return
+        }
+      }
+    } catch (loginError: any) {
+      console.error('Login after signup error:', loginError)
+      // エラーが発生した場合は、通常のログインフローにフォールバック
+      await login({
+        appState: {
+          targetUrl: '/make-profile'
+        },
+        authorizationParams: {
+          login_hint: email.value,
+          screen_hint: 'login'
+        }
+      })
+      return
+    }
   } catch (error: any) {
     console.error('Signup error:', error)
     console.error('Signup error data:', error.data)
