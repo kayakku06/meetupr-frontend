@@ -39,6 +39,17 @@ watch([isLoading, isAuthenticated], async ([loading, authenticated]) => {
     // 少し待機してからリダイレクト（Auth0のappStateが設定されるのを待つ）
     await new Promise(resolve => setTimeout(resolve, 100))
     
+    // 新規登録フラグを確認
+    if (typeof window !== 'undefined') {
+      const isNewSignup = localStorage.getItem('isNewSignup')
+      if (isNewSignup === 'true') {
+        console.log('[index] New signup detected, redirecting to /make-profile')
+        localStorage.removeItem('isNewSignup') // フラグを削除
+        navigateTo('/make-profile')
+        return
+      }
+    }
+    
     // Auth0のappStateを確認してリダイレクト先を決定
     try {
       const auth0 = useAuth0()
@@ -50,25 +61,9 @@ watch([isLoading, isAuthenticated], async ([loading, authenticated]) => {
           navigateTo(appState.targetUrl)
           return
         }
-        
-        // appStateがない場合は、新規登録かどうかを判定
-        // ユーザーの作成日時を確認（新規登録の場合は最近作成された）
-        const user = auth0.user?.value
-        if (user) {
-          const createdAt = user.created_at ? new Date(user.created_at) : null
-          const now = new Date()
-          // 5分以内に作成された場合は新規登録とみなす
-          const isNewUser = createdAt && (now.getTime() - createdAt.getTime()) < 300000
-          
-          if (isNewUser) {
-            console.log('[index] New user detected, redirecting to /make-profile')
-            navigateTo('/make-profile')
-            return
-          }
-        }
       }
     } catch (e) {
-      console.warn('[index] Failed to check redirect target:', e)
+      console.warn('[index] Failed to check appState:', e)
     }
     
     // デフォルトは/homeにリダイレクト
