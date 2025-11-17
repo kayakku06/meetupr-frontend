@@ -5,8 +5,6 @@ export default defineEventHandler(async (event: H3Event) => {
     const body = await readBody(event)
     const config = useRuntimeConfig()
 
-    console.log('[API] /api/auth/login POST received body:', JSON.stringify({ ...body, password: '***' }))
-
     // ボディの存在確認
     if (body == null) {
       console.warn('[API] /api/auth/login POST empty body received (null/undefined)')
@@ -30,12 +28,6 @@ export default defineEventHandler(async (event: H3Event) => {
       event.res.statusCode = 500
       return { error: 'Auth0 configuration is missing' }
     }
-
-    console.log('[API] Auth0 configuration:', {
-      domain: auth0Domain,
-      clientId: auth0ClientId,
-      connection: auth0Connection
-    })
 
     // Auth0のROPCエンドポイントでは、usernameにメールアドレス全体を使用する必要がある場合がある
     // また、emailフィールドも送信する
@@ -67,9 +59,6 @@ export default defineEventHandler(async (event: H3Event) => {
     //   tokenPayload.audience = auth0Audience
     // }
     
-    console.log('[API] Calling Auth0 token endpoint:', tokenUrl)
-    console.log('[API] Token payload (password hidden):', { ...tokenPayload, password: '***' })
-    
     let response = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
@@ -94,7 +83,6 @@ export default defineEventHandler(async (event: H3Event) => {
       if (errorData?.error === 'invalid_grant' || 
           errorData?.error === 'invalid_user_password' || 
           errorData?.error === 'access_denied') {
-        console.log('[API] Retrying with full email as username')
         retried = true
         tokenPayload = {
           client_id: auth0ClientId,
@@ -111,8 +99,6 @@ export default defineEventHandler(async (event: H3Event) => {
         //   tokenPayload.audience = auth0Audience
         // }
         
-        console.log('[API] Retry token payload (password hidden):', { ...tokenPayload, password: '***' })
-        
         response = await fetch(tokenUrl, {
           method: 'POST',
           headers: {
@@ -127,16 +113,12 @@ export default defineEventHandler(async (event: H3Event) => {
     try {
       // 再試行した場合は新しいresponseから取得、そうでない場合は最初の試行のresponseTextを使用
       const responseText = retried ? await response.text() : (firstResponseText || await response.text())
-      console.log('[API] Auth0 raw response:', responseText)
       data = JSON.parse(responseText)
     } catch (e) {
       console.error('[API] Failed to parse Auth0 response as JSON:', e)
       event.res.statusCode = 500
       return { error: 'auth0_response_parse_error', message: 'Failed to parse Auth0 response' }
     }
-    
-    console.log('[API] Auth0 response status:', response.status)
-    console.log('[API] Auth0 response data:', JSON.stringify({ ...data, access_token: data.access_token ? '***' : undefined, id_token: data.id_token ? '***' : undefined }))
 
     if (!response.ok) {
       // Auth0のエラーレスポンスを処理

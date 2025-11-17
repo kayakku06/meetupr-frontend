@@ -5,8 +5,6 @@ export default defineEventHandler(async (event: H3Event) => {
     const body = await readBody(event)
     const config = useRuntimeConfig()
 
-    console.log('[API] /api/auth/signup POST received body:', JSON.stringify(body))
-
     // ボディの存在確認
     if (body == null) {
       console.warn('[API] /api/auth/signup POST empty body received (null/undefined)')
@@ -67,9 +65,6 @@ export default defineEventHandler(async (event: H3Event) => {
       connection: auth0Connection,
     }
     
-    console.log('[API] Calling Auth0 signup endpoint:', signupUrl)
-    console.log('[API] Auth0 payload (password hidden):', { ...auth0Payload, password: '***' })
-    
     const response = await fetch(signupUrl, {
       method: 'POST',
       headers: {
@@ -88,9 +83,6 @@ export default defineEventHandler(async (event: H3Event) => {
       event.res.statusCode = 500
       return { error: 'auth0_response_parse_error', message: 'Failed to parse Auth0 response' }
     }
-    
-    console.log('[API] Auth0 response status:', response.status)
-    console.log('[API] Auth0 response data:', JSON.stringify(data))
 
     if (!response.ok) {
       // Auth0のエラーレスポンスを処理
