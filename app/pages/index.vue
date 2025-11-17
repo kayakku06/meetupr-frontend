@@ -34,9 +34,45 @@ watch(email, () => {
 })
 
 // 認証成功後のリダイレクト処理
-watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
+watch([isLoading, isAuthenticated], async ([loading, authenticated]) => {
   if (!loading && authenticated && route.path === '/') {
-    // ログイン成功後は常に/homeにリダイレクト
+    // 少し待機してからリダイレクト（Auth0のappStateが設定されるのを待つ）
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    // Auth0のappStateを確認してリダイレクト先を決定
+    try {
+      const auth0 = useAuth0()
+      if (auth0) {
+        // appStateを確認
+        const appState = auth0.appState?.value
+        if (appState && appState.targetUrl) {
+          console.log('[index] Redirecting to appState targetUrl:', appState.targetUrl)
+          navigateTo(appState.targetUrl)
+          return
+        }
+        
+        // appStateがない場合は、新規登録かどうかを判定
+        // ユーザーの作成日時を確認（新規登録の場合は最近作成された）
+        const user = auth0.user?.value
+        if (user) {
+          const createdAt = user.created_at ? new Date(user.created_at) : null
+          const now = new Date()
+          // 5分以内に作成された場合は新規登録とみなす
+          const isNewUser = createdAt && (now.getTime() - createdAt.getTime()) < 300000
+          
+          if (isNewUser) {
+            console.log('[index] New user detected, redirecting to /make-profile')
+            navigateTo('/make-profile')
+            return
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[index] Failed to check redirect target:', e)
+    }
+    
+    // デフォルトは/homeにリダイレクト
+    console.log('[index] Redirecting to /home (default)')
     navigateTo('/home')
   }
 }, { immediate: true })
