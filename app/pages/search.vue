@@ -206,10 +206,10 @@ const handleSearch = () => {
     </div>
     <main class="bg-[#FFF5C9] min-h-screen pt-20">
         <div class="p-4">
-            <SearchUser name="ユーザー１" message="よろしくお願いします！" avatarColor="bg-teal-600" :hobbies="['サッカー', 'ゲーム']"
+            <SearchUser name="ユーザー１" message="よろしくお願いします！" avatarColor="bg-[var(--meetupr-color-3)]" :hobbies="['サッカー', 'ゲーム']"
                 flag="jp" />
 
-            <SearchUser name="ユーザー２" message="仲良くしてください！" avatarColor="bg-teal-600" :hobbies="['アニメ', '旅行']"
+            <SearchUser name="ユーザー２" message="仲良くしてください！" avatarColor="bg-[var(--meetupr-color-3)]" :hobbies="['アニメ', '旅行']"
                 flag="us" />
         </div>
 

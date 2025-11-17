@@ -32,6 +32,8 @@ const props = defineProps<{
 
 // クリックしたらチャットページまたはプロフィールページに飛ぶ
 const goProfile = () => {
+
+
   if (props.chatId) {
     // チャットIDがある場合はチャットページに遷移
     router.push(`/chat?chatId=${props.chatId}`)

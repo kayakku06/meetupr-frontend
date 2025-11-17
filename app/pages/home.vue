@@ -16,7 +16,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-4 pb-24">
+
+  <div class="p-4 pb-24 bg-[var(--meetupr-main)]">
     <h1 class="text-xl mb-4 zen-maru-gothic-regular">Home</h1>
 
     <!-- ローディング状態 -->
@@ -62,6 +63,7 @@ onMounted(async () => {
     <div v-else class="text-center text-gray-500 py-8">
       <p>チャットがありません</p>
     </div>
+
   </div>
   <Footer class="fixed inset-x-0 bottom-0"/>
 </template>
