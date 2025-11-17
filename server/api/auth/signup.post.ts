@@ -93,8 +93,18 @@ export default defineEventHandler(async (event: H3Event) => {
     console.log('[API] Auth0 response data:', JSON.stringify(data))
 
     if (!response.ok) {
-      // Auth0のエラーレスポンスをそのまま返す
+      // Auth0のエラーレスポンスを処理
       event.res.statusCode = response.status
+      
+      // invalid_signupエラーの場合、既存ユーザーの可能性がある
+      if (data.code === 'invalid_signup' || data.name === 'BadRequestError') {
+        return {
+          error: 'user_exists',
+          error_description: 'このメールアドレスは既に登録されています',
+          code: 'invalid_signup'
+        }
+      }
+      
       return { 
         error: data.error || 'signup_failed',
         error_description: data.error_description || data.description || 'Failed to create user',
