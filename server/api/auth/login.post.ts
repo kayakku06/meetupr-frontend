@@ -61,11 +61,11 @@ export default defineEventHandler(async (event: H3Event) => {
 
     let data
     try {
-      data = await response.json()
+      const responseText = await response.text()
+      console.log('[API] Auth0 raw response:', responseText)
+      data = JSON.parse(responseText)
     } catch (e) {
       console.error('[API] Failed to parse Auth0 response as JSON:', e)
-      const text = await response.text()
-      console.error('[API] Auth0 response text:', text)
       event.res.statusCode = 500
       return { error: 'auth0_response_parse_error', message: 'Failed to parse Auth0 response' }
     }

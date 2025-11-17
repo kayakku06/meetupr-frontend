@@ -156,8 +156,26 @@ const handleLogin = async () => {
     }
   } catch (error: any) {
     console.error('Login error:', error)
+    console.error('Login error data:', error.data)
+    console.error('Login error status:', error.status)
+    
     const errorData = error.data || error.response?.data || error
-    const errorMessage = errorData?.error_description || errorData?.error || 'ログインに失敗しました。もう一度お試しください。'
+    
+    // ROPCが有効になっていない場合のエラー
+    if (errorData?.error === 'ropc_not_enabled') {
+      alert('認証設定が正しくありません。Auth0 DashboardでROPC (Password Grant Type) を有効にしてください。\n\n詳細: ' + (errorData.error_description || ''))
+      return
+    }
+    
+    // 認証情報が間違っている場合
+    if (errorData?.error === 'invalid_credentials') {
+      password.value = '' // パスワードをクリア
+      alert(errorData.error_description || 'メールアドレスまたはパスワードが正しくありません')
+      return
+    }
+    
+    // その他のエラー
+    const errorMessage = errorData?.error_description || errorData?.error || errorData?.message || 'ログインに失敗しました。もう一度お試しください。'
     alert(errorMessage)
   }
 }
