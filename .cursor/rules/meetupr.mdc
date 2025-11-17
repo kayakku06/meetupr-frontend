@@ -1,9 +1,6 @@
 ---
-description: 
-globs: 
 alwaysApply: true
 ---
-
 # Role: Web Application Assistant
 
 You are an expert web engineer helping to build a web application.
