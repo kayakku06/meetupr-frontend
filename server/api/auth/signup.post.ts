@@ -88,12 +88,32 @@ export default defineEventHandler(async (event: H3Event) => {
       // Auth0のエラーレスポンスを処理
       event.res.statusCode = response.status
       
-      // invalid_signupエラーの場合、既存ユーザーの可能性がある
-      if (data.code === 'invalid_signup' || data.name === 'BadRequestError') {
+      // メールアドレスが既に登録されている場合のみ、user_existsエラーを返す
+      // Auth0のエラーメッセージを確認して、実際にメールアドレスが重複している場合のみ
+      const errorMessage = data.error_description || data.description || ''
+      const errorCode = data.code || data.error || ''
+      
+      // デバッグ用: 実際のエラー内容をログに出力
+      console.error('[API] Auth0 signup error:', {
+        status: response.status,
+        code: errorCode,
+        error: data.error,
+        error_description: errorMessage,
+        full_response: data
+      })
+      
+      const isUserExists = 
+        errorMessage.toLowerCase().includes('already exists') ||
+        errorMessage.toLowerCase().includes('user already exists') ||
+        errorMessage.toLowerCase().includes('email already exists') ||
+        errorMessage.toLowerCase().includes('既に登録') ||
+        (errorCode === 'invalid_signup' && (errorMessage.toLowerCase().includes('user') || errorMessage.toLowerCase().includes('email')))
+      
+      if (isUserExists) {
         return {
           error: 'user_exists',
           error_description: 'このメールアドレスは既に登録されています',
-          code: 'invalid_signup'
+          code: errorCode || 'user_exists'
         }
       }
       

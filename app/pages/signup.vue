@@ -155,9 +155,10 @@ const handleSignUp = async () => {
 
     if ('error' in response && response.error) {
       // エラーハンドリング
-      if (response.error === 'user_exists' || ('code' in response && (response.code === 'user_exists' || response.code === 'invalid_signup'))) {
+      if (response.error === 'user_exists') {
         emailError.value = 'このメールアドレスは既に登録されています'
       } else {
+        // その他のエラーの場合は、実際のエラーメッセージを表示
         emailError.value = ('error_description' in response && response.error_description) || response.error || '登録に失敗しました'
       }
       return
