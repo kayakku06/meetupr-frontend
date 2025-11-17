@@ -9,6 +9,16 @@ const route = useRoute()
 // 認証成功後のリダイレクト処理
 watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
   if (!loading && authenticated && route.path === '/signup') {
+    // 新規登録フラグを確認
+    if (typeof window !== 'undefined') {
+      const isNewSignup = localStorage.getItem('isNewSignup')
+      if (isNewSignup === 'true') {
+        console.log('[signup] New signup detected, redirecting to /make-profile')
+        localStorage.removeItem('isNewSignup') // フラグを削除
+        navigateTo('/make-profile')
+        return
+      }
+    }
     // 新規登録成功後は常に/make-profileにリダイレクト
     navigateTo('/make-profile')
   }
@@ -91,6 +101,11 @@ const handleSignUp = async () => {
   }
   if (!validateConfirmPassword(confirmPassword.value)) {
     return
+  }
+  
+  // 新規登録フラグをlocalStorageに保存
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('isNewSignup', 'true')
   }
   
   // Authorization Code Flow with PKCEを使用してAuth0のサインアップページにリダイレクト

@@ -34,9 +34,40 @@ watch(email, () => {
 })
 
 // 認証成功後のリダイレクト処理
-watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
+watch([isLoading, isAuthenticated], async ([loading, authenticated]) => {
   if (!loading && authenticated && route.path === '/') {
-    // ログイン成功後は常に/homeにリダイレクト
+    // 少し待機してからリダイレクト（Auth0のappStateが設定されるのを待つ）
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    // 新規登録フラグを確認
+    if (typeof window !== 'undefined') {
+      const isNewSignup = localStorage.getItem('isNewSignup')
+      if (isNewSignup === 'true') {
+        console.log('[index] New signup detected, redirecting to /make-profile')
+        localStorage.removeItem('isNewSignup') // フラグを削除
+        navigateTo('/make-profile')
+        return
+      }
+    }
+    
+    // Auth0のappStateを確認してリダイレクト先を決定
+    try {
+      const auth0 = useAuth0()
+      if (auth0) {
+        // appStateを確認
+        const appState = auth0.appState?.value
+        if (appState && appState.targetUrl) {
+          console.log('[index] Redirecting to appState targetUrl:', appState.targetUrl)
+          navigateTo(appState.targetUrl)
+          return
+        }
+      }
+    } catch (e) {
+      console.warn('[index] Failed to check appState:', e)
+    }
+    
+    // デフォルトは/homeにリダイレクト
+    console.log('[index] Redirecting to /home (default)')
     navigateTo('/home')
   }
 }, { immediate: true })
