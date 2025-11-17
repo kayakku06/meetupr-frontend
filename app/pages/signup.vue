@@ -25,9 +25,11 @@ watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
 }, { immediate: true })
 
 const email = ref('')
+const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const emailError = ref('')
+const usernameError = ref('')
 const passwordError = ref('')
 const confirmPasswordError = ref('')
 
@@ -73,6 +75,24 @@ const validateConfirmPassword = (confirmPasswordValue: string) => {
   return true
 }
 
+// ユーザーネームのバリデーション
+const validateUsername = (usernameValue: string) => {
+  if (!usernameValue) {
+    usernameError.value = 'ユーザーネームを入力してください'
+    return false
+  }
+  if (usernameValue.length < 1) {
+    usernameError.value = 'ユーザーネームは1文字以上で入力してください'
+    return false
+  }
+  if (usernameValue.length > 15) {
+    usernameError.value = 'ユーザーネームは15文字以下で入力してください'
+    return false
+  }
+  usernameError.value = ''
+  return true
+}
+
 // メールアドレスの入力時にリアルタイムでバリデーション
 watch(email, () => {
   if (email.value && !email.value.endsWith('@ed.ritsumei.ac.jp')) {
@@ -91,9 +111,21 @@ watch(confirmPassword, () => {
   }
 })
 
+// ユーザーネームの入力時にリアルタイムでバリデーション
+watch(username, () => {
+  if (username.value && username.value.length > 15) {
+    usernameError.value = 'ユーザーネームは15文字以下で入力してください'
+  } else {
+    usernameError.value = ''
+  }
+})
+
 const handleSignUp = async () => {
   // バリデーション
   if (!validateEmail(email.value)) {
+    return
+  }
+  if (!validateUsername(username.value)) {
     return
   }
   if (!validatePassword(password.value)) {
@@ -107,6 +139,7 @@ const handleSignUp = async () => {
     // リクエストボディを準備
     const requestBody = {
       email: email.value,
+      username: username.value,
       password: password.value
     }
     
@@ -193,7 +226,7 @@ const handleSignUp = async () => {
               const payload = JSON.parse(atob(tokenParts[1]))
               const userId = payload.sub || ''
               const userEmail = payload.email || email.value
-              const userName = payload.nickname || payload.name || userEmail.split('@')[0]
+              const userName = username.value // 入力されたユーザーネームを使用
               
               // Supabaseにユーザー情報を保存
               if (userId && userEmail && userName) {
@@ -321,6 +354,27 @@ const handleBackToLogin = () => {
                         />
                         <p v-if="emailError" class="mt-1 text-sm text-red-500">
                             {{ emailError }}
+                        </p>
+                    </div>
+
+                    <!-- ユーザーネーム入力欄 -->
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                            ユーザーネーム
+                        </label>
+                        <input
+                            id="username"
+                            v-model="username"
+                            type="text"
+                            placeholder="ユーザーネームを入力（1-15文字）"
+                            maxlength="15"
+              :class="[
+                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
+                usernameError ? 'border-red-500 focus:ring-red-500' : 'border-[var(--meetupr-sub)] focus:ring-[var(--meetupr-sub)]'
+              ]"
+                        />
+                        <p v-if="usernameError" class="mt-1 text-sm text-red-500">
+                            {{ usernameError }}
                         </p>
                     </div>
 

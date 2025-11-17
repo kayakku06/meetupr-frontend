@@ -52,10 +52,10 @@ export default defineEventHandler(async (event: H3Event) => {
     // Auth0の/dbconnections/signupエンドポイントを呼び出す
     const signupUrl = `https://${auth0Domain}/dbconnections/signup`
     
-    // usernameはメールアドレスのローカル部分（@の前）を使用し、15文字に制限
+    // usernameはリクエストボディから取得、なければメールアドレスのローカル部分（@の前）を使用し、15文字に制限
     // 例: example@ed.ritsumei.ac.jp -> example
     const emailLocalPart = body.email.split('@')[0]
-    const username = emailLocalPart.substring(0, 15) // 最大15文字
+    const username = body.username ? body.username.substring(0, 15) : emailLocalPart.substring(0, 15) // 最大15文字
     
     const auth0Payload = {
       client_id: auth0ClientId,
