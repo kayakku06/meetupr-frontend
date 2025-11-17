@@ -42,13 +42,20 @@ export default defineEventHandler(async (event: H3Event) => {
     const tokenUrl = `https://${auth0Domain}/oauth/token`
     
     // まず、username（ローカル部分）で試す
-    let tokenPayload = {
+    // audienceを指定することで、アプリケーションへの認可を明示的に行う
+    const auth0Audience = config.public.auth0Audience
+    let tokenPayload: any = {
       client_id: auth0ClientId,
       username: username,
       password: body.password,
       connection: auth0Connection,
       grant_type: 'password',
       scope: 'openid profile email'
+    }
+    
+    // audienceが設定されている場合、追加する（アプリケーションへの認可を明示的に行う）
+    if (auth0Audience) {
+      tokenPayload.audience = auth0Audience
     }
     
     console.log('[API] Calling Auth0 token endpoint:', tokenUrl)
@@ -85,6 +92,11 @@ export default defineEventHandler(async (event: H3Event) => {
           connection: auth0Connection,
           grant_type: 'password',
           scope: 'openid profile email'
+        }
+        
+        // audienceが設定されている場合、追加する
+        if (auth0Audience) {
+          tokenPayload.audience = auth0Audience
         }
         
         console.log('[API] Retry token payload (password hidden):', { ...tokenPayload, password: '***' })
