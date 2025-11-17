@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuth0 } from '@auth0/auth0-vue';
@@ -32,7 +32,7 @@ const passwordError = ref('')
 const confirmPasswordError = ref('')
 
 // 学内メールアドレスのバリデーション
-const validateEmail = (emailValue) => {
+const validateEmail = (emailValue: string) => {
   if (!emailValue) {
     emailError.value = '学内メールアドレスを入力してください'
     return false
@@ -46,7 +46,7 @@ const validateEmail = (emailValue) => {
 }
 
 // パスワードのバリデーション
-const validatePassword = (passwordValue) => {
+const validatePassword = (passwordValue: string) => {
   if (!passwordValue) {
     passwordError.value = 'パスワードを入力してください'
     return false
@@ -60,7 +60,7 @@ const validatePassword = (passwordValue) => {
 }
 
 // パスワード確認のバリデーション
-const validateConfirmPassword = (confirmPasswordValue) => {
+const validateConfirmPassword = (confirmPasswordValue: string) => {
   if (!confirmPasswordValue) {
     confirmPasswordError.value = 'パスワード確認を入力してください'
     return false
@@ -103,22 +103,71 @@ const handleSignUp = async () => {
     return
   }
   
-  // 新規登録フラグをlocalStorageに保存
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('isNewSignup', 'true')
-  }
-  
-  // Authorization Code Flow with PKCEを使用してAuth0のサインアップページにリダイレクト
-  // login_hintでメールアドレスを事前入力、screen_hintでサインアップ画面を表示
-  await login({
-    appState: {
-      targetUrl: '/make-profile'
-    },
-    authorizationParams: {
-      login_hint: email.value,
-      screen_hint: 'signup'
+  try {
+    // リクエストボディを準備
+    const requestBody = {
+      email: email.value,
+      password: password.value
     }
-  })
+    
+    console.log('[signup] Sending signup request:', { email: requestBody.email, password: '***' })
+    
+    // サーバーサイドAPIエンドポイントを呼び出してAuth0にユーザーを登録
+    const response = await $fetch<{ success?: boolean; user?: { email: string; _id: string }; error?: string; error_description?: string; code?: string; message?: string }>('/api/auth/signup', {
+      method: 'POST',
+      body: requestBody
+    })
+    
+    console.log('[signup] Signup response:', response)
+
+    if ('error' in response && response.error) {
+      // エラーハンドリング
+      if (response.error === 'user_exists' || ('code' in response && response.code === 'user_exists')) {
+        emailError.value = 'このメールアドレスは既に登録されています'
+      } else {
+        emailError.value = ('error_description' in response && response.error_description) || response.error || '登録に失敗しました'
+      }
+      return
+    }
+
+    // 新規登録フラグをlocalStorageに保存
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('isNewSignup', 'true')
+    }
+
+    // 登録成功後、そのユーザーでログイン
+    // login_hintでメールアドレスを事前入力してログインページにリダイレクト
+    await login({
+      appState: {
+        targetUrl: '/make-profile'
+      },
+      authorizationParams: {
+        login_hint: email.value,
+        screen_hint: 'login'
+      }
+    })
+  } catch (error: any) {
+    console.error('Signup error:', error)
+    console.error('Signup error data:', error.data)
+    console.error('Signup error status:', error.status)
+    console.error('Signup error statusText:', error.statusText)
+    
+    // $fetchのエラーレスポンスから詳細を取得
+    const errorData = error.data || error.response?.data || error
+    const errorMessage = errorData?.message || errorData?.error_description || errorData?.error
+    
+    if (errorData?.error === 'user_exists' || errorData?.code === 'user_exists') {
+      emailError.value = 'このメールアドレスは既に登録されています'
+    } else if (errorData?.error === 'empty_body') {
+      emailError.value = 'リクエストが正しく送信されませんでした。もう一度お試しください。'
+    } else if (errorData?.error === 'email and password are required') {
+      emailError.value = 'メールアドレスとパスワードを入力してください'
+    } else if (errorMessage) {
+      emailError.value = errorMessage
+    } else {
+      emailError.value = `登録に失敗しました。${error.status ? `(エラーコード: ${error.status})` : ''} もう一度お試しください。`
+    }
+  }
 }
 
 const handleBackToLogin = () => {
