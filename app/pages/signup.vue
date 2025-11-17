@@ -147,14 +147,14 @@ const handleSignUp = async () => {
 
       if ('error' in loginResponse && loginResponse.error) {
         console.error('Login after signup failed:', loginResponse.error)
-        // ログインに失敗した場合は、通常のログインフローにフォールバック
-        await login({
-          appState: {
-            targetUrl: '/make-profile'
-          },
-          authorizationParams: {
-            login_hint: email.value,
-            screen_hint: 'login'
+        // 新規登録は成功しているが、自動ログインに失敗した場合
+        // ユーザーに成功メッセージを表示して、ログインページに遷移
+        alert('新規登録が完了しました。ログインページからログインしてください。')
+        navigateTo({
+          path: '/',
+          query: {
+            email: email.value,
+            fromSignup: 'true'
           }
         })
         return
@@ -188,21 +188,14 @@ const handleSignUp = async () => {
       }
     } catch (loginError: any) {
       console.error('Login after signup error:', loginError)
-      const errorData = loginError.data || loginError.response?.data || loginError
-      
-      // ROPCが有効になっていない場合のエラー
-      if (errorData?.error === 'ropc_not_enabled') {
-        alert('認証設定が正しくありません。Auth0 DashboardでROPC (Password Grant Type) を有効にしてください。\n\n詳細: ' + (errorData.error_description || ''))
-        return
-      }
-      
-      const errorMessage = errorData?.error_description || errorData?.error || 'ログインに失敗しました。ログインページから再度ログインしてください。'
-      alert(errorMessage)
-      // エラーが発生した場合は、ログインページに遷移
+      // 新規登録は成功しているが、自動ログインに失敗した場合
+      // ユーザーに成功メッセージを表示して、ログインページに遷移
+      alert('新規登録が完了しました。ログインページからログインしてください。')
       navigateTo({
         path: '/',
         query: {
-          email: email.value
+          email: email.value,
+          fromSignup: 'true'
         }
       })
       return
