@@ -9,12 +9,12 @@ const username = ref<string | null>(null)
 watch([user, isAuthenticated], async ([currentUser, authenticated]) => {
   if (authenticated && currentUser?.sub) {
     try {
-      const response = await $fetch<{ username?: string | null; error?: string }>('/api/users/username', {
+      const response = await $fetch('/api/users/username', {
         method: 'GET',
         query: {
           user_id: currentUser.sub
         }
-      })
+      }) as { username?: string | null; error?: string }
       
       if (response.username) {
         username.value = response.username
