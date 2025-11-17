@@ -16,8 +16,15 @@ watch([user, isAuthenticated], async ([currentUser, authenticated]) => {
         }
       })
       
-      if (response && typeof response === 'object' && 'username' in response && response.username) {
-        username.value = response.username
+      // responseがオブジェクトで、usernameプロパティが存在し、文字列であることを確認
+      if (response && typeof response === 'object' && response !== null && 'username' in response) {
+        const fetchedUsername = response.username
+        if (fetchedUsername && typeof fetchedUsername === 'string') {
+          username.value = fetchedUsername
+        } else {
+          // usernameが取得できない場合は、emailをフォールバック
+          username.value = currentUser.email || null
+        }
       } else {
         // usernameが取得できない場合は、emailをフォールバック
         username.value = currentUser.email || null
