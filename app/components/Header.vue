@@ -7,6 +7,9 @@ const username = ref<string | null>(null)
 
 // ユーザーが認証されている場合、Supabaseからusernameを取得
 watch([user, isAuthenticated], async ([currentUser, authenticated]) => {
+  // クライアントサイドでのみ実行
+  if (!import.meta.client) return
+  
   if (authenticated && currentUser?.sub) {
     try {
       const response = await $fetch('/api/users/username', {
@@ -17,7 +20,7 @@ watch([user, isAuthenticated], async ([currentUser, authenticated]) => {
       })
       
       // responseがオブジェクトで、usernameプロパティが存在することを確認
-      if (response && typeof response === 'object' && response !== null && 'username' in response) {
+      if (response && response !== null && typeof response === 'object' && 'username' in response) {
         const fetchedUsername = response.username
         // usernameが存在し、空でないことを確認
         if (fetchedUsername) {
