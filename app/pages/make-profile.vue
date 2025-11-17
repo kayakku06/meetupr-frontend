@@ -418,7 +418,8 @@ const registerProfile = async () => {
         const result = await res.json()
         console.log('プロフィールを送信しました:', result)
         alert('プロフィールを保存しました。')
-        // 必要なら遷移などを行う（例: navigateTo('/home')）
+        // プロフィール登録成功後は/homeにリダイレクト
+        navigateTo('/home')
     } catch (err) {
         console.error('送信中にエラーが発生しました:', err)
         alert('エラーが発生しました。もう一度お試しください。')
