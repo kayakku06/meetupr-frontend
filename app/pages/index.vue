@@ -108,9 +108,24 @@ const handleLogin = async () => {
 
     if ('error' in loginResponse && loginResponse.error) {
       // エラーハンドリング
-      // ROPCが有効になっていない場合のエラー
-      if (loginResponse.error === 'ropc_not_enabled') {
-        alert('認証設定が正しくありません。Auth0 DashboardでROPC (Password Grant Type) を有効にしてください。\n\n詳細: ' + (loginResponse.error_description || ''))
+      // ROPCが有効になっていない場合、または接続エラーの場合、通常のログインフローにフォールバック
+      if (loginResponse.error === 'ropc_not_enabled' || 
+          loginResponse.error === 'server_error' ||
+          loginResponse.error_description?.includes('not configured with default connection')) {
+        // 通常のログインフロー（Authorization Code Flow）にフォールバック
+        // 新規登録からの遷移の場合は、/make-profileにリダイレクト
+        const isNewSignup = typeof window !== 'undefined' && localStorage.getItem('isNewSignup') === 'true'
+        const targetUrl = isNewSignup ? '/make-profile' : '/home'
+        
+        await login({
+          appState: {
+            targetUrl: targetUrl
+          },
+          authorizationParams: {
+            login_hint: email.value,
+            screen_hint: 'login'
+          }
+        })
         return
       }
       
@@ -161,9 +176,23 @@ const handleLogin = async () => {
     
     const errorData = error.data || error.response?.data || error
     
-    // ROPCが有効になっていない場合のエラー
-    if (errorData?.error === 'ropc_not_enabled') {
-      alert('認証設定が正しくありません。Auth0 DashboardでROPC (Password Grant Type) を有効にしてください。\n\n詳細: ' + (errorData.error_description || ''))
+    // ROPCが有効になっていない場合、または接続エラーの場合、通常のログインフローにフォールバック
+    if (errorData?.error === 'ropc_not_enabled' || 
+        errorData?.error === 'server_error' ||
+        errorData?.error_description?.includes('not configured with default connection')) {
+      // 通常のログインフロー（Authorization Code Flow）にフォールバック
+      const isNewSignup = typeof window !== 'undefined' && localStorage.getItem('isNewSignup') === 'true'
+      const targetUrl = isNewSignup ? '/make-profile' : '/home'
+      
+      await login({
+        appState: {
+          targetUrl: targetUrl
+        },
+        authorizationParams: {
+          login_hint: email.value,
+          screen_hint: 'login'
+        }
+      })
       return
     }
     

@@ -31,6 +31,12 @@ export default defineEventHandler(async (event: H3Event) => {
       return { error: 'Auth0 configuration is missing' }
     }
 
+    console.log('[API] Auth0 configuration:', {
+      domain: auth0Domain,
+      clientId: auth0ClientId,
+      connection: auth0Connection
+    })
+
     // Auth0のROPCエンドポイントでは、usernameにメールアドレス全体を使用する必要がある場合がある
     // また、emailフィールドも送信する
     // usernameはメールアドレスのローカル部分（@の前）を使用（新規登録時と同じ形式）
