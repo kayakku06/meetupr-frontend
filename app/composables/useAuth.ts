@@ -1,6 +1,36 @@
 import { useAuth0 } from '@auth0/auth0-vue'
 import { ref, computed, watch } from 'vue'
 
+// localStorageに保存されたトークンを確認する関数
+const checkLocalStorageToken = (): boolean => {
+  if (typeof window === 'undefined') return false
+  
+  try {
+    const config = useRuntimeConfig()
+    const scope = 'openid profile email'
+    const auth0CacheKey = `@@auth0spajs@@::${config.public.auth0ClientId}::${config.public.auth0Domain}::${scope}`
+    const cachedData = localStorage.getItem(auth0CacheKey)
+    
+    if (!cachedData) return false
+    
+    const parsed = JSON.parse(cachedData)
+    const expiresAt = parsed.expiresAt || 0
+    const now = Math.floor(Date.now() / 1000)
+    
+    // トークンが有効期限内か確認
+    if (expiresAt > now && parsed.body?.access_token) {
+      return true
+    }
+    
+    // 期限切れの場合は削除
+    localStorage.removeItem(auth0CacheKey)
+    return false
+  } catch (e) {
+    console.warn('Failed to check localStorage token:', e)
+    return false
+  }
+}
+
 export const useAuth = () => {
   // クライアントサイドでのみuseAuth0を呼び出す
   let auth0: ReturnType<typeof useAuth0> | null = null
@@ -44,8 +74,22 @@ export const useAuth = () => {
   })
   
   const isAuthenticated = computed(() => {
-    if (!auth0) return defaultIsAuthenticated.value
-    return (auth0.isAuthenticated as any)?.value ?? defaultIsAuthenticated.value
+    if (!auth0) {
+      // Auth0が初期化されていない場合、localStorageのトークンを確認
+      if (import.meta.client) {
+        return checkLocalStorageToken()
+      }
+      return defaultIsAuthenticated.value
+    }
+    
+    const auth0Authenticated = (auth0.isAuthenticated as any)?.value ?? false
+    
+    // Auth0のSDKが認証状態を認識していない場合、localStorageのトークンを確認
+    if (!auth0Authenticated && import.meta.client) {
+      return checkLocalStorageToken()
+    }
+    
+    return auth0Authenticated
   })
   
   const isLoading = computed(() => {

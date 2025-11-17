@@ -47,13 +47,14 @@ export default defineEventHandler(async (event: H3Event) => {
     // 注意: ROPCはAuth0では非推奨ですが、ユーザーエクスペリエンスのために使用
     const tokenUrl = `https://${auth0Domain}/oauth/token`
     
-    // まず、username（ローカル部分）で試す
+    // まず、username（ローカル部分）とemailで試す
     // 注意: ROPCでaudienceを指定する場合、そのAPIが正しく設定されている必要があります
     // 接続エラーが発生する場合は、audienceを削除して試してください
     const auth0Audience = config.public.auth0Audience
     let tokenPayload: any = {
       client_id: auth0ClientId,
       username: username,
+      email: body.email, // emailフィールドも送信
       password: body.password,
       connection: auth0Connection,
       grant_type: 'password',
@@ -89,13 +90,16 @@ export default defineEventHandler(async (event: H3Event) => {
         // JSONパースに失敗した場合は、そのまま続行
       }
       
-      // invalid_grantエラーの場合、メールアドレス全体をusernameとして再試行
-      if (errorData?.error === 'invalid_grant' || errorData?.error === 'invalid_user_password') {
+      // invalid_grant、invalid_user_password、access_deniedエラーの場合、メールアドレス全体をusernameとして再試行
+      if (errorData?.error === 'invalid_grant' || 
+          errorData?.error === 'invalid_user_password' || 
+          errorData?.error === 'access_denied') {
         console.log('[API] Retrying with full email as username')
         retried = true
         tokenPayload = {
           client_id: auth0ClientId,
           username: body.email, // メールアドレス全体を使用
+          email: body.email, // emailフィールドも送信
           password: body.password,
           connection: auth0Connection,
           grant_type: 'password',
@@ -150,12 +154,22 @@ export default defineEventHandler(async (event: H3Event) => {
         }
       }
       
+      // access_deniedエラーの場合、ROPCが有効になっていない可能性が高い
+      if (data.error === 'access_denied') {
+        return {
+          error: 'ropc_not_enabled',
+          error_description: 'ROPC (Resource Owner Password Credentials) grant type is not enabled. Please check:\n1. Auth0 Dashboard → Applications → Your App → Settings → Advanced Settings → Grant Types → Password (enabled)\n2. Auth0 Dashboard → Applications → Your App → Connections → Username-Password-Authentication (enabled)\n\nError details: ' + (data.error_description || 'Unauthorized'),
+          code: data.code || data.error || 'access_denied'
+        }
+      }
+      
       // 認証情報が間違っている場合
-      if (data.error === 'invalid_grant' || data.error === 'invalid_user_password') {
+      if (data.error === 'invalid_grant' || 
+          data.error === 'invalid_user_password') {
         return {
           error: 'invalid_credentials',
           error_description: 'メールアドレスまたはパスワードが正しくありません',
-          code: data.code || 'invalid_grant'
+          code: data.code || data.error || 'invalid_grant'
         }
       }
       

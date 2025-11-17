@@ -53,6 +53,18 @@ watch([isLoading, isAuthenticated], async ([loading, authenticated]) => {
     // 少し待機してからリダイレクト（Auth0のappStateが設定されるのを待つ）
     await new Promise(resolve => setTimeout(resolve, 100))
     
+    // リダイレクト先を決定
+    let targetUrl = '/home'
+    
+    // クエリパラメータのredirectを確認
+    const redirectParam = route.query.redirect as string
+    if (redirectParam) {
+      targetUrl = redirectParam
+      console.log('[index] Redirecting to query param redirect:', targetUrl)
+      navigateTo(targetUrl)
+      return
+    }
+    
     // 新規登録フラグを確認
     if (typeof window !== 'undefined') {
       const isNewSignup = localStorage.getItem('isNewSignup')
@@ -145,9 +157,21 @@ const handleLogin = async () => {
       if (typeof window !== 'undefined') {
         localStorage.setItem(auth0CacheKey, JSON.stringify(cacheData))
         
-        // 新規登録からの遷移の場合は、/make-profileにリダイレクト
-        const isNewSignup = localStorage.getItem('isNewSignup') === 'true'
-        const targetUrl = isNewSignup ? '/make-profile' : '/home'
+        // リダイレクト先を決定
+        let targetUrl = '/home'
+        
+        // クエリパラメータのredirectを確認
+        const redirectParam = route.query.redirect as string
+        if (redirectParam) {
+          targetUrl = redirectParam
+        } else {
+          // 新規登録からの遷移の場合は、/make-profileにリダイレクト
+          const isNewSignup = localStorage.getItem('isNewSignup') === 'true'
+          if (isNewSignup) {
+            targetUrl = '/make-profile'
+            localStorage.removeItem('isNewSignup')
+          }
+        }
         
         // ページをリロードしてAuth0のSDKに状態を認識させる
         window.location.href = targetUrl
