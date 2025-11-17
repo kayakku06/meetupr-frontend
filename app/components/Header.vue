@@ -16,11 +16,12 @@ watch([user, isAuthenticated], async ([currentUser, authenticated]) => {
         }
       })
       
-      // responseがオブジェクトで、usernameプロパティが存在し、文字列であることを確認
+      // responseがオブジェクトで、usernameプロパティが存在することを確認
       if (response && typeof response === 'object' && response !== null && 'username' in response) {
         const fetchedUsername = response.username
-        if (fetchedUsername && typeof fetchedUsername === 'string') {
-          username.value = fetchedUsername
+        // usernameが存在し、空でないことを確認
+        if (fetchedUsername) {
+          username.value = String(fetchedUsername)
         } else {
           // usernameが取得できない場合は、emailをフォールバック
           username.value = currentUser.email || null
