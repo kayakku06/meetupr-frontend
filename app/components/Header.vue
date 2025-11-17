@@ -1,51 +1,7 @@
 <script setup>
 import { User, LogOut, LogIn } from 'lucide-vue-next'
-import { ref, watch, onMounted } from 'vue'
 
 const { user, isAuthenticated, isLoading, login, logout } = useAuth()
-const username = ref<string | null>(null)
-
-// ユーザーが認証されている場合、Supabaseからusernameを取得
-const fetchUsername = async () => {
-  if (!import.meta.client) return
-  
-  const currentUser = user.value
-  const authenticated = isAuthenticated.value
-  
-  if (authenticated && currentUser?.sub) {
-    try {
-      const response = await $fetch('/api/users/username', {
-        method: 'GET',
-        query: {
-          user_id: currentUser.sub
-        }
-      })
-      
-      // responseがオブジェクトで、usernameプロパティが存在することを確認
-      if (response && response.username) {
-        username.value = response.username
-      } else {
-        // usernameが取得できない場合は、emailをフォールバック
-        username.value = currentUser.email || null
-      }
-    } catch (error) {
-      console.warn('[Header] Failed to fetch username:', error)
-      // エラーが発生した場合は、emailをフォールバック
-      username.value = currentUser.email || null
-    }
-  } else {
-    username.value = null
-  }
-}
-
-// クライアントサイドでのみ実行
-onMounted(() => {
-  fetchUsername()
-})
-
-watch([user, isAuthenticated], () => {
-  fetchUsername()
-})
 
 const handleLogin = async () => {
   await login()
@@ -76,7 +32,7 @@ const handleLogout = async () => {
         <template v-else-if="isAuthenticated">
           <div class="flex items-center space-x-2">
             <User class="w-5 h-5 text-gray-600" />
-            <span class="text-gray-700">{{ username || user?.name || user?.email }}</span>
+            <span class="text-gray-700">{{ user?.name || user?.email }}</span>
           </div>
           <button
             @click="handleLogout"
