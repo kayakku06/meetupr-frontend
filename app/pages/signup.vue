@@ -335,7 +335,7 @@ const handleBackToLogin = () => {
 
 <template>
   <div class="min-h-screen flex flex-col items-center justify-center bg-[var(--meetupr-main)] px-4">
-        <div class="w-full max-w-md space-y-6">
+        <div class="w-full max-w-md space-y-4">
             <!-- ロゴとタイトル -->
             <div class="text-center space-y-4">
                 <!-- ロゴエリア -->
