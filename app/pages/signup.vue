@@ -188,14 +188,14 @@ const handleSignUp = async () => {
       }
     } catch (loginError: any) {
       console.error('Login after signup error:', loginError)
-      // エラーが発生した場合は、通常のログインフローにフォールバック
-      await login({
-        appState: {
-          targetUrl: '/make-profile'
-        },
-        authorizationParams: {
-          login_hint: email.value,
-          screen_hint: 'login'
+      const errorData = loginError.data || loginError.response?.data || loginError
+      const errorMessage = errorData?.error_description || errorData?.error || 'ログインに失敗しました。ログインページから再度ログインしてください。'
+      alert(errorMessage)
+      // エラーが発生した場合は、ログインページに遷移
+      navigateTo({
+        path: '/',
+        query: {
+          email: email.value
         }
       })
       return

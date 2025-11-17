@@ -96,21 +96,57 @@ const handleLogin = async () => {
     return
   }
   
-  // 新規登録からの遷移の場合は、/make-profileにリダイレクト
-  const isNewSignup = typeof window !== 'undefined' && localStorage.getItem('isNewSignup') === 'true'
-  const targetUrl = isNewSignup ? '/make-profile' : '/home'
-  
-  // Authorization Code Flow with PKCEを使用してAuth0のログインページにリダイレクト
-  // login_hintでメールアドレスを事前入力
-  await login({
-    appState: {
-      targetUrl: targetUrl
-    },
-    authorizationParams: {
-      login_hint: email.value,
-      screen_hint: 'login'
+  try {
+    // サーバーサイドのログインAPIを呼び出してトークンを取得
+    const loginResponse = await $fetch<{ success?: boolean; access_token?: string; id_token?: string; error?: string; error_description?: string }>('/api/auth/login', {
+      method: 'POST',
+      body: {
+        email: email.value,
+        password: password.value
+      }
+    })
+
+    if ('error' in loginResponse && loginResponse.error) {
+      // エラーハンドリング
+      const errorMessage = loginResponse.error_description || loginResponse.error || 'ログインに失敗しました'
+      alert(errorMessage)
+      return
     }
-  })
+
+    // トークンを取得できた場合、Auth0のSDKにセッションを設定
+    if (loginResponse.access_token && loginResponse.id_token) {
+      const config = useRuntimeConfig()
+      // Auth0のSDKが使用するlocalStorageのキーにトークンを保存
+      const scope = 'openid profile email'
+      const auth0CacheKey = `@@auth0spajs@@::${config.public.auth0ClientId}::${config.public.auth0Domain}::${scope}`
+      const cacheData = {
+        body: {
+          access_token: loginResponse.access_token,
+          id_token: loginResponse.id_token,
+          expires_in: 86400, // 24時間
+          token_type: 'Bearer',
+          scope: scope
+        },
+        expiresAt: Math.floor(Date.now() / 1000) + 86400 // Unix timestamp
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(auth0CacheKey, JSON.stringify(cacheData))
+        
+        // 新規登録からの遷移の場合は、/make-profileにリダイレクト
+        const isNewSignup = localStorage.getItem('isNewSignup') === 'true'
+        const targetUrl = isNewSignup ? '/make-profile' : '/home'
+        
+        // ページをリロードしてAuth0のSDKに状態を認識させる
+        window.location.href = targetUrl
+        return
+      }
+    }
+  } catch (error: any) {
+    console.error('Login error:', error)
+    const errorData = error.data || error.response?.data || error
+    const errorMessage = errorData?.error_description || errorData?.error || 'ログインに失敗しました。もう一度お試しください。'
+    alert(errorMessage)
+  }
 }
 
 const handleSignUp = () => {
