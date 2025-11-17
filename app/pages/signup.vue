@@ -189,6 +189,13 @@ const handleSignUp = async () => {
     } catch (loginError: any) {
       console.error('Login after signup error:', loginError)
       const errorData = loginError.data || loginError.response?.data || loginError
+      
+      // ROPCが有効になっていない場合のエラー
+      if (errorData?.error === 'ropc_not_enabled') {
+        alert('認証設定が正しくありません。Auth0 DashboardでROPC (Password Grant Type) を有効にしてください。\n\n詳細: ' + (errorData.error_description || ''))
+        return
+      }
+      
       const errorMessage = errorData?.error_description || errorData?.error || 'ログインに失敗しました。ログインページから再度ログインしてください。'
       alert(errorMessage)
       // エラーが発生した場合は、ログインページに遷移

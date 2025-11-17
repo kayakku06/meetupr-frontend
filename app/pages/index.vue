@@ -108,6 +108,19 @@ const handleLogin = async () => {
 
     if ('error' in loginResponse && loginResponse.error) {
       // エラーハンドリング
+      // ROPCが有効になっていない場合のエラー
+      if (loginResponse.error === 'ropc_not_enabled') {
+        alert('認証設定が正しくありません。Auth0 DashboardでROPC (Password Grant Type) を有効にしてください。\n\n詳細: ' + (loginResponse.error_description || ''))
+        return
+      }
+      
+      // 認証情報が間違っている場合
+      if (loginResponse.error === 'invalid_credentials') {
+        password.value = '' // パスワードをクリア
+        alert(loginResponse.error_description || 'メールアドレスまたはパスワードが正しくありません')
+        return
+      }
+      
       const errorMessage = loginResponse.error_description || loginResponse.error || 'ログインに失敗しました'
       alert(errorMessage)
       return

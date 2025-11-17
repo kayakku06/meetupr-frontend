@@ -74,8 +74,27 @@ export default defineEventHandler(async (event: H3Event) => {
     console.log('[API] Auth0 response data:', JSON.stringify({ ...data, access_token: data.access_token ? '***' : undefined, id_token: data.id_token ? '***' : undefined }))
 
     if (!response.ok) {
-      // Auth0のエラーレスポンスをそのまま返す
+      // Auth0のエラーレスポンスを処理
       event.res.statusCode = response.status
+      
+      // ROPCが有効になっていない場合のエラー
+      if (data.error === 'unauthorized_client' || data.error_description?.includes('not configured with default connection')) {
+        return {
+          error: 'ropc_not_enabled',
+          error_description: 'ROPC (Resource Owner Password Credentials) grant type is not enabled. Please enable it in Auth0 Dashboard → Applications → Your App → Settings → Advanced Settings → Grant Types → Password',
+          code: data.code || 'unauthorized_client'
+        }
+      }
+      
+      // 認証情報が間違っている場合
+      if (data.error === 'invalid_grant' || data.error === 'invalid_user_password') {
+        return {
+          error: 'invalid_credentials',
+          error_description: 'メールアドレスまたはパスワードが正しくありません',
+          code: data.code || 'invalid_grant'
+        }
+      }
+      
       return { 
         error: data.error || 'login_failed',
         error_description: data.error_description || data.description || 'Failed to login',
