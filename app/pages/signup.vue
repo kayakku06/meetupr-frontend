@@ -367,7 +367,7 @@ const handleBackToLogin = () => {
                     <!-- 新規登録ボタン -->
           <button
             type="submit"
-            class="w-full bg-[var(--meetupr-color-3)] text-white py-3 rounded-md font-semibold hover:bg-[var(--meetupr-color-3)] transition-colors"
+            class="w-full bg-[var(--meetupr-color-3)] text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
           >
                         新規登録
                     </button>
@@ -383,7 +383,7 @@ const handleBackToLogin = () => {
                     </p>
           <button
             @click="handleBackToLogin"
-            class="w-full bg-[var(--meetupr-color-3))] text-white py-3 rounded-md font-semibold hover:bg-[(--meetupr-color-3))] transition-colors"
+            class="w-full bg-[var(--meetupr-color-3)] text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
           >
                         ログイン
                     </button>
