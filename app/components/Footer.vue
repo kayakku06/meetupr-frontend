@@ -36,29 +36,29 @@ const onUser = () => router.push('/my-profile')
 </script>
 
 <template>
-  <div class="flex justify-around items-center p-3 bg-orange-300">
+  <div class="flex justify-around items-center p-3" :class="['bg-[var(--meetupr-sub)]']">
     
     <!-- 検索ボタン -->
     <button @click="onSearch" class="p-2 transition">
-      <Search 
+      <Search
         class="w-8 h-8"
-        :class="selected === 'search' ? 'text-teal-600' : 'text-yellow-100'"
+        :class="selected === 'search' ? 'text-[var(--meetupr-color-3)]' : 'text-[var(--meetupr-main)]'"
       />
     </button>
 
     <!-- メッセージボタン -->
     <button @click="onMessage" class="p-2 transition">
-      <MessageCircleMore 
+      <MessageCircleMore
         class="w-8 h-8"
-        :class="selected === 'message' ? 'text-teal-600' : 'text-yellow-100'"
+        :class="selected === 'message' ? 'text-[var(--meetupr-color-3)]' : 'text-[var(--meetupr-main)]'"
       />
     </button>
 
     <!-- ユーザーボタン -->
     <button @click="onUser" class="p-2 transition">
-      <UserRound 
+      <UserRound
         class="w-8 h-8"
-        :class="selected === 'user' ? 'text-teal-600' : 'text-yellow-100'"
+        :class="selected === 'user' ? 'text-[var(--meetupr-color-3)]' : 'text-[var(--meetupr-main)]'"
       />
     </button>
 

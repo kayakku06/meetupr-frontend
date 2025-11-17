@@ -18,20 +18,29 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
 const router = useRouter()
 
-defineProps({
-  name: String,
-  message: String,
-  date: String,
-  avatarColor: String
-})
+const props = defineProps<{
+  name: string
+  message: string
+  date: string
+  avatarColor: string
+  chatId?: number
+}>()
 
-// クリックしたら other-profile に飛ぶ
+// クリックしたらチャットページまたはプロフィールページに飛ぶ
 const goProfile = () => {
-  router.push('/other-profile')
+
+
+  if (props.chatId) {
+    // チャットIDがある場合はチャットページに遷移
+    router.push(`/chat?chatId=${props.chatId}`)
+  } else {
+    // チャットIDがない場合はプロフィールページに遷移
+    router.push('/other-profile')
+  }
 }
 </script>
 

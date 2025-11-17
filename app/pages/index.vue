@@ -71,7 +71,7 @@ const handleSignUp = () => {
 </script>
 
 <template>
-    <div class="min-h-screen flex flex-col items-center justify-center bg-basebg px-4">
+  <div class="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-color)] px-4">
         <div class="w-full max-w-md space-y-8">
             <!-- ロゴとタイトル -->
             <div class="text-center space-y-4">
@@ -103,10 +103,10 @@ const handleSignUp = () => {
                             v-model="email"
                             type="email"
                             placeholder="example@ed.ritsumei.ac.jp"
-                            :class="[
-                                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
-                                emailError ? 'border-red-500 focus:ring-red-500' : 'border-[#FEBC6E] focus:ring-[#FEBC6E]'
-                            ]"
+                :class="[
+                    'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--meetupr-sub)] focus:border-transparent',
+                    emailError ? 'border-red-500 focus:ring-red-500' : 'border-[var(--meetupr-sub)] focus:ring-[var(--meetupr-sub)]'
+                  ]"
                         />
                         <p v-if="emailError" class="mt-1 text-sm text-red-500">
                             {{ emailError }}
@@ -123,15 +123,15 @@ const handleSignUp = () => {
                             v-model="password"
                             type="password"
                             placeholder="パスワードを入力"
-                            class="w-full px-4 py-3 border-[3px] border-[#FEBC6E] rounded-md focus:outline-none focus:ring-2 focus:ring-[#FEBC6E] focus:border-transparent"
+                            class="w-full px-4 py-3 border-[3px] border-[var(--meetupr-sub)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--meetupr-sub)] focus:border-transparent"
                             required
                         />
                     </div>
 
                     <!-- ログインボタン -->
-                    <button
+          <button
                         type="submit"
-                        class="w-full bg-selected text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
+            class="w-full bg-[var(--meetupr-color-3)] text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
                     >
                         ログイン
                     </button>
@@ -145,12 +145,12 @@ const handleSignUp = () => {
                     <p class="text-sm text-gray-600">
                         初めての方はこちら
                     </p>
-                    <button
-                        @click="handleSignUp"
-                        class="w-full bg-selected text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
-                    >
-                        新規登録
-                    </button>
+          <button
+            @click="handleSignUp"
+            class="w-full bg-[var(--meetupr-color-3)] text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
+          >
+            新規登録
+          </button>
                 </div>
             </div>
 
@@ -161,3 +161,5 @@ const handleSignUp = () => {
         </div>
     </div>
 </template>
+
+ 
