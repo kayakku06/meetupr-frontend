@@ -31,7 +31,9 @@ export default defineEventHandler(async (event: H3Event) => {
       return { error: 'Auth0 configuration is missing' }
     }
 
-    // usernameはメールアドレスのローカル部分（@の前）を使用し、15文字に制限
+    // Auth0のROPCエンドポイントでは、usernameにメールアドレス全体を使用する必要がある場合がある
+    // また、emailフィールドも送信する
+    // usernameはメールアドレスのローカル部分（@の前）を使用（新規登録時と同じ形式）
     const emailLocalPart = body.email.split('@')[0]
     const username = emailLocalPart.substring(0, 15)
 
@@ -39,7 +41,8 @@ export default defineEventHandler(async (event: H3Event) => {
     // 注意: ROPCはAuth0では非推奨ですが、ユーザーエクスペリエンスのために使用
     const tokenUrl = `https://${auth0Domain}/oauth/token`
     
-    const tokenPayload = {
+    // まず、username（ローカル部分）で試す
+    let tokenPayload = {
       client_id: auth0ClientId,
       username: username,
       password: body.password,
@@ -51,17 +54,55 @@ export default defineEventHandler(async (event: H3Event) => {
     console.log('[API] Calling Auth0 token endpoint:', tokenUrl)
     console.log('[API] Token payload (password hidden):', { ...tokenPayload, password: '***' })
     
-    const response = await fetch(tokenUrl, {
+    let response = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(tokenPayload),
     })
+    
+    // 最初の試行が失敗した場合、メールアドレス全体をusernameとして試す
+    let firstResponseText = ''
+    let retried = false
+    if (!response.ok) {
+      firstResponseText = await response.text()
+      let errorData
+      try {
+        errorData = JSON.parse(firstResponseText)
+      } catch (e) {
+        // JSONパースに失敗した場合は、そのまま続行
+      }
+      
+      // invalid_grantエラーの場合、メールアドレス全体をusernameとして再試行
+      if (errorData?.error === 'invalid_grant' || errorData?.error === 'invalid_user_password') {
+        console.log('[API] Retrying with full email as username')
+        retried = true
+        tokenPayload = {
+          client_id: auth0ClientId,
+          username: body.email, // メールアドレス全体を使用
+          password: body.password,
+          connection: auth0Connection,
+          grant_type: 'password',
+          scope: 'openid profile email'
+        }
+        
+        console.log('[API] Retry token payload (password hidden):', { ...tokenPayload, password: '***' })
+        
+        response = await fetch(tokenUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(tokenPayload),
+        })
+      }
+    }
 
     let data
     try {
-      const responseText = await response.text()
+      // 再試行した場合は新しいresponseから取得、そうでない場合は最初の試行のresponseTextを使用
+      const responseText = retried ? await response.text() : (firstResponseText || await response.text())
       console.log('[API] Auth0 raw response:', responseText)
       data = JSON.parse(responseText)
     } catch (e) {
