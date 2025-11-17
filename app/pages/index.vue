@@ -245,7 +245,7 @@ const handleSignUp = () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-color)] px-4">
+  <div class="min-h-screen flex flex-col items-center justify-center bg-[var(--meetupr-main)] px-4">
         <div class="w-full max-w-md space-y-8">
             <!-- ロゴとタイトル -->
             <div class="text-center space-y-4">
