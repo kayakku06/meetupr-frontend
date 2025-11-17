@@ -337,26 +337,6 @@ const handleBackToLogin = () => {
             <!-- 新規登録フォーム -->
             <div class="p-8 space-y-6">
                 <form @submit.prevent="handleSignUp" class="space-y-4">
-                    <!-- 学内メールアドレス入力欄 -->
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                            学内メールアドレス
-                        </label>
-                        <input
-                            id="email"
-                            v-model="email"
-                            type="email"
-                            placeholder="example@ed.ritsumei.ac.jp"
-              :class="[
-                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
-                emailError ? 'border-red-500 focus:ring-red-500' : 'border-[var(--meetupr-sub)] focus:ring-[var(--meetupr-sub)]'
-              ]"
-                        />
-                        <p v-if="emailError" class="mt-1 text-sm text-red-500">
-                            {{ emailError }}
-                        </p>
-                    </div>
-
                     <!-- ユーザーネーム入力欄 -->
                     <div>
                         <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
@@ -375,6 +355,26 @@ const handleBackToLogin = () => {
                         />
                         <p v-if="usernameError" class="mt-1 text-sm text-red-500">
                             {{ usernameError }}
+                        </p>
+                    </div>
+
+                    <!-- 学内メールアドレス入力欄 -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                            学内メールアドレス
+                        </label>
+                        <input
+                            id="email"
+                            v-model="email"
+                            type="email"
+                            placeholder="example@ed.ritsumei.ac.jp"
+              :class="[
+                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
+                emailError ? 'border-red-500 focus:ring-red-500' : 'border-[var(--meetupr-sub)] focus:ring-[var(--meetupr-sub)]'
+              ]"
+                        />
+                        <p v-if="emailError" class="mt-1 text-sm text-red-500">
+                            {{ emailError }}
                         </p>
                     </div>
 
