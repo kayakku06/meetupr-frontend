@@ -1,14 +1,16 @@
 <script setup>
 import { User, LogOut, LogIn } from 'lucide-vue-next'
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 
 const { user, isAuthenticated, isLoading, login, logout } = useAuth()
 const username = ref<string | null>(null)
 
 // ユーザーが認証されている場合、Supabaseからusernameを取得
-watch([user, isAuthenticated], async ([currentUser, authenticated]) => {
-  // クライアントサイドでのみ実行
+const fetchUsername = async () => {
   if (!import.meta.client) return
+  
+  const currentUser = user.value
+  const authenticated = isAuthenticated.value
   
   if (authenticated && currentUser?.sub) {
     try {
@@ -20,15 +22,8 @@ watch([user, isAuthenticated], async ([currentUser, authenticated]) => {
       })
       
       // responseがオブジェクトで、usernameプロパティが存在することを確認
-      if (response && response !== null && typeof response === 'object' && 'username' in response) {
-        const fetchedUsername = response.username
-        // usernameが存在し、空でないことを確認
-        if (fetchedUsername) {
-          username.value = String(fetchedUsername)
-        } else {
-          // usernameが取得できない場合は、emailをフォールバック
-          username.value = currentUser.email || null
-        }
+      if (response && response.username) {
+        username.value = response.username
       } else {
         // usernameが取得できない場合は、emailをフォールバック
         username.value = currentUser.email || null
@@ -41,7 +36,16 @@ watch([user, isAuthenticated], async ([currentUser, authenticated]) => {
   } else {
     username.value = null
   }
-}, { immediate: true })
+}
+
+// クライアントサイドでのみ実行
+onMounted(() => {
+  fetchUsername()
+})
+
+watch([user, isAuthenticated], () => {
+  fetchUsername()
+})
 
 const handleLogin = async () => {
   await login()
