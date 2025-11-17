@@ -181,6 +181,58 @@ const handleSignUp = async () => {
         }
         if (typeof window !== 'undefined') {
           localStorage.setItem(auth0CacheKey, JSON.stringify(cacheData))
+          
+          // IDトークンをデコードしてユーザー情報を取得
+          try {
+            const idToken = loginResponse.id_token
+            if (!idToken) {
+              throw new Error('ID token is missing')
+            }
+            const tokenParts = idToken.split('.')
+            if (tokenParts.length === 3 && tokenParts[1]) {
+              const payload = JSON.parse(atob(tokenParts[1]))
+              const userId = payload.sub || ''
+              const userEmail = payload.email || email.value
+              const userName = payload.nickname || payload.name || userEmail.split('@')[0]
+              
+              // Supabaseにユーザー情報を保存
+              if (userId && userEmail && userName) {
+                const initialPayload = {
+                  user_id: userId,
+                  email: userEmail,
+                  username: userName,
+                  major: null,
+                  gender: null,
+                  native_language: '日本語', // デフォルト値（NOT NULL制約のため）
+                  spoken_languages: [],
+                  learning_languages: [],
+                  residence: null,
+                  comment: null,
+                  last_updated: new Date().toISOString()
+                }
+                
+                console.log('[signup] Registering user to Supabase:', initialPayload)
+                
+                try {
+                  const profileResponse = await $fetch('/api/profile', {
+                    method: 'POST',
+                    body: initialPayload
+                  })
+                  
+                  if (profileResponse && !('error' in profileResponse)) {
+                    console.log('[signup] User and profile registered successfully in Supabase')
+                  } else {
+                    console.warn('[signup] Failed to register user to Supabase:', profileResponse)
+                  }
+                } catch (profileError) {
+                  console.warn('[signup] Error registering user to Supabase (non-fatal):', profileError)
+                }
+              }
+            }
+          } catch (tokenError) {
+            console.warn('[signup] Failed to decode ID token (non-fatal):', tokenError)
+          }
+          
           // ページをリロードしてAuth0のSDKに状態を認識させる
           window.location.href = '/make-profile'
           return

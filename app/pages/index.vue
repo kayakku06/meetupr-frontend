@@ -157,6 +157,21 @@ const handleLogin = async () => {
       if (typeof window !== 'undefined') {
         localStorage.setItem(auth0CacheKey, JSON.stringify(cacheData))
         
+        // IDトークンをデコードしてユーザーIDを取得
+        let userId = ''
+        try {
+          const idToken = loginResponse.id_token
+          if (idToken) {
+            const tokenParts = idToken.split('.')
+            if (tokenParts.length === 3 && tokenParts[1]) {
+              const payload = JSON.parse(atob(tokenParts[1]))
+              userId = payload.sub || ''
+            }
+          }
+        } catch (tokenError) {
+          console.warn('[index] Failed to decode ID token:', tokenError)
+        }
+        
         // リダイレクト先を決定
         let targetUrl = '/home'
         
@@ -170,6 +185,25 @@ const handleLogin = async () => {
           if (isNewSignup) {
             targetUrl = '/make-profile'
             localStorage.removeItem('isNewSignup')
+          } else if (userId) {
+            // Profileをチェックして、NULLの場合は/make-profileにリダイレクト
+            try {
+              const profileCheck = await $fetch<{ hasProfile?: boolean; hasCompleteProfile?: boolean; error?: string }>('/api/profile/check', {
+                method: 'GET',
+                query: {
+                  user_id: userId
+                }
+              })
+              
+              // Profileが存在しない、または主要なフィールドがNULLの場合は/make-profileにリダイレクト
+              if (!profileCheck.hasProfile || !profileCheck.hasCompleteProfile) {
+                console.log('[index] Profile is incomplete, redirecting to /make-profile')
+                targetUrl = '/make-profile'
+              }
+            } catch (profileError) {
+              console.warn('[index] Failed to check profile (non-fatal):', profileError)
+              // エラーが発生した場合は、デフォルトの/homeにリダイレクト
+            }
           }
         }
         
