@@ -147,24 +147,8 @@ const handleSignUp = async () => {
 
       if ('error' in loginResponse && loginResponse.error) {
         console.error('Login after signup failed:', loginResponse.error)
-        // ROPCが有効になっていない場合、または接続エラーの場合、通常のログインフローにフォールバック
-        if (loginResponse.error === 'ropc_not_enabled' || 
-            loginResponse.error === 'server_error' ||
-            loginResponse.error_description?.includes('not configured with default connection')) {
-          // 通常のログインフロー（Authorization Code Flow）にフォールバック
-          await login({
-            appState: {
-              targetUrl: '/make-profile'
-            },
-            authorizationParams: {
-              login_hint: email.value,
-              screen_hint: 'login'
-            }
-          })
-          return
-        }
-        
-        // その他のエラーの場合、ログインページに遷移
+        // 新規登録は成功しているが、自動ログインに失敗した場合
+        // ユーザーに成功メッセージを表示して、ログインページに遷移
         alert('新規登録が完了しました。ログインページからログインしてください。')
         navigateTo({
           path: '/',
@@ -204,26 +188,8 @@ const handleSignUp = async () => {
       }
     } catch (loginError: any) {
       console.error('Login after signup error:', loginError)
-      const errorData = loginError.data || loginError.response?.data || loginError
-      
-      // ROPCが有効になっていない場合、または接続エラーの場合、通常のログインフローにフォールバック
-      if (errorData?.error === 'ropc_not_enabled' || 
-          errorData?.error === 'server_error' ||
-          errorData?.error_description?.includes('not configured with default connection')) {
-        // 通常のログインフロー（Authorization Code Flow）にフォールバック
-        await login({
-          appState: {
-            targetUrl: '/make-profile'
-          },
-          authorizationParams: {
-            login_hint: email.value,
-            screen_hint: 'login'
-          }
-        })
-        return
-      }
-      
-      // その他のエラーの場合、ログインページに遷移
+      // 新規登録は成功しているが、自動ログインに失敗した場合
+      // ユーザーに成功メッセージを表示して、ログインページに遷移
       alert('新規登録が完了しました。ログインページからログインしてください。')
       navigateTo({
         path: '/',
