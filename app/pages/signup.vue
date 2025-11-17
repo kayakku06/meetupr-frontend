@@ -89,6 +89,12 @@ const validateUsername = (usernameValue: string) => {
     usernameError.value = 'ユーザーネームは15文字以下で入力してください'
     return false
   }
+  // Auth0が許可している文字のみかチェック: 英数字、'_', '+', '-', '.', '!', '#', '$', ''', '^', '`', '~', '@'
+  const allowedPattern = /^[a-zA-Z0-9_+\-\.!#$'^`~@]+$/
+  if (!allowedPattern.test(usernameValue)) {
+    usernameError.value = 'ユーザーネームは英数字と以下の文字のみ使用できます: _ + - . ! # $ \' ^ ` ~ @'
+    return false
+  }
   usernameError.value = ''
   return true
 }
@@ -143,7 +149,11 @@ const handleSignUp = async () => {
       password: password.value
     }
     
-    console.log('[signup] Sending signup request:', { email: requestBody.email, password: '***' })
+    console.log('[signup] Sending signup request:', { 
+      email: requestBody.email, 
+      username: requestBody.username,
+      password: '***' 
+    })
     
     // サーバーサイドAPIエンドポイントを呼び出してAuth0にユーザーを登録
     const response = await $fetch<{ success?: boolean; user?: { email: string; _id: string }; error?: string; error_description?: string; code?: string; message?: string }>('/api/auth/signup', {
@@ -158,8 +168,16 @@ const handleSignUp = async () => {
       if (response.error === 'user_exists') {
         emailError.value = 'このメールアドレスは既に登録されています'
       } else {
-        // その他のエラーの場合は、実際のエラーメッセージを表示
-        emailError.value = ('error_description' in response && response.error_description) || response.error || '登録に失敗しました'
+        // エラーメッセージを確認して、username関連のエラーかどうかを判定
+        const errorDescription = ('error_description' in response && response.error_description) || response.error || '登録に失敗しました'
+        const isUsernameError = errorDescription.toLowerCase().includes('username') || 
+                                 errorDescription.toLowerCase().includes('ユーザーネーム')
+        
+        if (isUsernameError) {
+          usernameError.value = errorDescription
+        } else {
+          emailError.value = errorDescription
+        }
       }
       return
     }

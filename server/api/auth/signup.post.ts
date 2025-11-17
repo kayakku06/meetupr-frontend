@@ -55,6 +55,15 @@ export default defineEventHandler(async (event: H3Event) => {
     // usernameはリクエストボディから取得、なければメールアドレスのローカル部分（@の前）を使用し、15文字に制限
     // 例: example@ed.ritsumei.ac.jp -> example
     const emailLocalPart = body.email.split('@')[0]
+    
+    // デバッグ用: リクエストボディの内容を確認
+    console.error('[API] Signup request body:', {
+      email: body.email,
+      username: body.username,
+      hasUsername: !!body.username,
+      emailLocalPart: emailLocalPart
+    })
+    
     const username = body.username ? body.username.substring(0, 15) : emailLocalPart.substring(0, 15) // 最大15文字
     
     const auth0Payload = {
@@ -64,6 +73,13 @@ export default defineEventHandler(async (event: H3Event) => {
       password: body.password,
       connection: auth0Connection,
     }
+    
+    // デバッグ用: Auth0に送信するpayloadを確認
+    console.error('[API] Auth0 payload (password hidden):', {
+      ...auth0Payload,
+      password: '***',
+      username: username
+    })
     
     const response = await fetch(signupUrl, {
       method: 'POST',
