@@ -220,18 +220,93 @@ function toggleHobby(hobbyName) {
 let auth = null
 let getAccessTokenSilently = null
 
-onMounted(() => {
+onMounted(async () => {
     try {
         auth = (typeof useAuth0 !== 'undefined') ? useAuth0() : null
         if (auth) {
             getAccessTokenSilently = auth.getAccessTokenSilently
             console.log('[Auth0] initialized (auth ref) in make-profile.vue', { isAuthenticated: auth.isAuthenticated?.value, isLoading: auth.isLoading?.value })
+            
+            // Auth0のロードが完了するまで待機
+            const waitForAuth = () => {
+                return new Promise((resolve) => {
+                    if (!auth.isLoading?.value) {
+                        resolve()
+                        return
+                    }
+                    // ポーリングでロード状態をチェック
+                    const checkInterval = setInterval(() => {
+                        if (!auth.isLoading?.value) {
+                            clearInterval(checkInterval)
+                            resolve()
+                        }
+                    }, 100)
+                    // タイムアウト: 5秒後に強制的に解決
+                    setTimeout(() => {
+                        clearInterval(checkInterval)
+                        resolve()
+                    }, 5000)
+                })
+            }
+            
+            await waitForAuth()
+            
             // 取得済みのユーザ情報を表示（存在する場合）
             const u = auth.user?.value
-            if (u) {
+            if (u && auth.isAuthenticated?.value) {
                 console.log('[Auth0] user loaded:', { user_id: u.sub, username: u.nickname || u.name, email: u.email })
+                
+                // Auth0で新規登録した際に、usersテーブルとprofilesテーブルにnullの状態でデータを保存
+                const userId = u.sub || ''
+                const email = u.email || ''
+                const username = u.nickname || u.name || ''
+                
+                if (userId && email && username) {
+                    try {
+                        // アクセストークンを取得
+                        let headers = { 'Content-Type': 'application/json' }
+                        try {
+                            const token = getAccessTokenSilently ? await getAccessTokenSilently() : null
+                            if (token) headers['Authorization'] = `Bearer ${token}`
+                        } catch (e) {
+                            console.info('アクセストークン取得失敗（続行）:', e)
+                        }
+                        
+                        // nullの状態でusersテーブルとprofilesテーブルにデータを保存
+                        const initialPayload = {
+                            user_id: userId,
+                            email: email,
+                            username: username,
+                            major: null,
+                            gender: null,
+                            native_language: '日本語', // デフォルト値（NOT NULL制約のため）
+                            spoken_languages: [],
+                            learning_languages: [],
+                            residence: null,
+                            comment: null,
+                            last_updated: new Date().toISOString()
+                        }
+                        
+                        console.log('[make-profile] Registering user to Supabase:', initialPayload)
+                        
+                        const res = await fetch('/api/profile', {
+                            method: 'POST',
+                            headers,
+                            body: JSON.stringify(initialPayload)
+                        })
+                        
+                        if (res.ok) {
+                            console.log('[make-profile] User and profile registered successfully in Supabase')
+                        } else {
+                            const text = await res.text()
+                            console.warn('[make-profile] Failed to register user (non-fatal):', res.status, text)
+                        }
+                    } catch (err) {
+                        console.warn('[make-profile] Error registering user (non-fatal):', err)
+                    }
+                }
             } else {
-                console.log('[Auth0] user not yet loaded')
+                console.log('[Auth0] user not yet loaded or not authenticated')
             }
         } else {
             console.log('[Auth0] useAuth0 returned undefined in make-profile.vue')
@@ -243,17 +318,41 @@ onMounted(() => {
 
 // フォーム送信時の処理
 const registerProfile = async () => {
-    // Auth0が初期化されているか
+    console.log('[registerProfile] Called')
+    
+    // Auth0が初期化されていない場合は初期化を試みる
     if (!auth) {
-        console.warn('Auth0 not initialized')
+        try {
+            auth = (typeof useAuth0 !== 'undefined') ? useAuth0() : null
+            if (auth) {
+                getAccessTokenSilently = auth.getAccessTokenSilently
+            }
+        } catch (e) {
+            console.warn('useAuth0 を初期化できませんでした:', e)
+        }
+    }
+
+    // Auth0が初期化されていない場合
+    if (!auth) {
+        console.error('Auth0 not initialized')
+        alert('認証情報の取得に失敗しました。ページを再読み込みしてください。')
         return
     }
 
     // 必要ならAuth0のロード待ち
-    if (auth.isLoading?.value) return
+    if (auth.isLoading?.value) {
+        console.log('[registerProfile] Auth0 is still loading, waiting...')
+        // 最大5秒待機
+        let waitCount = 0
+        while (auth.isLoading?.value && waitCount < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100))
+            waitCount++
+        }
+    }
 
     if (!auth.isAuthenticated?.value) {
-        console.warn('未認証のため送信できません')
+        console.error('未認証のため送信できません')
+        alert('認証されていません。ログインしてください。')
         return
     }
 
@@ -266,18 +365,27 @@ const registerProfile = async () => {
     console.log('[Auth0] sending as:', { user_id: userId, username, email })
 
     // ペイロード作成
+    // 話せる言語を配列に変換
+    const spokenLanguages = form.value.langSpoken 
+        ? [form.value.langSpoken] 
+        : (Array.isArray(form.value.spoken_languages) ? form.value.spoken_languages : [])
+    
+    // 学びたい言語を配列に変換
+    const learningLanguages = form.value.langLearning 
+        ? [form.value.langLearning] 
+        : (Array.isArray(form.value.learning_languages) ? form.value.learning_languages : [])
+    
     const payload = {
         user_id: userId,
         email: email,
         username: username,
-        major: form.value.major || '',
-        gender: form.value.gender || '',
-        native_language: form.value.native_language || '',
-        spoken_languages: Array.isArray(form.value.spoken_languages) ? form.value.spoken_languages : (form.value.spoken_languages ? [form.value.spoken_languages] : (form.value.langSpoken ? [form.value.langSpoken] : [])),
-    learning_languages: Array.isArray(form.value.learning_languages) ? form.value.learning_languages : (form.value.learning_languages ? [form.value.learning_languages] : (form.value.langLearning ? [form.value.langLearning] : [])),
-        residence: form.value.residence || form.value.origin || '',
-        comment: form.value.comment || '',
-    interests: form.value.hobbies.map((name, idx) => ({ id: idx + 1, name, preference_level: 3 })),
+        major: form.value.faculty || form.value.major || null, // facultyをmajorにマッピング
+        gender: form.value.gender || null,
+        native_language: form.value.langNative || form.value.native_language || '日本語',
+        spoken_languages: spokenLanguages,
+        learning_languages: learningLanguages,
+        residence: form.value.origin || form.value.residence || null,
+        comment: form.value.bio || form.value.comment || null, // bioをcommentにマッピング
         last_updated: new Date().toISOString()
     }
 
@@ -303,13 +411,17 @@ const registerProfile = async () => {
         if (!res.ok) {
             const text = await res.text()
             console.error('プロフィール送信に失敗しました:', res.status, text)
+            alert('プロフィールの保存に失敗しました。もう一度お試しください。')
             return
         }
 
-        console.log('プロフィールを送信しました。')
-        // 必要なら遷移などを行う
+        const result = await res.json()
+        console.log('プロフィールを送信しました:', result)
+        alert('プロフィールを保存しました。')
+        // 必要なら遷移などを行う（例: navigateTo('/home')）
     } catch (err) {
         console.error('送信中にエラーが発生しました:', err)
+        alert('エラーが発生しました。もう一度お試しください。')
     }
 };
 </script>

@@ -41,18 +41,23 @@ export default defineEventHandler(async (event: H3Event) => {
     }
 
     // フロントから送られてくる形式に合わせて変換
+    // 空文字列をnullに変換するヘルパー関数
+    const toNullIfEmpty = (value: any) => {
+      if (value === '' || value === undefined) return null
+      return value
+    }
+
     const profileRow = {
       user_id: payload.user_id || null,
       email: payload.email || null,
       username: payload.username || null,
-      major: payload.major || null,
-      gender: payload.gender || null,
-      native_language: payload.native_language || null,
+      major: toNullIfEmpty(payload.major),
+      gender: toNullIfEmpty(payload.gender),
+      native_language: payload.native_language || '日本語',
       spoken_languages: Array.isArray(payload.spoken_languages) ? payload.spoken_languages : (payload.spoken_languages ? [payload.spoken_languages] : []),
       learning_languages: Array.isArray(payload.learning_languages) ? payload.learning_languages : (payload.learning_languages ? [payload.learning_languages] : []),
-      residence: payload.residence || null,
-      comment: payload.comment || null,
-      interests: Array.isArray(payload.interests) ? payload.interests : [],
+      residence: toNullIfEmpty(payload.residence),
+      comment: toNullIfEmpty(payload.comment),
       last_updated: payload.last_updated || new Date().toISOString()
     }
 
@@ -65,14 +70,43 @@ export default defineEventHandler(async (event: H3Event) => {
       return { status: 'ok', inserted: null, received: profileRow }
     }
 
+    // 1. まず users テーブルに upsert を行う
+    if (profileRow.user_id && profileRow.email && profileRow.username) {
+      const userRow = {
+        id: profileRow.user_id,
+        email: profileRow.email,
+        username: profileRow.username,
+        is_oic_verified: false
+      }
+
+      console.log('[API] Upserting user to users table:', JSON.stringify(userRow))
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .upsert([userRow], { onConflict: 'id' })
+        .select()
+
+      if (userError) {
+        console.error('[API] Failed to upsert user:', userError)
+        event.res.statusCode = 500
+        return { error: 'user_upsert_failed', details: userError }
+      }
+
+      console.log('[API] User upserted successfully:', userData)
+    } else {
+      console.warn('[API] Missing required fields for users table: user_id, email, or username')
+      event.res.statusCode = 400
+      return { error: 'missing_user_fields', required: ['user_id', 'email', 'username'] }
+    }
+
+    // 2. profiles テーブルに upsert を行う（nullの状態でも保存）
     // Supabase に挿入。もしスキーマに存在しないカラムのために失敗した場合は
     // エラーメッセージからカラム名を取り出して該当フィールドを削除し、再試行する。
     // 最大で 5 回までリトライする（安全策）。
-    async function tryInsert(row: Record<string, any>) {
+    async function tryUpsertProfile(row: Record<string, any>) {
       for (let attempt = 0; attempt < 5; attempt++) {
         const { data, error } = await supabase
           .from('profiles')
-          .insert([row])
+          .upsert([row], { onConflict: 'user_id' })
           .select()
 
         if (!error) return { data, error: null }
@@ -83,7 +117,7 @@ export default defineEventHandler(async (event: H3Event) => {
           const m = msg.match(/Could not find the '(.+?)' column of 'profiles'/)
           if (m && m[1]) {
             const col = m[1]
-            console.warn(`[API] Supabase insert failed due to missing column '${col}'. Removing field and retrying (attempt ${attempt + 1}).`)
+            console.warn(`[API] Supabase upsert failed due to missing column '${col}'. Removing field and retrying (attempt ${attempt + 1}).`)
             delete row[col]
             continue // retry
           }
@@ -96,23 +130,31 @@ export default defineEventHandler(async (event: H3Event) => {
       return { data: null, error: { message: 'retry_limit_exceeded' } }
     }
 
-    // 挿入前に null/undefined のフィールドを削除しておく（スキーマにないカラムを送らないため）
-    const cleanedRow: Record<string, any> = { ...profileRow }
-    for (const k of Object.keys(cleanedRow)) {
-      if (cleanedRow[k] === null || cleanedRow[k] === undefined) {
-        delete cleanedRow[k]
-      }
+    // profiles テーブル用のデータを準備
+    // profiles テーブルのスキーマに合わせてフィールドを整理
+    const profileData: Record<string, any> = {
+      user_id: profileRow.user_id,
+      major: profileRow.major,
+      gender: profileRow.gender,
+      native_language: profileRow.native_language || '日本語', // NOT NULL制約のためデフォルト値を設定
+      spoken_languages: Array.isArray(profileRow.spoken_languages) && profileRow.spoken_languages.length > 0 
+        ? profileRow.spoken_languages 
+        : [],
+      learning_languages: Array.isArray(profileRow.learning_languages) && profileRow.learning_languages.length > 0
+        ? profileRow.learning_languages 
+        : [],
+      residence: profileRow.residence,
+      comment: profileRow.comment,
+      last_updated: profileRow.last_updated || new Date().toISOString()
     }
 
-    // spoken_languages / learning_languages が未定義なら空配列にしておく
-    if (!('spoken_languages' in cleanedRow)) cleanedRow.spoken_languages = []
-    if (!('learning_languages' in cleanedRow)) cleanedRow.learning_languages = []
+    console.log('[API] Upserting profile to profiles table:', JSON.stringify(profileData))
 
-    const result = await tryInsert(cleanedRow)
+    const result = await tryUpsertProfile(profileData)
     if (result.error) {
-      console.error('[API] Supabase insert error after retries:', result.error)
+      console.error('[API] Supabase profile upsert error after retries:', result.error)
       event.res.statusCode = 500
-      return { error: 'supabase_insert_failed', details: result.error }
+      return { error: 'profile_upsert_failed', details: result.error }
     }
 
     return { status: 'ok', inserted: result.data }
