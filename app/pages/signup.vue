@@ -340,7 +340,7 @@ const handleBackToLogin = () => {
             <div class="text-center space-y-4">
                 <!-- ロゴエリア -->
                 <div class="flex justify-center mb-4">
-                    <div class="w-56 h-56 rounded-full overflow-hidden">
+                    <div class="w-48 h-48 rounded-full overflow-hidden">
                         <img 
                             src="/icon.png" 
                             alt="MeetUp+R ロゴ" 
