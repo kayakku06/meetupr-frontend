@@ -133,17 +133,16 @@ const handleSignUp = async () => {
     // 新規登録フラグをlocalStorageに保存
     if (typeof window !== 'undefined') {
       localStorage.setItem('isNewSignup', 'true')
-      // 登録したメールアドレスも保存（ログイン時に使用）
-      localStorage.setItem('signupEmail', email.value)
     }
 
-    // 登録成功後、ログインページに遷移（メールアドレスをクエリパラメータで渡す）
-    // ログインページでメールアドレスを事前入力して、ユーザーがパスワードを入力してログイン
-    navigateTo({
-      path: '/',
-      query: {
-        email: email.value,
-        fromSignup: 'true'
+    // 登録成功後、Auth0のログインページにリダイレクトして、ログイン後に/make-profileに遷移
+    await login({
+      appState: {
+        targetUrl: '/make-profile'
+      },
+      authorizationParams: {
+        login_hint: email.value,
+        screen_hint: 'login'
       }
     })
   } catch (error: any) {
