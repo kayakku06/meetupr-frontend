@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuth0 } from '@auth0/auth0-vue';
@@ -10,8 +10,22 @@ const email = ref('')
 const password = ref('')
 const emailError = ref('')
 
+// クエリパラメータからメールアドレスを取得（新規登録からの遷移時）
+if (import.meta.client) {
+  const query = route.query
+  if (query.email) {
+    email.value = query.email as string
+  }
+  // 新規登録からの遷移の場合は、新規登録フラグを設定
+  if (query.fromSignup === 'true') {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('isNewSignup', 'true')
+    }
+  }
+}
+
 // 学内メールアドレスのバリデーション
-const validateEmail = (emailValue) => {
+const validateEmail = (emailValue: string) => {
   if (!emailValue) {
     emailError.value = '学内メールアドレスを入力してください'
     return false
@@ -55,7 +69,7 @@ watch([isLoading, isAuthenticated], async ([loading, authenticated]) => {
       const auth0 = useAuth0()
       if (auth0) {
         // appStateを確認
-        const appState = auth0.appState?.value
+        const appState = (auth0 as any).appState?.value
         if (appState && appState.targetUrl) {
           console.log('[index] Redirecting to appState targetUrl:', appState.targetUrl)
           navigateTo(appState.targetUrl)
@@ -82,11 +96,15 @@ const handleLogin = async () => {
     return
   }
   
+  // 新規登録からの遷移の場合は、/make-profileにリダイレクト
+  const isNewSignup = typeof window !== 'undefined' && localStorage.getItem('isNewSignup') === 'true'
+  const targetUrl = isNewSignup ? '/make-profile' : '/home'
+  
   // Authorization Code Flow with PKCEを使用してAuth0のログインページにリダイレクト
   // login_hintでメールアドレスを事前入力
   await login({
     appState: {
-      targetUrl: '/home'
+      targetUrl: targetUrl
     },
     authorizationParams: {
       login_hint: email.value,
