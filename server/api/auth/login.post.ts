@@ -118,12 +118,15 @@ export default defineEventHandler(async (event: H3Event) => {
       // Auth0のエラーレスポンスを処理
       event.res.statusCode = response.status
       
-      // ROPCが有効になっていない場合のエラー
-      if (data.error === 'unauthorized_client' || data.error_description?.includes('not configured with default connection')) {
+      // ROPCが有効になっていない場合、または接続が設定されていない場合のエラー
+      if (data.error === 'unauthorized_client' || 
+          data.error === 'server_error' ||
+          data.error_description?.includes('not configured with default connection') ||
+          data.error_description?.includes('Authorization server not configured')) {
         return {
           error: 'ropc_not_enabled',
-          error_description: 'ROPC (Resource Owner Password Credentials) grant type is not enabled. Please enable it in Auth0 Dashboard → Applications → Your App → Settings → Advanced Settings → Grant Types → Password',
-          code: data.code || 'unauthorized_client'
+          error_description: 'ROPC (Resource Owner Password Credentials) grant type is not enabled or connection is not configured. Please check:\n1. Auth0 Dashboard → Applications → Your App → Settings → Advanced Settings → Grant Types → Password (enabled)\n2. Auth0 Dashboard → Applications → Your App → Connections → Username-Password-Authentication (enabled)',
+          code: data.code || data.error || 'unauthorized_client'
         }
       }
       
