@@ -104,12 +104,19 @@ export default defineEventHandler(async (event: H3Event) => {
     // 最大で 5 回までリトライする（安全策）。
     async function tryUpsertProfile(row: Record<string, any>) {
       for (let attempt = 0; attempt < 5; attempt++) {
+        console.log(`[API] Attempting profile upsert (attempt ${attempt + 1}):`, JSON.stringify(row))
+        
         const { data, error } = await supabase
           .from('profiles')
           .upsert([row], { onConflict: 'user_id' })
           .select()
 
-        if (!error) return { data, error: null }
+        if (!error) {
+          console.log('[API] Profile upsert successful:', JSON.stringify(data))
+          return { data, error: null }
+        }
+
+        console.error(`[API] Profile upsert error (attempt ${attempt + 1}):`, JSON.stringify(error))
 
         // PostgREST のエラー PGRST204: "Could not find the 'email' column of 'profiles' in the schema cache"
         if (error && typeof error === 'object' && (error as any).code === 'PGRST204' && (error as any).message) {
@@ -132,6 +139,12 @@ export default defineEventHandler(async (event: H3Event) => {
 
     // profiles テーブル用のデータを準備
     // profiles テーブルのスキーマに合わせてフィールドを整理
+    if (!profileRow.user_id) {
+      console.error('[API] user_id is required for profiles table')
+      event.res.statusCode = 400
+      return { error: 'missing_user_id', message: 'user_id is required for profiles table' }
+    }
+
     const profileData: Record<string, any> = {
       user_id: profileRow.user_id,
       major: profileRow.major,
@@ -149,14 +162,29 @@ export default defineEventHandler(async (event: H3Event) => {
     }
 
     console.log('[API] Upserting profile to profiles table:', JSON.stringify(profileData))
+    console.log('[API] Profile data user_id:', profileData.user_id)
 
     const result = await tryUpsertProfile(profileData)
     if (result.error) {
-      console.error('[API] Supabase profile upsert error after retries:', result.error)
+      console.error('[API] Supabase profile upsert error after retries:', JSON.stringify(result.error))
       event.res.statusCode = 500
-      return { error: 'profile_upsert_failed', details: result.error }
+      return { 
+        error: 'profile_upsert_failed', 
+        details: result.error,
+        message: result.error?.message || 'Failed to upsert profile'
+      }
     }
 
+    if (!result.data) {
+      console.warn('[API] Profile upsert returned no data:', result)
+      event.res.statusCode = 500
+      return { 
+        error: 'profile_upsert_no_data', 
+        message: 'Profile upsert succeeded but no data returned'
+      }
+    }
+
+    console.log('[API] Profile upserted successfully:', JSON.stringify(result.data))
     return { status: 'ok', inserted: result.data }
   } catch (err) {
     console.error('Error in /api/profile handler:', err)

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuth0 } from '@auth0/auth0-vue';
@@ -32,7 +32,7 @@ const passwordError = ref('')
 const confirmPasswordError = ref('')
 
 // 学内メールアドレスのバリデーション
-const validateEmail = (emailValue) => {
+const validateEmail = (emailValue: string) => {
   if (!emailValue) {
     emailError.value = '学内メールアドレスを入力してください'
     return false
@@ -46,7 +46,7 @@ const validateEmail = (emailValue) => {
 }
 
 // パスワードのバリデーション
-const validatePassword = (passwordValue) => {
+const validatePassword = (passwordValue: string) => {
   if (!passwordValue) {
     passwordError.value = 'パスワードを入力してください'
     return false
@@ -60,7 +60,7 @@ const validatePassword = (passwordValue) => {
 }
 
 // パスワード確認のバリデーション
-const validateConfirmPassword = (confirmPasswordValue) => {
+const validateConfirmPassword = (confirmPasswordValue: string) => {
   if (!confirmPasswordValue) {
     confirmPasswordError.value = 'パスワード確認を入力してください'
     return false
@@ -103,22 +103,177 @@ const handleSignUp = async () => {
     return
   }
   
-  // 新規登録フラグをlocalStorageに保存
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('isNewSignup', 'true')
-  }
-  
-  // Authorization Code Flow with PKCEを使用してAuth0のサインアップページにリダイレクト
-  // login_hintでメールアドレスを事前入力、screen_hintでサインアップ画面を表示
-  await login({
-    appState: {
-      targetUrl: '/make-profile'
-    },
-    authorizationParams: {
-      login_hint: email.value,
-      screen_hint: 'signup'
+  try {
+    // リクエストボディを準備
+    const requestBody = {
+      email: email.value,
+      password: password.value
     }
-  })
+    
+    console.log('[signup] Sending signup request:', { email: requestBody.email, password: '***' })
+    
+    // サーバーサイドAPIエンドポイントを呼び出してAuth0にユーザーを登録
+    const response = await $fetch<{ success?: boolean; user?: { email: string; _id: string }; error?: string; error_description?: string; code?: string; message?: string }>('/api/auth/signup', {
+      method: 'POST',
+      body: requestBody
+    })
+    
+    console.log('[signup] Signup response:', response)
+
+    if ('error' in response && response.error) {
+      // エラーハンドリング
+      if (response.error === 'user_exists' || ('code' in response && (response.code === 'user_exists' || response.code === 'invalid_signup'))) {
+        emailError.value = 'このメールアドレスは既に登録されています'
+      } else {
+        emailError.value = ('error_description' in response && response.error_description) || response.error || '登録に失敗しました'
+      }
+      return
+    }
+
+    // 新規登録フラグをlocalStorageに保存
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('isNewSignup', 'true')
+    }
+
+    // 登録成功後、同じパスワードでサーバーサイドのログインAPIを呼び出してトークンを取得
+    try {
+      const loginResponse = await $fetch<{ success?: boolean; access_token?: string; id_token?: string; error?: string; error_description?: string }>('/api/auth/login', {
+        method: 'POST',
+        body: {
+          email: email.value,
+          password: password.value
+        }
+      })
+
+      if ('error' in loginResponse && loginResponse.error) {
+        console.error('Login after signup failed:', loginResponse.error)
+        // 新規登録は成功しているが、自動ログインに失敗した場合
+        // ユーザーに成功メッセージを表示して、ログインページに遷移
+        alert('新規登録が完了しました。ログインページからログインしてください。')
+        navigateTo({
+          path: '/',
+          query: {
+            email: email.value,
+            fromSignup: 'true'
+          }
+        })
+        return
+      }
+
+      // トークンを取得できた場合、Auth0のSDKにセッションを設定
+      // 注意: Auth0 Vue SDKはROPCを直接サポートしていないため、
+      // トークンをlocalStorageに保存して、SDKが認識できるようにする
+      if (loginResponse.access_token && loginResponse.id_token) {
+        const config = useRuntimeConfig()
+        // Auth0のSDKが使用するlocalStorageのキーにトークンを保存
+        // キーの形式: @@auth0spajs@@::{clientId}::{domain}::{scope}
+        const scope = 'openid profile email'
+        const auth0CacheKey = `@@auth0spajs@@::${config.public.auth0ClientId}::${config.public.auth0Domain}::${scope}`
+        const cacheData = {
+          body: {
+            access_token: loginResponse.access_token,
+            id_token: loginResponse.id_token,
+            expires_in: 86400, // 24時間
+            token_type: 'Bearer',
+            scope: scope
+          },
+          expiresAt: Math.floor(Date.now() / 1000) + 86400 // Unix timestamp
+        }
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(auth0CacheKey, JSON.stringify(cacheData))
+          
+          // IDトークンをデコードしてユーザー情報を取得
+          try {
+            const idToken = loginResponse.id_token
+            if (!idToken) {
+              throw new Error('ID token is missing')
+            }
+            const tokenParts = idToken.split('.')
+            if (tokenParts.length === 3 && tokenParts[1]) {
+              const payload = JSON.parse(atob(tokenParts[1]))
+              const userId = payload.sub || ''
+              const userEmail = payload.email || email.value
+              const userName = payload.nickname || payload.name || userEmail.split('@')[0]
+              
+              // Supabaseにユーザー情報を保存
+              if (userId && userEmail && userName) {
+                const initialPayload = {
+                  user_id: userId,
+                  email: userEmail,
+                  username: userName,
+                  major: null,
+                  gender: null,
+                  native_language: '日本語', // デフォルト値（NOT NULL制約のため）
+                  spoken_languages: [],
+                  learning_languages: [],
+                  residence: null,
+                  comment: null,
+                  last_updated: new Date().toISOString()
+                }
+                
+                console.log('[signup] Registering user to Supabase:', initialPayload)
+                
+                try {
+                  const profileResponse = await $fetch('/api/profile', {
+                    method: 'POST',
+                    body: initialPayload
+                  })
+                  
+                  if (profileResponse && !('error' in profileResponse)) {
+                    console.log('[signup] User and profile registered successfully in Supabase')
+                  } else {
+                    console.warn('[signup] Failed to register user to Supabase:', profileResponse)
+                  }
+                } catch (profileError) {
+                  console.warn('[signup] Error registering user to Supabase (non-fatal):', profileError)
+                }
+              }
+            }
+          } catch (tokenError) {
+            console.warn('[signup] Failed to decode ID token (non-fatal):', tokenError)
+          }
+          
+          // ページをリロードしてAuth0のSDKに状態を認識させる
+          window.location.href = '/make-profile'
+          return
+        }
+      }
+    } catch (loginError: any) {
+      console.error('Login after signup error:', loginError)
+      // 新規登録は成功しているが、自動ログインに失敗した場合
+      // ユーザーに成功メッセージを表示して、ログインページに遷移
+      alert('新規登録が完了しました。ログインページからログインしてください。')
+      navigateTo({
+        path: '/',
+        query: {
+          email: email.value,
+          fromSignup: 'true'
+        }
+      })
+      return
+    }
+  } catch (error: any) {
+    console.error('Signup error:', error)
+    console.error('Signup error data:', error.data)
+    console.error('Signup error status:', error.status)
+    console.error('Signup error statusText:', error.statusText)
+    
+    // $fetchのエラーレスポンスから詳細を取得
+    const errorData = error.data || error.response?.data || error
+    const errorMessage = errorData?.message || errorData?.error_description || errorData?.error
+    
+    if (errorData?.error === 'user_exists' || errorData?.code === 'user_exists') {
+      emailError.value = 'このメールアドレスは既に登録されています'
+    } else if (errorData?.error === 'empty_body') {
+      emailError.value = 'リクエストが正しく送信されませんでした。もう一度お試しください。'
+    } else if (errorData?.error === 'email and password are required') {
+      emailError.value = 'メールアドレスとパスワードを入力してください'
+    } else if (errorMessage) {
+      emailError.value = errorMessage
+    } else {
+      emailError.value = `登録に失敗しました。${error.status ? `(エラーコード: ${error.status})` : ''} もう一度お試しください。`
+    }
+  }
 }
 
 const handleBackToLogin = () => {

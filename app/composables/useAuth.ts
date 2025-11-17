@@ -1,6 +1,36 @@
 import { useAuth0 } from '@auth0/auth0-vue'
 import { ref, computed, watch } from 'vue'
 
+// localStorageに保存されたトークンを確認する関数
+const checkLocalStorageToken = (): boolean => {
+  if (typeof window === 'undefined') return false
+  
+  try {
+    const config = useRuntimeConfig()
+    const scope = 'openid profile email'
+    const auth0CacheKey = `@@auth0spajs@@::${config.public.auth0ClientId}::${config.public.auth0Domain}::${scope}`
+    const cachedData = localStorage.getItem(auth0CacheKey)
+    
+    if (!cachedData) return false
+    
+    const parsed = JSON.parse(cachedData)
+    const expiresAt = parsed.expiresAt || 0
+    const now = Math.floor(Date.now() / 1000)
+    
+    // トークンが有効期限内か確認
+    if (expiresAt > now && parsed.body?.access_token) {
+      return true
+    }
+    
+    // 期限切れの場合は削除
+    localStorage.removeItem(auth0CacheKey)
+    return false
+  } catch (e) {
+    console.warn('Failed to check localStorage token:', e)
+    return false
+  }
+}
+
 export const useAuth = () => {
   // クライアントサイドでのみuseAuth0を呼び出す
   let auth0: ReturnType<typeof useAuth0> | null = null
@@ -38,14 +68,87 @@ export const useAuth = () => {
     defaultIsLoading.value = false
   }
 
+  // localStorageからユーザー情報を取得する関数
+  const getUserFromLocalStorage = () => {
+    if (typeof window === 'undefined') return null
+    
+    try {
+      const config = useRuntimeConfig()
+      const scope = 'openid profile email'
+      const auth0CacheKey = `@@auth0spajs@@::${config.public.auth0ClientId}::${config.public.auth0Domain}::${scope}`
+      const cachedData = localStorage.getItem(auth0CacheKey)
+      
+      if (!cachedData) return null
+      
+      const parsed = JSON.parse(cachedData)
+      const idToken = parsed.body?.id_token
+      
+      if (!idToken) return null
+      
+      // IDトークンをデコードしてユーザー情報を取得
+      const tokenParts = idToken.split('.')
+      if (tokenParts.length === 3 && tokenParts[1]) {
+        const payload = JSON.parse(atob(tokenParts[1]))
+        return {
+          sub: payload.sub,
+          email: payload.email,
+          nickname: payload.nickname,
+          name: payload.name,
+          picture: payload.picture
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to get user from localStorage:', e)
+    }
+    
+    return null
+  }
+
   const user = computed(() => {
-    if (!auth0) return defaultUser.value
-    return auth0.user?.value ?? defaultUser.value
+    if (!auth0) {
+      // Auth0が初期化されていない場合、localStorageからユーザー情報を取得
+      if (import.meta.client) {
+        const localStorageUser = getUserFromLocalStorage()
+        if (localStorageUser) {
+          return localStorageUser
+        }
+      }
+      return defaultUser.value
+    }
+    
+    const auth0User = auth0.user?.value
+    if (auth0User) {
+      return auth0User
+    }
+    
+    // Auth0のSDKがユーザー情報を認識していない場合、localStorageから取得
+    if (import.meta.client) {
+      const localStorageUser = getUserFromLocalStorage()
+      if (localStorageUser) {
+        return localStorageUser
+      }
+    }
+    
+    return defaultUser.value
   })
   
   const isAuthenticated = computed(() => {
-    if (!auth0) return defaultIsAuthenticated.value
-    return (auth0.isAuthenticated as any)?.value ?? defaultIsAuthenticated.value
+    if (!auth0) {
+      // Auth0が初期化されていない場合、localStorageのトークンを確認
+      if (import.meta.client) {
+        return checkLocalStorageToken()
+      }
+      return defaultIsAuthenticated.value
+    }
+    
+    const auth0Authenticated = (auth0.isAuthenticated as any)?.value ?? false
+    
+    // Auth0のSDKが認証状態を認識していない場合、localStorageのトークンを確認
+    if (!auth0Authenticated && import.meta.client) {
+      return checkLocalStorageToken()
+    }
+    
+    return auth0Authenticated
   })
   
   const isLoading = computed(() => {
@@ -87,9 +190,34 @@ export const useAuth = () => {
   }
 
   const getAccessToken = async (options?: { audience?: string }) => {
+    // まずlocalStorageからトークンを取得
+    if (import.meta.client) {
+      try {
+        const config = useRuntimeConfig()
+        const scope = 'openid profile email'
+        const auth0CacheKey = `@@auth0spajs@@::${config.public.auth0ClientId}::${config.public.auth0Domain}::${scope}`
+        const cachedData = localStorage.getItem(auth0CacheKey)
+        
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData)
+          const expiresAt = parsed.expiresAt || 0
+          const now = Math.floor(Date.now() / 1000)
+          
+          // トークンが有効期限内か確認
+          if (expiresAt > now && parsed.body?.access_token) {
+            return parsed.body.access_token
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to get access token from localStorage:', e)
+      }
+    }
+    
+    // localStorageにトークンがない場合、Auth0のSDKから取得
     if (!auth0) {
       return null
     }
+    
     try {
       const config = useRuntimeConfig()
       // audienceが指定されている場合、または設定されている場合に使用
