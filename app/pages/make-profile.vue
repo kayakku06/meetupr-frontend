@@ -247,8 +247,32 @@ onMounted(async () => {
     if (u && isAuthenticated.value) {
         console.log('[make-profile] User loaded:', { user_id: u.sub, username: u.nickname || u.name, email: u.email })
         
-        // Auth0で新規登録した際に、usersテーブルとprofilesテーブルにnullの状態でデータを保存
+        // 既にSupabaseにユーザーが存在するかチェック
         const userId = u.sub || ''
+        if (userId) {
+            try {
+                // プロフィールが既に存在するかチェック
+                const profileCheck = await $fetch<{ hasProfile?: boolean; hasCompleteProfile?: boolean; error?: string }>('/api/profile/check', {
+                    method: 'GET',
+                    query: {
+                        user_id: userId
+                    }
+                })
+                
+                // 既にプロフィールが存在する場合は、保存処理をスキップ
+                // signup.vueで既に保存されているため
+                if (profileCheck.hasProfile) {
+                    console.log('[make-profile] User already exists in Supabase, skipping registration')
+                    return
+                }
+            } catch (err) {
+                console.warn('[make-profile] Error checking profile (non-fatal):', err)
+                // エラーが発生した場合は続行（既存の処理を実行）
+            }
+        }
+        
+        // Auth0で新規登録した際に、usersテーブルとprofilesテーブルにnullの状態でデータを保存
+        // 注意: この処理は既にsignup.vueで実行されているため、通常は実行されない
         const email = u.email || ''
         const username = u.nickname || u.name || ''
         

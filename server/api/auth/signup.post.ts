@@ -5,8 +5,6 @@ export default defineEventHandler(async (event: H3Event) => {
     const body = await readBody(event)
     const config = useRuntimeConfig()
 
-    console.log('[API] /api/auth/signup POST received body:', JSON.stringify(body))
-
     // ボディの存在確認
     if (body == null) {
       console.warn('[API] /api/auth/signup POST empty body received (null/undefined)')
@@ -54,10 +52,19 @@ export default defineEventHandler(async (event: H3Event) => {
     // Auth0の/dbconnections/signupエンドポイントを呼び出す
     const signupUrl = `https://${auth0Domain}/dbconnections/signup`
     
-    // usernameはメールアドレスのローカル部分（@の前）を使用し、15文字に制限
+    // usernameはリクエストボディから取得、なければメールアドレスのローカル部分（@の前）を使用し、15文字に制限
     // 例: example@ed.ritsumei.ac.jp -> example
     const emailLocalPart = body.email.split('@')[0]
-    const username = emailLocalPart.substring(0, 15) // 最大15文字
+    
+    // デバッグ用: リクエストボディの内容を確認
+    console.error('[API] Signup request body:', {
+      email: body.email,
+      username: body.username,
+      hasUsername: !!body.username,
+      emailLocalPart: emailLocalPart
+    })
+    
+    const username = body.username ? body.username.substring(0, 15) : emailLocalPart.substring(0, 15) // 最大15文字
     
     const auth0Payload = {
       client_id: auth0ClientId,
@@ -67,8 +74,12 @@ export default defineEventHandler(async (event: H3Event) => {
       connection: auth0Connection,
     }
     
-    console.log('[API] Calling Auth0 signup endpoint:', signupUrl)
-    console.log('[API] Auth0 payload (password hidden):', { ...auth0Payload, password: '***' })
+    // デバッグ用: Auth0に送信するpayloadを確認
+    console.error('[API] Auth0 payload (password hidden):', {
+      ...auth0Payload,
+      password: '***',
+      username: username
+    })
     
     const response = await fetch(signupUrl, {
       method: 'POST',
@@ -88,20 +99,37 @@ export default defineEventHandler(async (event: H3Event) => {
       event.res.statusCode = 500
       return { error: 'auth0_response_parse_error', message: 'Failed to parse Auth0 response' }
     }
-    
-    console.log('[API] Auth0 response status:', response.status)
-    console.log('[API] Auth0 response data:', JSON.stringify(data))
 
     if (!response.ok) {
       // Auth0のエラーレスポンスを処理
       event.res.statusCode = response.status
       
-      // invalid_signupエラーの場合、既存ユーザーの可能性がある
-      if (data.code === 'invalid_signup' || data.name === 'BadRequestError') {
+      // メールアドレスが既に登録されている場合のみ、user_existsエラーを返す
+      // Auth0のエラーメッセージを確認して、実際にメールアドレスが重複している場合のみ
+      const errorMessage = data.error_description || data.description || ''
+      const errorCode = data.code || data.error || ''
+      
+      // デバッグ用: 実際のエラー内容をログに出力
+      console.error('[API] Auth0 signup error:', {
+        status: response.status,
+        code: errorCode,
+        error: data.error,
+        error_description: errorMessage,
+        full_response: data
+      })
+      
+      const isUserExists = 
+        errorMessage.toLowerCase().includes('already exists') ||
+        errorMessage.toLowerCase().includes('user already exists') ||
+        errorMessage.toLowerCase().includes('email already exists') ||
+        errorMessage.toLowerCase().includes('既に登録') ||
+        (errorCode === 'invalid_signup' && (errorMessage.toLowerCase().includes('user') || errorMessage.toLowerCase().includes('email')))
+      
+      if (isUserExists) {
         return {
           error: 'user_exists',
           error_description: 'このメールアドレスは既に登録されています',
-          code: 'invalid_signup'
+          code: errorCode || 'user_exists'
         }
       }
       

@@ -245,13 +245,13 @@ const handleSignUp = () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-color)] px-4">
+  <div class="min-h-screen flex flex-col items-center justify-center bg-[var(--meetupr-main)] px-4">
         <div class="w-full max-w-md space-y-8">
             <!-- ロゴとタイトル -->
             <div class="text-center space-y-4">
                 <!-- ロゴエリア -->
                 <div class="flex justify-center mb-4">
-                    <div class="w-52 h-52 rounded-full overflow-hidden">
+                    <div class="w-56 h-56 rounded-full overflow-hidden">
                         <img 
                             src="/icon.png" 
                             alt="MeetUp+R ロゴ" 

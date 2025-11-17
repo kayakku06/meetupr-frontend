@@ -61,8 +61,6 @@ export default defineEventHandler(async (event: H3Event) => {
       last_updated: payload.last_updated || new Date().toISOString()
     }
 
-    console.log('[API] /api/profile POST profileRow:', JSON.stringify(profileRow))
-
     // Supabase に挿入する
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       // env がなければ DB への挿入は行わない
@@ -79,7 +77,6 @@ export default defineEventHandler(async (event: H3Event) => {
         is_oic_verified: false
       }
 
-      console.log('[API] Upserting user to users table:', JSON.stringify(userRow))
       const { data: userData, error: userError } = await supabase
         .from('users')
         .upsert([userRow], { onConflict: 'id' })
@@ -90,8 +87,6 @@ export default defineEventHandler(async (event: H3Event) => {
         event.res.statusCode = 500
         return { error: 'user_upsert_failed', details: userError }
       }
-
-      console.log('[API] User upserted successfully:', userData)
     } else {
       console.warn('[API] Missing required fields for users table: user_id, email, or username')
       event.res.statusCode = 400
@@ -104,15 +99,12 @@ export default defineEventHandler(async (event: H3Event) => {
     // 最大で 5 回までリトライする（安全策）。
     async function tryUpsertProfile(row: Record<string, any>) {
       for (let attempt = 0; attempt < 5; attempt++) {
-        console.log(`[API] Attempting profile upsert (attempt ${attempt + 1}):`, JSON.stringify(row))
-        
         const { data, error } = await supabase
           .from('profiles')
           .upsert([row], { onConflict: 'user_id' })
           .select()
 
         if (!error) {
-          console.log('[API] Profile upsert successful:', JSON.stringify(data))
           return { data, error: null }
         }
 
@@ -161,9 +153,6 @@ export default defineEventHandler(async (event: H3Event) => {
       last_updated: profileRow.last_updated || new Date().toISOString()
     }
 
-    console.log('[API] Upserting profile to profiles table:', JSON.stringify(profileData))
-    console.log('[API] Profile data user_id:', profileData.user_id)
-
     const result = await tryUpsertProfile(profileData)
     if (result.error) {
       console.error('[API] Supabase profile upsert error after retries:', JSON.stringify(result.error))
@@ -184,7 +173,6 @@ export default defineEventHandler(async (event: H3Event) => {
       }
     }
 
-    console.log('[API] Profile upserted successfully:', JSON.stringify(result.data))
     return { status: 'ok', inserted: result.data }
   } catch (err) {
     console.error('Error in /api/profile handler:', err)

@@ -25,9 +25,11 @@ watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
 }, { immediate: true })
 
 const email = ref('')
+const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const emailError = ref('')
+const usernameError = ref('')
 const passwordError = ref('')
 const confirmPasswordError = ref('')
 
@@ -73,6 +75,30 @@ const validateConfirmPassword = (confirmPasswordValue: string) => {
   return true
 }
 
+// ユーザーネームのバリデーション
+const validateUsername = (usernameValue: string) => {
+  if (!usernameValue) {
+    usernameError.value = 'ユーザーネームを入力してください'
+    return false
+  }
+  if (usernameValue.length < 1) {
+    usernameError.value = 'ユーザーネームは1文字以上で入力してください'
+    return false
+  }
+  if (usernameValue.length > 15) {
+    usernameError.value = 'ユーザーネームは15文字以下で入力してください'
+    return false
+  }
+  // Auth0が許可している文字のみかチェック: 英数字、'_', '+', '-', '.', '!', '#', '$', ''', '^', '`', '~', '@'
+  const allowedPattern = /^[a-zA-Z0-9_+\-\.!#$'^`~@]+$/
+  if (!allowedPattern.test(usernameValue)) {
+    usernameError.value = 'ユーザーネームは英数字と以下の文字のみ使用できます: _ + - . ! # $ \' ^ ` ~ @'
+    return false
+  }
+  usernameError.value = ''
+  return true
+}
+
 // メールアドレスの入力時にリアルタイムでバリデーション
 watch(email, () => {
   if (email.value && !email.value.endsWith('@ed.ritsumei.ac.jp')) {
@@ -91,9 +117,21 @@ watch(confirmPassword, () => {
   }
 })
 
+// ユーザーネームの入力時にリアルタイムでバリデーション
+watch(username, () => {
+  if (username.value && username.value.length > 15) {
+    usernameError.value = 'ユーザーネームは15文字以下で入力してください'
+  } else {
+    usernameError.value = ''
+  }
+})
+
 const handleSignUp = async () => {
   // バリデーション
   if (!validateEmail(email.value)) {
+    return
+  }
+  if (!validateUsername(username.value)) {
     return
   }
   if (!validatePassword(password.value)) {
@@ -107,10 +145,15 @@ const handleSignUp = async () => {
     // リクエストボディを準備
     const requestBody = {
       email: email.value,
+      username: username.value,
       password: password.value
     }
     
-    console.log('[signup] Sending signup request:', { email: requestBody.email, password: '***' })
+    console.log('[signup] Sending signup request:', { 
+      email: requestBody.email, 
+      username: requestBody.username,
+      password: '***' 
+    })
     
     // サーバーサイドAPIエンドポイントを呼び出してAuth0にユーザーを登録
     const response = await $fetch<{ success?: boolean; user?: { email: string; _id: string }; error?: string; error_description?: string; code?: string; message?: string }>('/api/auth/signup', {
@@ -122,10 +165,19 @@ const handleSignUp = async () => {
 
     if ('error' in response && response.error) {
       // エラーハンドリング
-      if (response.error === 'user_exists' || ('code' in response && (response.code === 'user_exists' || response.code === 'invalid_signup'))) {
+      if (response.error === 'user_exists') {
         emailError.value = 'このメールアドレスは既に登録されています'
       } else {
-        emailError.value = ('error_description' in response && response.error_description) || response.error || '登録に失敗しました'
+        // エラーメッセージを確認して、username関連のエラーかどうかを判定
+        const errorDescription = ('error_description' in response && response.error_description) || response.error || '登録に失敗しました'
+        const isUsernameError = errorDescription.toLowerCase().includes('username') || 
+                                 errorDescription.toLowerCase().includes('ユーザーネーム')
+        
+        if (isUsernameError) {
+          usernameError.value = errorDescription
+        } else {
+          emailError.value = errorDescription
+        }
       }
       return
     }
@@ -193,7 +245,7 @@ const handleSignUp = async () => {
               const payload = JSON.parse(atob(tokenParts[1]))
               const userId = payload.sub || ''
               const userEmail = payload.email || email.value
-              const userName = payload.nickname || payload.name || userEmail.split('@')[0]
+              const userName = username.value // 入力されたユーザーネームを使用
               
               // Supabaseにユーザー情報を保存
               if (userId && userEmail && userName) {
@@ -282,13 +334,13 @@ const handleBackToLogin = () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-color)] px-4">
-        <div class="w-full max-w-md space-y-8">
+  <div class="min-h-screen flex flex-col items-center justify-center bg-[var(--meetupr-main)] px-4">
+        <div class="w-full max-w-md space-y-1">
             <!-- ロゴとタイトル -->
             <div class="text-center space-y-4">
                 <!-- ロゴエリア -->
                 <div class="flex justify-center mb-4">
-                    <div class="w-52 h-52 rounded-full overflow-hidden">
+                    <div class="w-48 h-48 rounded-full overflow-hidden">
                         <img 
                             src="/icon.png" 
                             alt="MeetUp+R ロゴ" 
@@ -304,6 +356,27 @@ const handleBackToLogin = () => {
             <!-- 新規登録フォーム -->
             <div class="p-8 space-y-6">
                 <form @submit.prevent="handleSignUp" class="space-y-4">
+                    <!-- ユーザーネーム入力欄 -->
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                            ユーザーネーム
+                        </label>
+                        <input
+                            id="username"
+                            v-model="username"
+                            type="text"
+                            placeholder="ユーザーネームを入力（1-15文字）"
+                            maxlength="15"
+              :class="[
+                'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
+                usernameError ? 'border-red-500 focus:ring-red-500' : 'border-[var(--meetupr-sub)] focus:ring-[var(--meetupr-sub)]'
+              ]"
+                        />
+                        <p v-if="usernameError" class="mt-1 text-sm text-red-500">
+                            {{ usernameError }}
+                        </p>
+                    </div>
+
                     <!-- 学内メールアドレス入力欄 -->
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
@@ -367,7 +440,7 @@ const handleBackToLogin = () => {
                     <!-- 新規登録ボタン -->
           <button
             type="submit"
-            class="w-full bg-[var(--meetupr-color-3)] text-white py-3 rounded-md font-semibold hover:bg-[var(--meetupr-color-3)] transition-colors"
+            class="w-full bg-[var(--meetupr-color-3)] text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
           >
                         新規登録
                     </button>
@@ -383,7 +456,7 @@ const handleBackToLogin = () => {
                     </p>
           <button
             @click="handleBackToLogin"
-            class="w-full bg-[var(--meetupr-color-3))] text-white py-3 rounded-md font-semibold hover:bg-[(--meetupr-color-3))] transition-colors"
+            class="w-full bg-[var(--meetupr-color-3)] text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
           >
                         ログイン
                     </button>
