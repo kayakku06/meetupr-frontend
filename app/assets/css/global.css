@@ -4,6 +4,14 @@
 
 :root {
   --container-border-color: #FEBC6E;
+  --bg-color: #f3f4f6; /* gray-100, used as global page background */
+ --meetupr-main: #FFF5C9; /* Meetupr 特有の背景色 */
+ --meetupr-sub: #FEBC6E; /* Meetupr 特有のサブ背景色 */
+ --chat-other-color: #FEBC6E80; /* チャット相手の吹き出し背景色 */
+ --chat-my-color: #FEBC6E; /* 自分の吹き出し背景色 */
+ --meetupr-color-3: #3C938B; /* Meetupr 特有のコメント色 */
+
+
 }
 
 /* 最小限の global 基本設定 */
