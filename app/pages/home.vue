@@ -17,7 +17,7 @@ onMounted(async () => {
 
 <template>
 
-  <div class="p-4 pb-24 bg-[var(--meetupr-main)]">
+  <div class="min-h-screen p-4 pb-24 bg-[var(--meetupr-main)]">
     <h1 class="text-xl mb-4 zen-maru-gothic-regular">Home</h1>
 
     <!-- ローディング状態 -->

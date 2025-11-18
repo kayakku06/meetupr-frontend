@@ -133,21 +133,19 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 definePageMeta({
     middleware: 'auth'
 })
 
 import { ref, onMounted } from 'vue';
-import { useAuth0 } from '@auth0/auth0-vue'
-// Auth0のComposableはクライアントでのみ利用可能なため、トップレベルで分割代入しない
 
 // フォームデータをrefで管理
 const form = ref({
     // テンプレートと合わせたプロパティを用意
     faculty: '',
     major: '',
-    gender: null,
+    gender: null as string | null,
     origin: '',
     residence: '',
     native_language: '日本語',
@@ -156,10 +154,10 @@ const form = ref({
     langSpoken: '',
     langLearning: '',
     // internal names kept for payload
-    spoken_languages: [],
-    learning_languages: [],
+    spoken_languages: [] as string[],
+    learning_languages: [] as string[],
     // テンプレートは `form.hobbies` を参照するため保持
-    hobbies: [],
+    hobbies: [] as string[],
     bio: '',
     comment: '',
 });
@@ -188,8 +186,8 @@ const choiceCategories = ref([
 ]);
 
 // ★ 現在選択されているタブ
-const activeTab = ref(choiceCategories.value[0].name); // 初期タブを「スポーツ」に
-function addHobby(hobby) {
+const activeTab = ref(choiceCategories.value[0]?.name || 'スポーツ'); // 初期タブを「スポーツ」に
+function addHobby(hobby?: string) {
     const v = hobby !== undefined ? String(hobby).trim() : newHobby.value.trim()
     if (v && !form.value.hobbies.includes(v)) {
         form.value.hobbies.push(v)
@@ -199,16 +197,16 @@ function addHobby(hobby) {
 }
 
 // removeHobby: インデックス指定（既存の編集UI）か、名前指定の両方に対応
-function removeHobby(target) {
+function removeHobby(target: number | string) {
     if (typeof target === 'number') {
         form.value.hobbies.splice(target, 1)
     } else {
-        form.value.hobbies = form.value.hobbies.filter(h => h !== target)
+        form.value.hobbies = form.value.hobbies.filter((h: string) => h !== target)
     }
 }
 
 // toggleHobby: 指定した名前があれば削除、なければ追加
-function toggleHobby(hobbyName) {
+function toggleHobby(hobbyName: string) {
     if (form.value.hobbies.includes(hobbyName)) {
         removeHobby(hobbyName)
     } else {
@@ -216,68 +214,183 @@ function toggleHobby(hobbyName) {
     }
 }
 
-// Auth0関連の参照をクライアントで初期化
-let auth = null
-let getAccessTokenSilently = null
+// useAuthコンポーザブルを使用
+const { user, isAuthenticated, isLoading, getAccessToken } = useAuth()
 
-onMounted(() => {
-    try {
-        auth = (typeof useAuth0 !== 'undefined') ? useAuth0() : null
-        if (auth) {
-            getAccessTokenSilently = auth.getAccessTokenSilently
-            console.log('[Auth0] initialized (auth ref) in make-profile.vue', { isAuthenticated: auth.isAuthenticated?.value, isLoading: auth.isLoading?.value })
-            // 取得済みのユーザ情報を表示（存在する場合）
-            const u = auth.user?.value
-            if (u) {
-                console.log('[Auth0] user loaded:', { user_id: u.sub, username: u.nickname || u.name, email: u.email })
-            } else {
-                console.log('[Auth0] user not yet loaded')
+onMounted(async () => {
+    // Auth0のロードが完了するまで待機
+    const waitForAuth = (): Promise<void> => {
+        return new Promise<void>((resolve) => {
+            if (!isLoading.value) {
+                resolve()
+                return
             }
-        } else {
-            console.log('[Auth0] useAuth0 returned undefined in make-profile.vue')
+            // ポーリングでロード状態をチェック
+            const checkInterval = setInterval(() => {
+                if (!isLoading.value) {
+                    clearInterval(checkInterval)
+                    resolve()
+                }
+            }, 100)
+            // タイムアウト: 5秒後に強制的に解決
+            setTimeout(() => {
+                clearInterval(checkInterval)
+                resolve()
+            }, 5000)
+        })
+    }
+    
+    await waitForAuth()
+    
+    // 取得済みのユーザ情報を表示（存在する場合）
+    const u = user.value
+    if (u && isAuthenticated.value) {
+        console.log('[make-profile] User loaded:', { user_id: u.sub, username: u.nickname || u.name, email: u.email })
+        
+        // 既にSupabaseにユーザーが存在するかチェック
+        const userId = u.sub || ''
+        if (userId) {
+            try {
+                // プロフィールが既に存在するかチェック
+                const profileCheck = await $fetch<{ hasProfile?: boolean; hasCompleteProfile?: boolean; error?: string }>('/api/profile/check', {
+                    method: 'GET',
+                    query: {
+                        user_id: userId
+                    }
+                })
+                
+                // 既にプロフィールが存在する場合は、保存処理をスキップ
+                // signup.vueで既に保存されているため
+                if (profileCheck.hasProfile) {
+                    console.log('[make-profile] User already exists in Supabase, skipping registration')
+                    return
+                }
+            } catch (err) {
+                console.warn('[make-profile] Error checking profile (non-fatal):', err)
+                // エラーが発生した場合は続行（既存の処理を実行）
+            }
         }
-    } catch (e) {
-        console.warn('useAuth0 を初期化できませんでした:', e)
+        
+        // Auth0で新規登録した際に、usersテーブルとprofilesテーブルにnullの状態でデータを保存
+        // 注意: この処理は既にsignup.vueで実行されているため、通常は実行されない
+        const email = u.email || ''
+        const username = u.nickname || u.name || ''
+        
+        if (userId && email && username) {
+            try {
+                // アクセストークンを取得
+                let headers: Record<string, string> = { 'Content-Type': 'application/json' }
+                try {
+                    const token = await getAccessToken()
+                    if (token) {
+                        headers['Authorization'] = `Bearer ${token}`
+                    }
+                } catch (e) {
+                    console.info('アクセストークン取得失敗（続行）:', e)
+                }
+                
+                // nullの状態でusersテーブルとprofilesテーブルにデータを保存
+                const initialPayload = {
+                    user_id: userId,
+                    email: email,
+                    username: username,
+                    major: null,
+                    gender: null,
+                    native_language: '日本語', // デフォルト値（NOT NULL制約のため）
+                    spoken_languages: [],
+                    learning_languages: [],
+                    residence: null,
+                    comment: null,
+                    last_updated: new Date().toISOString()
+                }
+                
+                console.log('[make-profile] Registering user to Supabase:', initialPayload)
+                
+                const res = await fetch('/api/profile', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(initialPayload)
+                })
+                
+                if (res.ok) {
+                    console.log('[make-profile] User and profile registered successfully in Supabase')
+                } else {
+                    const text = await res.text()
+                    console.warn('[make-profile] Failed to register user (non-fatal):', res.status, text)
+                }
+            } catch (err) {
+                console.warn('[make-profile] Error registering user (non-fatal):', err)
+            }
+        }
+    } else {
+        console.log('[make-profile] User not yet loaded or not authenticated', { user: u, isAuthenticated: isAuthenticated.value })
     }
 })
 
 // フォーム送信時の処理
 const registerProfile = async () => {
-    // Auth0が初期化されているか
-    if (!auth) {
-        console.warn('Auth0 not initialized')
-        return
-    }
+    console.log('[registerProfile] Called')
+    console.log('[registerProfile] Auth state:', { isAuthenticated: isAuthenticated.value, isLoading: isLoading.value, user: user.value })
 
     // 必要ならAuth0のロード待ち
-    if (auth.isLoading?.value) return
+    if (isLoading.value) {
+        console.log('[registerProfile] Auth is still loading, waiting...')
+        // 最大5秒待機
+        let waitCount = 0
+        while (isLoading.value && waitCount < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100))
+            waitCount++
+        }
+    }
 
-    if (!auth.isAuthenticated?.value) {
-        console.warn('未認証のため送信できません')
+    if (!isAuthenticated.value) {
+        console.error('[registerProfile] Not authenticated', { isAuthenticated: isAuthenticated.value, user: user.value })
+        alert('認証されていません。ログインしてください。')
         return
     }
 
-    // Auth0のuserオブジェクトから必要情報を取り出す
-    const u = auth.user?.value || {}
+    // ユーザー情報を取得
+    const u = user.value
+    if (!u) {
+        console.error('[registerProfile] User not found')
+        alert('ユーザー情報の取得に失敗しました。ページを再読み込みしてください。')
+        return
+    }
+
     const userId = u.sub || ''
     const email = u.email || ''
     const username = u.nickname || u.name || ''
 
-    console.log('[Auth0] sending as:', { user_id: userId, username, email })
+    if (!userId || !email || !username) {
+        console.error('[registerProfile] Missing user information', { userId, email, username })
+        alert('ユーザー情報が不完全です。ページを再読み込みしてください。')
+        return
+    }
+
+    console.log('[registerProfile] Sending as:', { user_id: userId, username, email })
 
     // ペイロード作成
+    // 話せる言語を配列に変換
+    const spokenLanguages = form.value.langSpoken 
+        ? [form.value.langSpoken] 
+        : (Array.isArray(form.value.spoken_languages) ? form.value.spoken_languages : [])
+    
+    // 学びたい言語を配列に変換
+    const learningLanguages = form.value.langLearning 
+        ? [form.value.langLearning] 
+        : (Array.isArray(form.value.learning_languages) ? form.value.learning_languages : [])
+    
     const payload = {
         user_id: userId,
         email: email,
         username: username,
-        major: form.value.major || '',
-        gender: form.value.gender || '',
-        native_language: form.value.native_language || '',
-        spoken_languages: Array.isArray(form.value.spoken_languages) ? form.value.spoken_languages : (form.value.spoken_languages ? [form.value.spoken_languages] : (form.value.langSpoken ? [form.value.langSpoken] : [])),
-    learning_languages: Array.isArray(form.value.learning_languages) ? form.value.learning_languages : (form.value.learning_languages ? [form.value.learning_languages] : (form.value.langLearning ? [form.value.langLearning] : [])),
-        residence: form.value.residence || form.value.origin || '',
-        comment: form.value.comment || '',
-    interests: form.value.hobbies.map((name, idx) => ({ id: idx + 1, name, preference_level: 3 })),
+        major: form.value.faculty || form.value.major || null, // facultyをmajorにマッピング
+        gender: form.value.gender || null,
+        native_language: form.value.langNative || form.value.native_language || '日本語',
+        spoken_languages: spokenLanguages,
+        learning_languages: learningLanguages,
+        residence: form.value.origin || form.value.residence || null,
+        comment: form.value.bio || form.value.comment || null, // bioをcommentにマッピング
         last_updated: new Date().toISOString()
     }
 
@@ -285,31 +398,55 @@ const registerProfile = async () => {
 
     try {
         // 可能であればアクセストークンを取得してAuthorizationに付与
-        let headers = { 'Content-Type': 'application/json' }
+        let headers: Record<string, string> = { 'Content-Type': 'application/json' } as Record<string, string>
         try {
-            const token = getAccessTokenSilently ? await getAccessTokenSilently() : null
-            if (token) headers['Authorization'] = `Bearer ${token}`
+            const token = await getAccessToken()
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`
+            }
         } catch (e) {
             // トークン取得失敗は致命的ではない（パブリックAPI等）
             console.info('アクセストークン取得失敗:', e)
         }
 
-        const res = await fetch('/api/profile', {
+        console.log('[registerProfile] Sending profile data to /api/profile:', payload)
+
+        // $fetchを使用してAPIを呼び出す
+        const result = await $fetch<{ status?: string; inserted?: any; error?: string; details?: any }>('/api/profile', {
             method: 'POST',
             headers,
-            body: JSON.stringify(payload)
+            body: payload
         })
 
-        if (!res.ok) {
-            const text = await res.text()
-            console.error('プロフィール送信に失敗しました:', res.status, text)
+        console.log('[registerProfile] API response:', result)
+
+        if (result && 'error' in result && result.error) {
+            console.error('[registerProfile] Profile save failed:', result.error, result.details)
+            const errorDetails = result.details ? JSON.stringify(result.details) : ''
+            alert(`プロフィールの保存に失敗しました。\nエラー: ${result.error}\n${errorDetails ? `詳細: ${errorDetails}` : ''}`)
             return
         }
 
-        console.log('プロフィールを送信しました。')
-        // 必要なら遷移などを行う
-    } catch (err) {
-        console.error('送信中にエラーが発生しました:', err)
+        if (!result || !result.inserted) {
+            console.warn('[registerProfile] No data inserted:', result)
+            alert('プロフィールの保存に失敗しました。データが挿入されませんでした。')
+            return
+        }
+
+        console.log('[registerProfile] Profile saved successfully:', result)
+        alert('プロフィールを保存しました。')
+        // プロフィール登録成功後は/homeにリダイレクト
+        navigateTo('/home')
+    } catch (err: any) {
+        console.error('[registerProfile] Error saving profile:', err)
+        console.error('[registerProfile] Error details:', {
+            status: err.status,
+            statusText: err.statusText,
+            data: err.data,
+            message: err.message
+        })
+        const errorMessage = err.data?.error || err.data?.details || err.message || 'エラーが発生しました。もう一度お試しください。'
+        alert(`エラーが発生しました。\n${errorMessage}`)
     }
 };
 </script>
