@@ -351,9 +351,42 @@ const registerProfile = async () => {
     }
 
     // ユーザー情報を取得
-    const u = user.value
+    let u = user.value
+    
+    // user.valueがnullの場合、localStorageから直接取得を試みる
+    if (!u && typeof window !== 'undefined') {
+        try {
+            const config = useRuntimeConfig()
+            const scope = 'openid profile email'
+            const auth0CacheKey = `@@auth0spajs@@::${config.public.auth0ClientId}::${config.public.auth0Domain}::${scope}`
+            const cachedData = localStorage.getItem(auth0CacheKey)
+            
+            if (cachedData) {
+                const parsed = JSON.parse(cachedData)
+                const idToken = parsed.body?.id_token
+                
+                if (idToken) {
+                    const tokenParts = idToken.split('.')
+                    if (tokenParts.length === 3 && tokenParts[1]) {
+                        const payload = JSON.parse(atob(tokenParts[1]))
+                        u = {
+                            sub: payload.sub,
+                            email: payload.email,
+                            nickname: payload.nickname,
+                            name: payload.name,
+                            picture: payload.picture
+                        }
+                        console.log('[registerProfile] User retrieved from localStorage:', u)
+                    }
+                }
+            }
+        } catch (err) {
+            console.warn('[registerProfile] Failed to get user from localStorage:', err)
+        }
+    }
+    
     if (!u) {
-        console.error('[registerProfile] User not found')
+        console.error('[registerProfile] User not found', { user: user.value, isAuthenticated: isAuthenticated.value })
         alert('ユーザー情報の取得に失敗しました。ページを再読み込みしてください。')
         return
     }
