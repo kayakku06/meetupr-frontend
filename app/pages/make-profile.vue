@@ -299,6 +299,7 @@ onMounted(async () => {
                     native_language: '日本語', // デフォルト値（NOT NULL制約のため）
                     spoken_languages: [],
                     learning_languages: [],
+                    interests: [],
                     residence: null,
                     comment: null,
                     last_updated: new Date().toISOString()
@@ -389,6 +390,7 @@ const registerProfile = async () => {
         native_language: form.value.langNative || form.value.native_language || '日本語',
         spoken_languages: spokenLanguages,
         learning_languages: learningLanguages,
+        interests: Array.isArray(form.value.hobbies) ? form.value.hobbies : [],
         residence: form.value.origin || form.value.residence || null,
         comment: form.value.bio || form.value.comment || null, // bioをcommentにマッピング
         last_updated: new Date().toISOString()
