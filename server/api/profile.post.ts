@@ -56,6 +56,7 @@ export default defineEventHandler(async (event: H3Event) => {
       native_language: payload.native_language || '日本語',
       spoken_languages: Array.isArray(payload.spoken_languages) ? payload.spoken_languages : (payload.spoken_languages ? [payload.spoken_languages] : []),
       learning_languages: Array.isArray(payload.learning_languages) ? payload.learning_languages : (payload.learning_languages ? [payload.learning_languages] : []),
+      interests: Array.isArray(payload.interests) ? payload.interests : (payload.interests ? [payload.interests] : []),
       residence: toNullIfEmpty(payload.residence),
       comment: toNullIfEmpty(payload.comment),
       last_updated: payload.last_updated || new Date().toISOString()
@@ -147,6 +148,9 @@ export default defineEventHandler(async (event: H3Event) => {
         : [],
       learning_languages: Array.isArray(profileRow.learning_languages) && profileRow.learning_languages.length > 0
         ? profileRow.learning_languages 
+        : [],
+      interests: Array.isArray(profileRow.interests) && profileRow.interests.length > 0
+        ? profileRow.interests
         : [],
       residence: profileRow.residence,
       comment: profileRow.comment,
