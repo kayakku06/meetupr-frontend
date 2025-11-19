@@ -30,17 +30,9 @@ const props = defineProps<{
   chatId?: number
 }>()
 
-// クリックしたらチャットページまたはプロフィールページに飛ぶ
+// クリックしたらチャットページに飛ぶ
 const goProfile = () => {
-
-
-  if (props.chatId) {
-    // チャットIDがある場合はチャットページに遷移
-    router.push(`/chat?chatId=${props.chatId}`)
-  } else {
-    // チャットIDがない場合はプロフィールページに遷移
-    router.push('/other-profile')
-  }
+  router.push('/chat')
 }
 </script>
 
