@@ -258,6 +258,7 @@ const handleSignUp = async () => {
                   native_language: '日本語', // デフォルト値（NOT NULL制約のため）
                   spoken_languages: [],
                   learning_languages: [],
+                  interests: [],
                   residence: null,
                   comment: null,
                   last_updated: new Date().toISOString()

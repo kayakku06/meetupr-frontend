@@ -57,12 +57,9 @@ APIリクエストには、Auth0から発行されたJWT（JSON Web Token）を`
           "native_language": "日本語",
           "spoken_languages": ["英語"],
           "learning_languages": ["韓国語"],
+          "interests": ["ゲーム", "K-POP"],
           "residence": "大阪",
           "comment": "よろしくお願いします！",
-          "interests": [
-            { "id": 1, "name": "ゲーム", "preference_level": 5 },
-            { "id": 2, "name": "K-POP", "preference_level": 4 }
-          ],
           "last_updated": "2025-11-14T11:00:00Z"
         }
         ```
@@ -80,9 +77,9 @@ APIリクエストには、Auth0から発行されたJWT（JSON Web Token）を`
       "native_language": "日本語",
       "spoken_languages": ["英語"],
       "learning_languages": ["韓国語"],
+      "interests": ["ゲーム", "K-POP"],
       "residence": "大阪",
-      "comment": "よろしくお願いします！",
-      "interest_ids": [1, 2]
+      "comment": "よろしくお願いします！"
     }
     ```
 -   **レスポンス:**
@@ -93,7 +90,7 @@ APIリクエストには、Auth0から発行されたJWT（JSON Web Token）を`
 -   **説明:** 条件に基づいて他のユーザーを検索します。
 -   **認証:** 必要
 -   **クエリパラメータ:**
-    -   `interest_id` (number): 興味ID
+    -   `interest` (string): 興味・趣味
     -   `learning_language` (string): 学習したい言語
     -   `spoken_language` (string): 話せる言語
 -   **レスポンス:**
@@ -108,24 +105,7 @@ APIリクエストには、Auth0から発行されたJWT（JSON Web Token）を`
 
 ---
 
-### 2. 興味・趣味 (`/interests`)
-
-#### `GET /api/v1/interests`
-
--   **説明:** 登録可能な興味・趣味のマスターデータを一覧で取得します。
--   **認証:** 必要
--   **レスポンス:**
-    -   `200 OK`:
-        ```json
-        [
-          { "id": 1, "name": "ゲーム", "category": "インドア" },
-          { "id": 2, "name": "K-POP", "category": "音楽" }
-        ]
-        ```
-
----
-
-### 3. 匿名会いたいボタン (`/meet-requests`)
+### 2. 匿名会いたいボタン (`/meet-requests`)
 
 #### `POST /api/v1/meet-requests`
 
@@ -149,7 +129,7 @@ APIリクエストには、Auth0から発行されたJWT（JSON Web Token）を`
 
 ---
 
-### 4. チャット (`/chats`, `/ws`)
+### 3. チャット (`/chats`, `/ws`)
 
 #### `GET /api/v1/chats`
 
@@ -188,7 +168,7 @@ APIリクエストには、Auth0から発行されたJWT（JSON Web Token）を`
 
 ---
 
-### 5. イベント (`/events`)
+### 4. イベント (`/events`)
 
 #### `GET /api/v1/events`
 
