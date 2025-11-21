@@ -1,151 +1,203 @@
-# MeetUpr Frontend
+# MeetUP +R Frontend
 
-Nuxt 4ベースのフロントエンドアプリケーション
+OIC（立命館大学大阪いばらきキャンパス）の学生間、特に留学生と日本人学生の交流を促進するコミュニティアプリのフロントエンドアプリケーション。
 
-## Auth0認証設定
+## 📋 プロジェクト概要
 
-このプロジェクトではAuth0を使用した認証機能を実装しています。
+**MeetUP +R**は、共通の趣味や言語を通じて、自然な出会いや会話のきっかけを作り出すコミュニティアプリです。
+
+### 主な目的
+
+- 留学生が日本人と関わる機会を増やす
+- 言語学習や文化交流を促進する
+- 学内コミュニティの国際的つながりを強化する
+
+### 主要機能
+
+- 🔐 **認証機能**: Auth0を使用したOIC学生限定の認証
+- 👤 **プロフィール管理**: 趣味・言語・学部などのプロフィール登録・編集
+- 🔍 **検索機能**: 趣味・興味ベースでユーザーを検索
+- 💬 **チャット機能**: WebSocketによるリアルタイムテキストチャット
+- 🤝 **匿名「会いたい」ボタン**: 相互マッチ時のみ通知
+
+詳細な機能要件については、[プロダクト要件定義書](./docs/REQUIREMENTS.md)を参照してください。
+
+## 🛠️ 技術スタック
+
+- **フレームワーク**: [Nuxt 4](https://nuxt.com/)
+- **言語**: TypeScript
+- **UI**: Vue 3 + Tailwind CSS
+- **認証**: Auth0
+- **データベース**: Supabase
+- **デプロイ**: Vercel（予定）
+
+## 📦 セットアップ
+
+### 前提条件
+
+- Node.js 18以上
+- npm / pnpm / yarn / bun
+
+### インストール
+
+```bash
+# 依存関係のインストール
+npm install
+# または
+pnpm install
+# または
+yarn install
+# または
+bun install
+```
 
 ### 環境変数の設定
 
 プロジェクトルートに`.env`ファイルを作成し、以下の環境変数を設定してください：
 
 ```env
+# Auth0設定（必須）
 AUTH0_DOMAIN=your-auth0-domain.auth0.com
 AUTH0_CLIENT_ID=your-auth0-client-id
-AUTH0_CONNECTION=Username-Password-Authentication  # オプション: 接続名（デフォルト: Username-Password-Authentication）
-AUTH0_AUDIENCE=your-auth0-api-audience  # オプション: APIを使用する場合のみ必要
+
+# Auth0設定（オプション）
+AUTH0_CONNECTION=Username-Password-Authentication
+AUTH0_AUDIENCE=your-auth0-api-audience
+
+# Supabase設定（サーバーサイド）
+SUPABASE_URL=your-supabase-url
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 ```
 
 **必須の環境変数:**
-- `AUTH0_DOMAIN`: Auth0ドメイン（例: `your-tenant.auth0.com`）
+- `AUTH0_DOMAIN`: Auth0ドメイン
 - `AUTH0_CLIENT_ID`: Auth0アプリケーションのClient ID
 
 **オプションの環境変数:**
 - `AUTH0_CONNECTION`: Auth0の接続名（デフォルト: `Username-Password-Authentication`）
-  - 接続名の確認方法: Auth0 Dashboard → Authentication → Database → 接続をクリック → 接続名を確認
 - `AUTH0_AUDIENCE`: API Audience（バックエンドAPIと連携する場合のみ必要）
+- `SUPABASE_URL`: SupabaseプロジェクトのURL
+- `SUPABASE_SERVICE_ROLE_KEY`: SupabaseのService Role Key
+
+## 🚀 開発サーバーの起動
+
+```bash
+# 開発サーバーを起動（http://localhost:3000）
+npm run dev
+# または
+pnpm dev
+# または
+yarn dev
+# または
+bun run dev
+```
+
+ブラウザで [http://localhost:3000](http://localhost:3000) を開いて確認できます。
+
+## 🔐 Auth0認証設定
+
+このプロジェクトではAuth0を使用した認証機能を実装しています。
 
 ### Auth0の設定手順
 
-このプロジェクトでは、**Authorization Code Flow with PKCE**を使用してAuth0認証を実装しています。これはAuth0が推奨する安全な認証方法です。
-
 1. [Auth0 Dashboard](https://manage.auth0.com/)にログイン
 2. 新しいアプリケーションを作成（**Single Page Application (SPA)**タイプを選択）
-   - **注意**: Authorization Code Flow with PKCEを使用するため、SPAタイプで問題ありません
 3. アプリケーション設定から以下を取得：
    - **Domain**: アプリケーション設定ページの上部に表示
    - **Client ID**: アプリケーション設定ページに表示
 4. **Allowed Callback URLs**に以下を追加：
    - `http://localhost:3000`
-   - 本番環境のURL（例: `https://your-domain.com`）
+   - 本番環境のURL
 5. **Allowed Logout URLs**に以下を追加：
    - `http://localhost:3000`
-   - 本番環境のURL（例: `https://your-domain.com`）
-6. **Allowed Web Origins**に以下を追加（推奨）：
+   - 本番環境のURL
+6. **Allowed Web Origins**に以下を追加：
    - `http://localhost:3000`
-   - 本番環境のURL（例: `https://your-domain.com`）
+   - 本番環境のURL
 7. **デフォルト接続（Database Connection）を確認・作成**：
    - Auth0 Dashboard → Authentication → Database
    - 「Username-Password-Authentication」接続が存在し、有効になっていることを確認
-   - 存在しない場合：
-     - 「Create Database Connection」をクリック
-     - 「Username-Password-Authentication」を選択
-     - 「Create」をクリック
-   - 接続名が異なる場合は、`.env`ファイルの`AUTH0_CONNECTION`に正しい接続名を設定
-8. **接続をアプリケーションに有効化**（重要）：
+8. **接続をアプリケーションに有効化**：
    - Auth0 Dashboard → Applications → あなたのアプリケーション → **Connections** タブ
-   - 「Username-Password-Authentication」（または設定した接続名）にチェックを入れる
+   - 「Username-Password-Authentication」にチェックを入れる
    - **「Save」をクリックして保存**
 
-### 認証フローの説明
+詳細な認証フローの説明については、READMEの「認証フローの説明」セクションを参照してください。
 
-1. **ログイン**:
-   - ユーザーがカスタムフォームにメールアドレスとパスワードを入力
-   - バリデーション後、Auth0のログインページにリダイレクト
-   - Auth0で認証が完了すると、元のページに戻る
+## 📁 プロジェクト構造
 
-2. **新規登録**:
-   - ユーザーがカスタムフォームにメールアドレスとパスワードを入力
-   - バリデーション後、Auth0のサインアップページにリダイレクト
-   - Auth0で新規登録が完了すると、プロフィール設定ページに移動
-
-### API Audienceの設定（オプション）
-
-バックエンドAPIと連携する場合のみ必要です：
-
-1. Auth0 Dashboardで「APIs」メニューを開く
-2. 新しいAPIを作成（または既存のAPIを選択）
-3. **Identifier**（Audience）をコピーして`.env`の`AUTH0_AUDIENCE`に設定
-
-## Setup
-
-Make sure to install dependencies:
-
-```bash
-# npm
-npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+```
+meetupr-frontend/
+├── app/                    # アプリケーションのメインコード
+│   ├── components/         # Vueコンポーネント
+│   ├── composables/        # コンポーザブル（useAuth, useChat等）
+│   ├── middleware/         # ミドルウェア（認証等）
+│   ├── pages/              # ページコンポーネント
+│   └── plugins/            # プラグイン（Auth0等）
+├── server/                 # サーバーサイドAPI
+│   └── api/                # APIエンドポイント
+├── docs/                   # ドキュメント
+│   ├── REQUIREMENTS.md     # プロダクト要件定義書
+│   ├── API_SPECIFICATION.md # API仕様書
+│   ├── DATABASE.md         # データベース設計書
+│   └── FRONTEND_WEBSOCKET_IMPLEMENTATION.md # WebSocket実装ガイド
+├── public/                 # 静的ファイル
+└── .github/                # GitHub設定
+    └── templates/          # PRテンプレート等
 ```
 
-## Development Server
+## 📚 ドキュメント
 
-Start the development server on `http://localhost:3000`:
+- [プロダクト要件定義書](./docs/REQUIREMENTS.md)
+- [API仕様書](./docs/API_SPECIFICATION.md)
+- [データベース設計書](./docs/DATABASE.md)
+- [WebSocket実装ガイド](./docs/FRONTEND_WEBSOCKET_IMPLEMENTATION.md)
 
-```bash
-# npm
-npm run dev
+## 🏗️ ビルド
 
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
+### 本番用ビルド
 
 ```bash
-# npm
 npm run build
-
-# pnpm
+# または
 pnpm build
-
-# yarn
+# または
 yarn build
-
-# bun
+# または
 bun run build
 ```
 
-Locally preview production build:
+### 本番ビルドのプレビュー
 
 ```bash
-# npm
 npm run preview
-
-# pnpm
+# または
 pnpm preview
-
-# yarn
+# または
 yarn preview
-
-# bun
+# または
 bun run preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## 🚢 デプロイ
+
+本番環境へのデプロイについては、[Nuxtのデプロイメントドキュメント](https://nuxt.com/docs/getting-started/deployment)を参照してください。
+
+このプロジェクトは**Vercel**へのデプロイを想定しています。
+
+## 👥 開発体制
+
+- **フロントエンド**: 秋田／ゆいちゃん／ゆいゆい／みきちゃん
+- **バックエンド**: さめ／よーた
+
+## 📝 ライセンス
+
+このプロジェクトはプライベートプロジェクトです。
+
+## 🤝 コントリビューション
+
+このプロジェクトはOICの学生向けのプロジェクトです。コントリビューションについては、プロジェクトメンテナーにご連絡ください。
+
+---
+
+**開発期間**: 2025年10月〜2025年12月
