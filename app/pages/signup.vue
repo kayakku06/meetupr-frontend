@@ -407,7 +407,7 @@ const handleBackToLogin = () => {
                             id="password"
                             v-model="password"
                             type="password"
-                            placeholder="8文字以上で入力"
+                            placeholder="8文字以上で入力(大文字・小文字・数字を含む)"
               :class="[
                 'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
                 passwordError ? 'border-red-500 focus:ring-red-500' : 'border-[var(--meetupr-sub)] focus:ring-[var(--meetupr-sub)]'
