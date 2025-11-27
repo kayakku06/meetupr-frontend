@@ -53,20 +53,24 @@
                     <div class="text-xs text-amber-900">言語</div>
                     <div class="flex flex-col gap-2">
                         <select v-model="form.langNative"
-                            class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed">
-                            <option value="native">ネイティブ</option>
+                            class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            :class="{ 'text-gray-400': !form.langNative }">
+                            <option value="" disabled selected class="text-gray-400">ネイティブ言語</option>
+                            <option value="jp" class="text-black">日本語</option>
                         </select>
                         <select v-model="form.langSpoken"
-                            class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed">
-                            <option value="">話せる言語</option>
-                            <option value="en">英語</option>
-                            <option value="cn">中国語</option>
+                            class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            :class="{ 'text-gray-400': !form.langSpoken }">
+                            <option value="" disabled selected class="text-gray-400">話せる言語</option>
+                            <option value="en" class="text-black">英語</option>
+                            <option value="cn" class="text-black">中国語</option>
                         </select>
                         <select v-model="form.langLearning"
-                            class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed">
-                            <option value="">学びたい言語</option>
-                            <option value="fr">フランス語</option>
-                            <option value="es">スペイン語</option>
+                            class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            :class="{ 'text-gray-400': !form.langLearning }">
+                            <option value="" disabled selected class="text-gray-400">学びたい言語</option>
+                            <option value="fr" class="text-black">フランス語</option>
+                            <option value="es" class="text-black">スペイン語</option>
                         </select>
                     </div>
                 </div>
@@ -130,8 +134,6 @@
 
             </form>
         </main>
-
-        <Footer class="fixed inset-x-0 bottom-0" />
     </div>
 </template>
 
@@ -152,7 +154,7 @@ const form = ref({
     residence: '',
     native_language: '日本語',
     // テンプレートでは langNative/langSpoken/langLearning を使用しているため両方用意
-    langNative: '日本語',
+    langNative: '',
     langSpoken: '',
     langLearning: '',
     // internal names kept for payload
