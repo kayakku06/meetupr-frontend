@@ -23,9 +23,14 @@
                     <select v-model="form.faculty"
                         class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none">
                         <option value="" disabled selected></option>
-                        <option value="engineering">工学部</option>
-                        <option value="economics">経済学部</option>
-                        <option value="literature">文学部</option>
+                        <option value="business">経営</option>
+                        <option value="production_science">制作科学</option>
+                        <option value="information_science">情報理工</option>
+                         <option value="film_studies">映像</option>
+                          <option value="psychology">総合心理</option>
+                          <option value="global_liberal_arts">グローバル教養</option>
+
+
                     </select>
                 </label>
 
@@ -42,32 +47,152 @@
                             class="disabled:opacity-50 disabled:cursor-not-allowed" /> その他</label>
                 </fieldset>
 
-                <label class="flex flex-col gap-2">
-                    <div class="text-xs text-amber-900">出身</div>
-                    <input v-model="form.origin"
-                        class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none"
-                        placeholder="例：日本" />
-                </label>
+                <!-- 出身 -->
+                <div class="flex flex-col gap-2">
+                    <button type="button" @click="showOrigin = !showOrigin"
+                        class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none text-left hover:bg-gray-50 transition">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-xs text-amber-900">出身</span>
+                            <span :class="showOrigin ? 'rotate-180' : ''">▼</span>
+                        </div>
+                        <div v-if="form.origin">
+                            <span class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
+                                {{ getCountryLabel(form.origin) }}
+                            </span>
+                        </div>
+                        <span v-else class="text-gray-400 text-sm">選択してください</span>
+                    </button>
+
+                    <div v-if="showOrigin" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+                        <!-- 地域タブ -->
+                        <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 overflow-x-auto">
+                            <span v-for="category in regionCategories" :key="category.name" @click="activeRegionTab = category.name"
+                                class="cursor-pointer pb-2 transition whitespace-nowrap"
+                                :class="activeRegionTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
+                                {{ category.name }}
+                            </span>
+                        </div>
+                        <!-- 国選択ボタン -->
+                        <div v-for="category in regionCategories" :key="category.name" v-show="activeRegionTab === category.name" class="flex flex-wrap gap-2">
+                            <button v-for="country in category.tags"
+                                :key="country.code" type="button" @click="form.origin = country.code"
+                                :class="form.origin === country.code ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
+                                {{ country.label }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="flex flex-col gap-4">
                     <div class="text-xs text-amber-900">言語</div>
                     <div class="flex flex-col gap-2">
-                        <select v-model="form.langNative"
-                            class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed">
-                            <option value="native">ネイティブ</option>
-                        </select>
-                        <select v-model="form.langSpoken"
-                            class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed">
-                            <option value="">話せる言語</option>
-                            <option value="en">英語</option>
-                            <option value="cn">中国語</option>
-                        </select>
-                        <select v-model="form.langLearning"
-                            class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed">
-                            <option value="">学びたい言語</option>
-                            <option value="fr">フランス語</option>
-                            <option value="es">スペイン語</option>
-                        </select>
+                        <!-- 母国語 -->
+                        <div class="flex flex-col gap-2">
+                            <button type="button" @click="showNativeLanguage = !showNativeLanguage"
+                                class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none text-left hover:bg-gray-50 transition">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium">母国語</span>
+                                    <span :class="showNativeLanguage ? 'rotate-180' : ''">▼</span>
+                                </div>
+                                <div v-if="form.langNative">
+                                    <span class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
+                                        {{ getLanguageLabel(form.langNative) }}
+                                    </span>
+                                </div>
+                                <span v-else class="text-gray-400 text-sm">選択してください</span>
+                            </button>
+
+                            <div v-if="showNativeLanguage" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+                                <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
+                                    <span v-for="category in languageCategories" :key="category.name"
+                                        @click="activeLanguageTab = category.name"
+                                        :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
+                                        {{ category.name }}
+                                    </span>
+                                </div>
+                                <div v-for="category in languageCategories" :key="category.name"
+                                    v-show="activeLanguageTab === category.name" class="flex flex-wrap gap-2">
+                                    <button v-for="lang in category.tags" :key="lang.code" type="button" @click="form.langNative = lang.code"
+                                        :disabled="false"
+                                        :class="form.langNative === lang.code ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
+                                        {{ lang.label }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 話せる言語 -->
+                    <div class="flex flex-col gap-2">
+                        <button type="button" @click="showSpokenLanguages = !showSpokenLanguages"
+                            class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none text-left hover:bg-gray-50 transition">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-medium">話せる言語</span>
+                                <span :class="showSpokenLanguages ? 'rotate-180' : ''">▼</span>
+                            </div>
+                            <div class="flex flex-wrap gap-2" v-if="form.langSpoken.length > 0">
+                                <span v-for="langCode in form.langSpoken" :key="langCode"
+                                    class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
+                                    {{ getLanguageLabel(langCode) }}
+                                </span>
+                            </div>
+                            <span v-else class="text-gray-400 text-sm">選択してください</span>
+                        </button>
+
+                        <div v-if="showSpokenLanguages" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+
+                            <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
+                                <span v-for="category in languageCategories" :key="category.name"
+                                    @click="activeLanguageTab = category.name"
+                                    :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
+                                    {{ category.name }}
+                                </span>
+                            </div>
+                            <div v-for="category in languageCategories" :key="category.name"
+                                v-show="activeLanguageTab === category.name" class="flex flex-wrap gap-2">
+                                <button v-for="lang in category.tags" :key="lang.code" type="button" @click="toggleSpokenLanguage(lang.code)"
+                                    :disabled="false"
+                                    :class="form.langSpoken.includes(lang.code) ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
+                                    {{ lang.label }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 学びたい言語 -->
+                    <div class="flex flex-col gap-2">
+                        <button type="button" @click="showLearningLanguages = !showLearningLanguages"
+                            class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none text-left hover:bg-gray-50 transition">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-medium">学びたい言語</span>
+                                <span :class="showLearningLanguages ? 'rotate-180' : ''">▼</span>
+                            </div>
+                            <div class="flex flex-wrap gap-2" v-if="form.langLearning.length > 0">
+                                <span v-for="langCode in form.langLearning" :key="langCode"
+                                    class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
+                                    {{ getLanguageLabel(langCode) }}
+                                </span>
+                            </div>
+                            <span v-else class="text-gray-400 text-sm">選択してください</span>
+                        </button>
+
+                        <div v-if="showLearningLanguages" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+                            <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
+                                <span v-for="category in languageCategories" :key="category.name"
+                                    @click="activeLanguageTab = category.name"
+                                    :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
+                                    {{ category.name }}
+                                </span>
+                            </div>
+                            <div v-for="category in languageCategories" :key="category.name"
+                                v-show="activeLanguageTab === category.name" class="flex flex-wrap gap-2">
+                                <button v-for="lang in category.tags" :key="lang.code" type="button" @click="toggleLearningLanguage(lang.code)"
+                                    :disabled="false"
+                                    :class="form.langLearning.includes(lang.code) ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
+                                    {{ lang.label }}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -150,9 +275,9 @@ const form = ref({
     residence: '',
     native_language: '日本語',
     // テンプレートでは langNative/langSpoken/langLearning を使用しているため両方用意
-    langNative: '日本語',
-    langSpoken: '',
-    langLearning: '',
+    langNative: '',
+    langSpoken: [] as string[],
+    langLearning: [] as string[],
     // internal names kept for payload
     spoken_languages: [] as string[],
     learning_languages: [] as string[],
@@ -165,7 +290,303 @@ const form = ref({
 // 一時入力用
 const newHobby = ref('')
 
-// ★ 既存の選択肢のデータ（サンプル）
+// 選択された地域
+const selectedRegion = ref('')
+
+// 各セクションの展開状態
+const showOrigin = ref(false)
+const showNativeLanguage = ref(false)
+const showSpokenLanguages = ref(false)
+const showLearningLanguages = ref(false)
+
+// 現在選択されている地域タブ
+const activeRegionTab = ref('')
+
+// 地域ごとの国分類（言語と同じ形式）
+const regionCategories = ref([
+    {
+        name: '東アジア',
+        tags: [
+            { code: 'CN', label: '中国' },
+            { code: 'KR', label: '韓国' },
+            { code: 'TW', label: '台湾' },
+            { code: 'MN', label: 'モンゴル' }
+        ]
+    },
+    {
+        name: '東南アジア',
+        tags: [
+            { code: 'ID', label: 'インドネシア' },
+            { code: 'VN', label: 'ベトナム' },
+            { code: 'MY', label: 'マレーシア' },
+            { code: 'MM', label: 'ミャンマー' },
+            { code: 'KH', label: 'カンボジア' },
+            { code: 'SG', label: 'シンガポール' },
+            { code: 'LA', label: 'ラオス' },
+            { code: 'TH', label: 'タイ' },
+            { code: 'PH', label: 'フィリピン' },
+            { code: 'BN', label: 'ブルネイ' }
+        ]
+    },
+    {
+        name: '南アジア',
+        tags: [
+            { code: 'IN', label: 'インド' },
+            { code: 'BD', label: 'バングラディシュ' },
+            { code: 'PK', label: 'パキスタン' },
+            { code: 'NP', label: 'ネパール' },
+            { code: 'LK', label: 'スリランカ' },
+            { code: 'MV', label: 'モルディブ' }
+        ]
+    },
+    {
+        name: '中央アジア',
+        tags: [
+            { code: 'KG', label: 'キルギス' },
+            { code: 'UZ', label: 'ウズベキスタン' },
+            { code: 'TJ', label: 'タジキスタン' },
+            { code: 'KZ', label: 'カザフスタン' },
+            { code: 'AF', label: 'アフガニスタン' }
+        ]
+    },
+    {
+        name: '西アジア・中東',
+        tags: [
+            { code: 'TR', label: 'トルコ' },
+            { code: 'IL', label: 'イスラエル' },
+            { code: 'OM', label: 'オマーン' }
+        ]
+    },
+    {
+        name: '東アジア(香港)',
+        tags: [
+            { code: 'HK', label: '香港' }
+        ]
+    },
+    {
+        name: 'オセアニア',
+        tags: [
+            { code: 'AU', label: 'オーストラリア' }
+        ]
+    },
+    {
+        name: '北米',
+        tags: [
+            { code: 'US', label: 'アメリカ' },
+            { code: 'CA', label: 'カナダ' }
+        ]
+    },
+    {
+        name: '中米・南米',
+        tags: [
+            { code: 'MX', label: 'メキシコ' },
+            { code: 'GT', label: 'グアテマラ' },
+            { code: 'PE', label: 'ペルー' }
+        ]
+    },
+    {
+        name: 'ヨーロッパ',
+        tags: [
+            { code: 'GB', label: 'イギリス' },
+            { code: 'FR', label: 'フランス' },
+            { code: 'DE', label: 'ドイツ' },
+            { code: 'IT', label: 'イタリア' },
+            { code: 'ES', label: 'スペイン' },
+            { code: 'CH', label: 'スイス' },
+            { code: 'UA', label: 'ウクライナ' },
+            { code: 'RU', label: 'ロシア' },
+            { code: 'LT', label: 'リトアニア' },
+            { code: 'SE', label: 'スウェーデン' },
+            { code: 'NO', label: 'ノルウェー' },
+            { code: 'HU', label: 'ハンガリー' },
+            { code: 'AT', label: 'オーストリア' }
+        ]
+    },
+    {
+        name: 'アフリカ',
+        tags: [
+            { code: 'EG', label: 'エジプト' },
+            { code: 'GH', label: 'ガーナ' },
+            { code: 'NG', label: 'ナイジェリア' },
+            { code: 'ET', label: 'エチオピア' },
+            { code: 'BF', label: 'ブルキナファソ' },
+            { code: 'UG', label: 'ウガンダ' },
+            { code: 'NA', label: 'ナミビア' },
+            { code: 'MA', label: 'モロッコ' },
+            { code: 'GA', label: 'ガボン' }
+        ]
+    }
+])
+
+// 初期タブを設定
+activeRegionTab.value = regionCategories.value[0]?.name || '東アジア'
+
+// 国ごとの地域分類（互換性のため保持）
+const regionCountries: { [key: string]: { value: string; label: string }[] } = {
+    '東アジア': [
+        { value: 'CN', label: '中国' },
+        { value: 'KR', label: '韓国' },
+        { value: 'TW', label: '台湾' },
+        { value: 'MN', label: 'モンゴル' }
+    ],
+    '東南アジア': [
+        { value: 'ID', label: 'インドネシア' },
+        { value: 'VN', label: 'ベトナム' },
+        { value: 'MY', label: 'マレーシア' },
+        { value: 'MM', label: 'ミャンマー' },
+        { value: 'KH', label: 'カンボジア' },
+        { value: 'SG', label: 'シンガポール' },
+        { value: 'LA', label: 'ラオス' },
+        { value: 'TH', label: 'タイ' },
+        { value: 'PH', label: 'フィリピン' },
+        { value: 'BN', label: 'ブルネイ' }
+    ],
+    '南アジア': [
+        { value: 'IN', label: 'インド' },
+        { value: 'BD', label: 'バングラディシュ' },
+        { value: 'PK', label: 'パキスタン' },
+        { value: 'NP', label: 'ネパール' },
+        { value: 'LK', label: 'スリランカ' },
+        { value: 'MV', label: 'モルディブ' }
+    ],
+    '中央アジア': [
+        { value: 'KG', label: 'キルギス' },
+        { value: 'UZ', label: 'ウズベキスタン' },
+        { value: 'TJ', label: 'タジキスタン' },
+        { value: 'KZ', label: 'カザフスタン' },
+        { value: 'AF', label: 'アフガニスタン' }
+    ],
+    '西アジア・中東': [
+        { value: 'TR', label: 'トルコ' },
+        { value: 'IL', label: 'イスラエル' },
+        { value: 'OM', label: 'オマーン' }
+    ],
+    '東香港': [
+        { value: 'HK', label: '香港' }
+    ],
+    'オセアニア': [
+        { value: 'AU', label: 'オーストラリア' }
+    ],
+    '北米': [
+        { value: 'US', label: 'アメリカ' },
+        { value: 'CA', label: 'カナダ' }
+    ],
+    '中米・南米': [
+        { value: 'MX', label: 'メキシコ' },
+        { value: 'GT', label: 'グアテマラ' },
+        { value: 'PE', label: 'ペルー' }
+    ],
+    'ヨーロッパ': [
+        { value: 'GB', label: 'イギリス' },
+        { value: 'FR', label: 'フランス' },
+        { value: 'DE', label: 'ドイツ' },
+        { value: 'IT', label: 'イタリア' },
+        { value: 'ES', label: 'スペイン' },
+        { value: 'CH', label: 'スイス' },
+        { value: 'UA', label: 'ウクライナ' },
+        { value: 'RU', label: 'ロシア' },
+        { value: 'LT', label: 'リトアニア' },
+        { value: 'SE', label: 'スウェーデン' },
+        { value: 'NO', label: 'ノルウェー' },
+        { value: 'HU', label: 'ハンガリー' },
+        { value: 'AT', label: 'オーストリア' }
+    ],
+    'アフリカ': [
+        { value: 'EG', label: 'エジプト' },
+        { value: 'GH', label: 'ガーナ' },
+        { value: 'NG', label: 'ナイジェリア' },
+        { value: 'ET', label: 'エチオピア' },
+        { value: 'BF', label: 'ブルキナファソ' },
+        { value: 'UG', label: 'ウガンダ' },
+        { value: 'NA', label: 'ナミビア' },
+        { value: 'MA', label: 'モロッコ' },
+        { value: 'GA', label: 'ガボン' }
+    ]
+}
+
+// 地域から国を取得する関数
+function getCountriesByRegion(region: string): { value: string; label: string }[] {
+    return regionCountries[region] || []
+}
+
+// 国コードからラベルを取得する関数
+function getCountryLabel(countryCode: string): string {
+    const allCountries = regionCategories.value.flatMap(region => region.tags)
+    return allCountries.find(country => country.code === countryCode)?.label || countryCode
+}
+
+// 言語カテゴリーのデータ
+const languageCategories = ref([
+    {
+        name: 'アジア',
+        tags: [
+            { code: 'ja', label: '日本語' },
+            { code: 'zh', label: '中国語' },
+            { code: 'ko', label: '韓国語' },
+            { code: 'vi', label: 'ベトナム語' },
+            { code: 'id', label: 'インドネシア語' },
+            { code: 'th', label: 'タイ語' },
+            { code: 'hi', label: 'ヒンディー語' },
+            { code: 'bn', label: 'ベンガル語' },
+            { code: 'pa', label: 'パンジャブ語' }
+        ]
+    },
+    {
+        name: 'ヨーロッパ',
+        tags: [
+            { code: 'en', label: '英語' },
+            { code: 'fr', label: 'フランス語' },
+            { code: 'de', label: 'ドイツ語' },
+            { code: 'es', label: 'スペイン語' },
+            { code: 'pt', label: 'ポルトガル語' },
+            { code: 'ru', label: 'ロシア語' }
+        ]
+    },
+    {
+        name: 'その他',
+        tags: [
+            { code: 'ar', label: 'アラビア語' }
+        ]
+    }
+]);
+
+// 現在選択されている言語タブ
+const activeLanguageTab = ref(languageCategories.value[0]?.name || 'アジア');
+
+// 言語を追加する関数（話せる言語）
+function toggleSpokenLanguage(langCode: string) {
+    if (form.value.langSpoken.includes(langCode)) {
+        form.value.langSpoken = form.value.langSpoken.filter(l => l !== langCode)
+    } else {
+        form.value.langSpoken.push(langCode)
+    }
+}
+
+// 言語を削除する関数（話せる言語）
+function removeSpokenLanguage(langCode: string) {
+    form.value.langSpoken = form.value.langSpoken.filter(l => l !== langCode)
+}
+
+// 言語を追加する関数（学びたい言語）
+function toggleLearningLanguage(langCode: string) {
+    if (form.value.langLearning.includes(langCode)) {
+        form.value.langLearning = form.value.langLearning.filter(l => l !== langCode)
+    } else {
+        form.value.langLearning.push(langCode)
+    }
+}
+
+// 言語を削除する関数（学びたい言語）
+function removeLearningLanguage(langCode: string) {
+    form.value.langLearning = form.value.langLearning.filter(l => l !== langCode)
+}
+
+// 言語コードからラベルを取得する関数
+function getLanguageLabel(langCode: string): string {
+    const allLanguages = languageCategories.value.flatMap(cat => cat.tags)
+    return allLanguages.find(tag => tag.code === langCode)?.label || langCode
+}
+
 const choiceCategories = ref([
     {
         name: 'スポーツ',
@@ -405,14 +826,14 @@ const registerProfile = async () => {
 
     // ペイロード作成
     // 話せる言語を配列に変換
-    const spokenLanguages = form.value.langSpoken 
-        ? [form.value.langSpoken] 
-        : (Array.isArray(form.value.spoken_languages) ? form.value.spoken_languages : [])
+    const spokenLanguages = Array.isArray(form.value.langSpoken) 
+        ? form.value.langSpoken 
+        : (form.value.langSpoken ? [form.value.langSpoken] : (Array.isArray(form.value.spoken_languages) ? form.value.spoken_languages : []))
     
     // 学びたい言語を配列に変換
-    const learningLanguages = form.value.langLearning 
-        ? [form.value.langLearning] 
-        : (Array.isArray(form.value.learning_languages) ? form.value.learning_languages : [])
+    const learningLanguages = Array.isArray(form.value.langLearning) 
+        ? form.value.langLearning 
+        : (form.value.langLearning ? [form.value.langLearning] : (Array.isArray(form.value.learning_languages) ? form.value.learning_languages : []))
     
     const payload = {
         user_id: userId,
