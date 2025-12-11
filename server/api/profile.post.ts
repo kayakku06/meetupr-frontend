@@ -84,9 +84,14 @@ export default defineEventHandler(async (event: H3Event) => {
         .select()
 
       if (userError) {
-        console.error('[API] Failed to upsert user:', userError)
+        console.error('[API] Failed to upsert user:', {
+          message: userError.message,
+          details: userError.details || userError.message,
+          hint: userError.hint || '',
+          code: userError.code || ''
+        })
         event.res.statusCode = 500
-        return { error: 'user_upsert_failed', details: userError }
+        return { error: 'user_upsert_failed', details: userError.message }
       }
     } else {
       console.warn('[API] Missing required fields for users table: user_id, email, or username')
