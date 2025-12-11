@@ -86,6 +86,7 @@
                 <div class="flex flex-col gap-4">
                     <div class="text-xs text-amber-900">言語</div>
                     <div class="flex flex-col gap-2">
+
                         <!-- 母国語 -->
                         <div class="flex flex-col gap-2">
                             <button type="button" @click="showNativeLanguage = !showNativeLanguage"
@@ -193,14 +194,17 @@
                                 </button>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
                 <div class="flex flex-col gap-2">
                     <div class="text-xs text-amber-900">趣味</div>
                     <div class="flex flex-wrap gap-2">
-                        <span v-if="!(Array.isArray(form.hobbies) && form.hobbies.length > 0)" class="text-gray-400 text-sm">下の選択肢から趣味を選んでください</span>
-                        <button v-for="hobby in (Array.isArray(form.hobbies) ? form.hobbies : [])" :key="hobby" type="button" @click="removeHobby(hobby)"
+                        <span v-if="!(Array.isArray(form.hobbies) && form.hobbies.length > 0)"
+                            class="text-gray-400 text-sm">下の選択肢から趣味を選んでください</span>
+                        <button v-for="hobby in (Array.isArray(form.hobbies) ? form.hobbies : [])" :key="hobby"
+                            type="button" @click="removeHobby(hobby)"
                             class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
                             {{ hobby }} <span class="ml-1 font-bold opacity-70">×</span>
                         </button>
@@ -221,16 +225,16 @@
 
                     <div class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
                         <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
-                            <span v-for="category in (Array.isArray(choiceCategories) ? choiceCategories : [])" :key="category.name"
-                                @click="activeTab = category.name"
+                            <span v-for="category in (Array.isArray(choiceCategories) ? choiceCategories : [])"
+                                :key="category.name" @click="activeTab = category.name"
                                 :class="activeTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
                                 {{ category.name }}
                             </span>
                         </div>
                         <div v-for="category in choiceCategories" :key="category.name"
                             v-show="activeTab === category.name" class="flex flex-wrap gap-2">
-                            <button v-for="tag in (Array.isArray(category.tags) ? category.tags : [])" :key="tag" type="button" @click="toggleHobby(tag)"
-                                :disabled="false"
+                            <button v-for="tag in (Array.isArray(category.tags) ? category.tags : [])" :key="tag"
+                                type="button" @click="toggleHobby(tag)" :disabled="false"
                                 :class="(Array.isArray(form.hobbies) && form.hobbies.includes(tag)) ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
                                 {{ tag }}
                             </button>
@@ -253,8 +257,6 @@
 
             </form>
         </main>
-
-        <Footer class="fixed inset-x-0 bottom-0" />
     </div>
 </template>
 
@@ -276,8 +278,10 @@ const form = ref({
     native_language: '日本語',
     // テンプレートでは langNative/langSpoken/langLearning を使用しているため両方用意
     langNative: '',
+
     langSpoken: [] as string[],
     langLearning: [] as string[],
+
     // internal names kept for payload
     spoken_languages: [] as string[],
     learning_languages: [] as string[],
@@ -660,14 +664,14 @@ onMounted(async () => {
             }, 5000)
         })
     }
-    
+
     await waitForAuth()
-    
+
     // 取得済みのユーザ情報を表示（存在する場合）
     const u = user.value
     if (u && isAuthenticated.value) {
         console.log('[make-profile] User loaded:', { user_id: u.sub, username: u.nickname || u.name, email: u.email })
-        
+
         // 既にSupabaseにユーザーが存在するかチェック
         const userId = u.sub || ''
         if (userId) {
@@ -679,7 +683,7 @@ onMounted(async () => {
                         user_id: userId
                     }
                 })
-                
+
                 // 既にプロフィールが存在する場合は、保存処理をスキップ
                 // signup.vueで既に保存されているため
                 if (profileCheck.hasProfile) {
@@ -691,12 +695,12 @@ onMounted(async () => {
                 // エラーが発生した場合は続行（既存の処理を実行）
             }
         }
-        
+
         // Auth0で新規登録した際に、usersテーブルとprofilesテーブルにnullの状態でデータを保存
         // 注意: この処理は既にsignup.vueで実行されているため、通常は実行されない
         const email = u.email || ''
         const username = u.nickname || u.name || ''
-        
+
         if (userId && email && username) {
             try {
                 // アクセストークンを取得
@@ -709,7 +713,7 @@ onMounted(async () => {
                 } catch (e) {
                     console.info('アクセストークン取得失敗（続行）:', e)
                 }
-                
+
                 // nullの状態でusersテーブルとprofilesテーブルにデータを保存
                 const initialPayload = {
                     user_id: userId,
@@ -725,15 +729,15 @@ onMounted(async () => {
                     comment: null,
                     last_updated: new Date().toISOString()
                 }
-                
+
                 console.log('[make-profile] Registering user to Supabase:', initialPayload)
-                
+
                 const res = await fetch('/api/profile', {
                     method: 'POST',
                     headers,
                     body: JSON.stringify(initialPayload)
                 })
-                
+
                 if (res.ok) {
                     console.log('[make-profile] User and profile registered successfully in Supabase')
                 } else {
@@ -773,7 +777,7 @@ const registerProfile = async () => {
 
     // ユーザー情報を取得
     let u = user.value
-    
+
     // user.valueがnullの場合、localStorageから直接取得を試みる
     if (!u && typeof window !== 'undefined') {
         try {
@@ -781,11 +785,11 @@ const registerProfile = async () => {
             const scope = 'openid profile email'
             const auth0CacheKey = `@@auth0spajs@@::${config.public.auth0ClientId}::${config.public.auth0Domain}::${scope}`
             const cachedData = localStorage.getItem(auth0CacheKey)
-            
+
             if (cachedData) {
                 const parsed = JSON.parse(cachedData)
                 const idToken = parsed.body?.id_token
-                
+
                 if (idToken) {
                     const tokenParts = idToken.split('.')
                     if (tokenParts.length === 3 && tokenParts[1]) {
@@ -805,7 +809,7 @@ const registerProfile = async () => {
             console.warn('[registerProfile] Failed to get user from localStorage:', err)
         }
     }
-    
+
     if (!u) {
         console.error('[registerProfile] User not found', { user: user.value, isAuthenticated: isAuthenticated.value })
         alert('ユーザー情報の取得に失敗しました。ページを再読み込みしてください。')
@@ -826,6 +830,7 @@ const registerProfile = async () => {
 
     // ペイロード作成
     // 話せる言語を配列に変換
+
     const spokenLanguages = Array.isArray(form.value.langSpoken) 
         ? form.value.langSpoken 
         : (form.value.langSpoken ? [form.value.langSpoken] : (Array.isArray(form.value.spoken_languages) ? form.value.spoken_languages : []))
@@ -835,6 +840,7 @@ const registerProfile = async () => {
         ? form.value.langLearning 
         : (form.value.langLearning ? [form.value.langLearning] : (Array.isArray(form.value.learning_languages) ? form.value.learning_languages : []))
     
+
     const payload = {
         user_id: userId,
         email: email,

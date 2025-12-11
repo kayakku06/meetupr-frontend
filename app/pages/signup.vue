@@ -6,6 +6,18 @@ import { useAuth0 } from '@auth0/auth0-vue';
 const { login, isAuthenticated, isLoading } = useAuth()
 const route = useRoute()
 
+// デバッグログ用のヘルパー関数(開発環境でのみ出力)
+const isDev = process.env.NODE_ENV === 'development'
+const debugLog = (...args: any[]) => {
+  if (isDev) console.log('[signup]', ...args)
+}
+const debugError = (...args: any[]) => {
+  if (isDev) console.error('[signup]', ...args)
+}
+const debugWarn = (...args: any[]) => {
+  if (isDev) console.warn('[signup]', ...args)
+}
+
 // 認証成功後のリダイレクト処理
 watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
   if (!loading && authenticated && route.path === '/signup') {
@@ -13,7 +25,7 @@ watch([isLoading, isAuthenticated], ([loading, authenticated]) => {
     if (typeof window !== 'undefined') {
       const isNewSignup = localStorage.getItem('isNewSignup')
       if (isNewSignup === 'true') {
-        console.log('[signup] New signup detected, redirecting to /make-profile')
+        debugLog('New signup detected, redirecting to /make-profile')
         localStorage.removeItem('isNewSignup') // フラグを削除
         navigateTo('/make-profile')
         return
@@ -32,6 +44,14 @@ const emailError = ref('')
 const usernameError = ref('')
 const passwordError = ref('')
 const confirmPasswordError = ref('')
+
+// パスワード要件のチェック状態
+const passwordChecks = ref({
+  length: false,
+  uppercase: false,
+  lowercase: false,
+  number: false
+})
 
 // 学内メールアドレスのバリデーション
 const validateEmail = (emailValue: string) => {
@@ -57,6 +77,16 @@ const validatePassword = (passwordValue: string) => {
     passwordError.value = 'パスワードは8文字以上で入力してください'
     return false
   }
+  // 大文字、小文字、数字を含むかチェック
+  const hasUpperCase = /[A-Z]/.test(passwordValue)
+  const hasLowerCase = /[a-z]/.test(passwordValue)
+  const hasNumber = /[0-9]/.test(passwordValue)
+  
+  if (!hasUpperCase || !hasLowerCase || !hasNumber) {
+    passwordError.value = 'パスワードは大文字・小文字・数字を全て含む必要があります'
+    return false
+  }
+  
   passwordError.value = ''
   return true
 }
@@ -108,6 +138,40 @@ watch(email, () => {
   }
 })
 
+// パスワードの入力時にリアルタイムでバリデーション
+watch(password, () => {
+  if (password.value && password.value.length > 0) {
+    const hasUpperCase = /[A-Z]/.test(password.value)
+    const hasLowerCase = /[a-z]/.test(password.value)
+    const hasNumber = /[0-9]/.test(password.value)
+    
+    // チェック状態を更新
+    passwordChecks.value = {
+      length: password.value.length >= 8,
+      uppercase: hasUpperCase,
+      lowercase: hasLowerCase,
+      number: hasNumber
+    }
+    
+    if (password.value.length < 8) {
+      passwordError.value = 'パスワードは8文字以上で入力してください'
+    } else if (!hasUpperCase || !hasLowerCase || !hasNumber) {
+      passwordError.value = 'パスワードは大文字・小文字・数字を全て含む必要があります'
+    } else {
+      passwordError.value = ''
+    }
+  } else {
+    passwordError.value = ''
+    // チェック状態をリセット
+    passwordChecks.value = {
+      length: false,
+      uppercase: false,
+      lowercase: false,
+      number: false
+    }
+  }
+})
+
 // パスワード確認の入力時にリアルタイムでバリデーション
 watch(confirmPassword, () => {
   if (confirmPassword.value && confirmPassword.value !== password.value) {
@@ -149,7 +213,7 @@ const handleSignUp = async () => {
       password: password.value
     }
     
-    console.log('[signup] Sending signup request:', { 
+    debugLog('Sending signup request:', { 
       email: requestBody.email, 
       username: requestBody.username,
       password: '***' 
@@ -161,22 +225,27 @@ const handleSignUp = async () => {
       body: requestBody
     })
     
-    console.log('[signup] Signup response:', response)
+    debugLog('Signup response:', response)
 
     if ('error' in response && response.error) {
       // エラーハンドリング
+      debugError('Signup API error response:', response)
+      
       if (response.error === 'user_exists') {
         emailError.value = 'このメールアドレスは既に登録されています'
       } else {
-        // エラーメッセージを確認して、username関連のエラーかどうかを判定
-        const errorDescription = ('error_description' in response && response.error_description) || response.error || '登録に失敗しました'
-        const isUsernameError = errorDescription.toLowerCase().includes('username') || 
-                                 errorDescription.toLowerCase().includes('ユーザーネーム')
+        // エラーメッセージを確認
+        const errorDescription = ('error_description' in response && response.error_description) || response.error
+        const errorDescriptionStr = typeof errorDescription === 'string' ? errorDescription : JSON.stringify(errorDescription)
+        
+        // username関連のエラーかどうかを判定
+        const isUsernameError = errorDescriptionStr.toLowerCase().includes('username') || 
+                                 errorDescriptionStr.toLowerCase().includes('ユーザーネーム')
         
         if (isUsernameError) {
-          usernameError.value = errorDescription
+          usernameError.value = 'このユーザーネームは使用できません'
         } else {
-          emailError.value = errorDescription
+          emailError.value = '登録に失敗しました。入力内容をご確認ください'
         }
       }
       return
@@ -198,7 +267,7 @@ const handleSignUp = async () => {
       })
 
       if ('error' in loginResponse && loginResponse.error) {
-        console.error('Login after signup failed:', loginResponse.error)
+        debugError('Login after signup failed:', loginResponse.error)
         // 新規登録は成功しているが、自動ログインに失敗した場合
         // ユーザーに成功メッセージを表示して、ログインページに遷移
         alert('新規登録が完了しました。ログインページからログインしてください。')
@@ -264,7 +333,7 @@ const handleSignUp = async () => {
                   last_updated: new Date().toISOString()
                 }
                 
-                console.log('[signup] Registering user to Supabase:', initialPayload)
+                debugLog('Registering user to Supabase:', initialPayload)
                 
                 try {
                   const profileResponse = await $fetch('/api/profile', {
@@ -273,17 +342,17 @@ const handleSignUp = async () => {
                   })
                   
                   if (profileResponse && !('error' in profileResponse)) {
-                    console.log('[signup] User and profile registered successfully in Supabase')
+                    debugLog('User and profile registered successfully in Supabase')
                   } else {
-                    console.warn('[signup] Failed to register user to Supabase:', profileResponse)
+                    debugWarn('Failed to register user to Supabase:', profileResponse)
                   }
                 } catch (profileError) {
-                  console.warn('[signup] Error registering user to Supabase (non-fatal):', profileError)
+                  debugWarn('Error registering user to Supabase (non-fatal):', profileError)
                 }
               }
             }
           } catch (tokenError) {
-            console.warn('[signup] Failed to decode ID token (non-fatal):', tokenError)
+            debugWarn('Failed to decode ID token (non-fatal):', tokenError)
           }
           
           // ページをリロードしてAuth0のSDKに状態を認識させる
@@ -292,7 +361,7 @@ const handleSignUp = async () => {
         }
       }
     } catch (loginError: any) {
-      console.error('Login after signup error:', loginError)
+      debugError('Login after signup error:', loginError)
       // 新規登録は成功しているが、自動ログインに失敗した場合
       // ユーザーに成功メッセージを表示して、ログインページに遷移
       alert('新規登録が完了しました。ログインページからログインしてください。')
@@ -306,25 +375,34 @@ const handleSignUp = async () => {
       return
     }
   } catch (error: any) {
-    console.error('Signup error:', error)
-    console.error('Signup error data:', error.data)
-    console.error('Signup error status:', error.status)
-    console.error('Signup error statusText:', error.statusText)
+    debugError('Signup error:', error)
+    debugError('Error details:', {
+      data: error.data,
+      status: error.status,
+      statusText: error.statusText
+    })
     
     // $fetchのエラーレスポンスから詳細を取得
     const errorData = error.data || error.response?.data || error
-    const errorMessage = errorData?.message || errorData?.error_description || errorData?.error
     
-    if (errorData?.error === 'user_exists' || errorData?.code === 'user_exists') {
+    // エラーコードとメッセージを取得
+    const errorCode = errorData?.code || errorData?.error
+    const errorMessage = errorData?.message || errorData?.error_description || errorData?.error
+    const errorMessageStr = typeof errorMessage === 'string' ? errorMessage : ''
+    
+    // エラーの種類に応じて適切なメッセージを表示
+    if (errorCode === 'invalid_password' || errorMessageStr.toLowerCase().includes('password')) {
+      passwordError.value = 'パスワードは8文字以上で、大文字・小文字・数字を全て含む必要があります'
+    } else if (errorData?.error === 'user_exists' || errorData?.code === 'user_exists') {
       emailError.value = 'このメールアドレスは既に登録されています'
     } else if (errorData?.error === 'empty_body') {
       emailError.value = 'リクエストが正しく送信されませんでした。もう一度お試しください。'
     } else if (errorData?.error === 'email and password are required') {
       emailError.value = 'メールアドレスとパスワードを入力してください'
-    } else if (errorMessage) {
-      emailError.value = errorMessage
+    } else if (errorMessageStr.toLowerCase().includes('username') || errorMessageStr.toLowerCase().includes('ユーザーネーム')) {
+      usernameError.value = 'このユーザーネームは使用できません'
     } else {
-      emailError.value = `登録に失敗しました。${error.status ? `(エラーコード: ${error.status})` : ''} もう一度お試しください。`
+      emailError.value = '登録に失敗しました。しばらく時間をおいてから再度お試しください。'
     }
   }
 }
@@ -407,12 +485,67 @@ const handleBackToLogin = () => {
                             id="password"
                             v-model="password"
                             type="password"
-                            placeholder="8文字以上で入力"
+                            placeholder="大文字・小文字・数字を含む8文字以上"
+                            
               :class="[
                 'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:border-transparent',
                 passwordError ? 'border-red-500 focus:ring-red-500' : 'border-[var(--meetupr-sub)] focus:ring-[var(--meetupr-sub)]'
               ]"
                         />
+                        <!-- パスワード要件チェックリスト -->
+                        <div v-if="password.length > 0" class="mt-2 space-y-1">
+                            <div class="flex items-center text-xs">
+                                <input 
+                                    type="checkbox" 
+                                    :checked="passwordChecks.length" 
+                                    disabled 
+                                    class="mr-2 cursor-default"
+                                    :class="passwordChecks.length ? 'accent-green-600' : 'accent-gray-400'"
+                                />
+                                <span :class="passwordChecks.length ? 'text-green-600' : 'text-gray-500'">
+                                    8文字以上
+                                </span>
+                            </div>
+                            <div class="flex items-center text-xs">
+                                <input 
+                                    type="checkbox" 
+                                    :checked="passwordChecks.uppercase" 
+                                    disabled 
+                                    class="mr-2 cursor-default"
+                                    :class="passwordChecks.uppercase ? 'accent-green-600' : 'accent-gray-400'"
+                                />
+                                <span :class="passwordChecks.uppercase ? 'text-green-600' : 'text-gray-500'">
+                                    大文字(A-Z)を含む
+                                </span>
+                            </div>
+                            <div class="flex items-center text-xs">
+                                <input 
+                                    type="checkbox" 
+                                    :checked="passwordChecks.lowercase" 
+                                    disabled 
+                                    class="mr-2 cursor-default"
+                                    :class="passwordChecks.lowercase ? 'accent-green-600' : 'accent-gray-400'"
+                                />
+                                <span :class="passwordChecks.lowercase ? 'text-green-600' : 'text-gray-500'">
+                                    小文字(a-z)を含む
+                                </span>
+                            </div>
+                            <div class="flex items-center text-xs">
+                                <input 
+                                    type="checkbox" 
+                                    :checked="passwordChecks.number" 
+                                    disabled 
+                                    class="mr-2 cursor-default"
+                                    :class="passwordChecks.number ? 'accent-green-600' : 'accent-gray-400'"
+                                />
+                                <span :class="passwordChecks.number ? 'text-green-600' : 'text-gray-500'">
+                                    数字(0-9)を含む
+                                </span>
+                            </div>
+                        </div>
+                        <p v-else class="mt-1 text-xs text-gray-500">
+                            ※ 大文字(A-Z)・小文字(a-z)・数字(0-9)を全て含む必要があります
+                        </p>
                         <p v-if="passwordError" class="mt-1 text-sm text-red-500">
                             {{ passwordError }}
                         </p>
