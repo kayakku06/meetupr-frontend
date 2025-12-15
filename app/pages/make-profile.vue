@@ -344,8 +344,7 @@ onMounted(() => {
     }
 })
 
-// 選択された地域
-const selectedRegion = ref('')
+// (selectedRegion removed — not used)
 
 // 各セクションの展開状態
 const showOrigin = ref(false)
@@ -475,93 +474,7 @@ const regionCategories = ref([
 // 初期タブを設定
 activeRegionTab.value = regionCategories.value[0]?.name || '東アジア'
 
-// 国ごとの地域分類（互換性のため保持）
-const regionCountries: { [key: string]: { value: string; label: string }[] } = {
-    '東アジア': [
-        { value: 'CN', label: '中国' },
-        { value: 'KR', label: '韓国' },
-        { value: 'TW', label: '台湾' },
-        { value: 'MN', label: 'モンゴル' }
-    ],
-    '東南アジア': [
-        { value: 'ID', label: 'インドネシア' },
-        { value: 'VN', label: 'ベトナム' },
-        { value: 'MY', label: 'マレーシア' },
-        { value: 'MM', label: 'ミャンマー' },
-        { value: 'KH', label: 'カンボジア' },
-        { value: 'SG', label: 'シンガポール' },
-        { value: 'LA', label: 'ラオス' },
-        { value: 'TH', label: 'タイ' },
-        { value: 'PH', label: 'フィリピン' },
-        { value: 'BN', label: 'ブルネイ' }
-    ],
-    '南アジア': [
-        { value: 'IN', label: 'インド' },
-        { value: 'BD', label: 'バングラディシュ' },
-        { value: 'PK', label: 'パキスタン' },
-        { value: 'NP', label: 'ネパール' },
-        { value: 'LK', label: 'スリランカ' },
-        { value: 'MV', label: 'モルディブ' }
-    ],
-    '中央アジア': [
-        { value: 'KG', label: 'キルギス' },
-        { value: 'UZ', label: 'ウズベキスタン' },
-        { value: 'TJ', label: 'タジキスタン' },
-        { value: 'KZ', label: 'カザフスタン' },
-        { value: 'AF', label: 'アフガニスタン' }
-    ],
-    '西アジア・中東': [
-        { value: 'TR', label: 'トルコ' },
-        { value: 'IL', label: 'イスラエル' },
-        { value: 'OM', label: 'オマーン' }
-    ],
-    '東香港': [
-        { value: 'HK', label: '香港' }
-    ],
-    'オセアニア': [
-        { value: 'AU', label: 'オーストラリア' }
-    ],
-    '北米': [
-        { value: 'US', label: 'アメリカ' },
-        { value: 'CA', label: 'カナダ' }
-    ],
-    '中米・南米': [
-        { value: 'MX', label: 'メキシコ' },
-        { value: 'GT', label: 'グアテマラ' },
-        { value: 'PE', label: 'ペルー' }
-    ],
-    'ヨーロッパ': [
-        { value: 'GB', label: 'イギリス' },
-        { value: 'FR', label: 'フランス' },
-        { value: 'DE', label: 'ドイツ' },
-        { value: 'IT', label: 'イタリア' },
-        { value: 'ES', label: 'スペイン' },
-        { value: 'CH', label: 'スイス' },
-        { value: 'UA', label: 'ウクライナ' },
-        { value: 'RU', label: 'ロシア' },
-        { value: 'LT', label: 'リトアニア' },
-        { value: 'SE', label: 'スウェーデン' },
-        { value: 'NO', label: 'ノルウェー' },
-        { value: 'HU', label: 'ハンガリー' },
-        { value: 'AT', label: 'オーストリア' }
-    ],
-    'アフリカ': [
-        { value: 'EG', label: 'エジプト' },
-        { value: 'GH', label: 'ガーナ' },
-        { value: 'NG', label: 'ナイジェリア' },
-        { value: 'ET', label: 'エチオピア' },
-        { value: 'BF', label: 'ブルキナファソ' },
-        { value: 'UG', label: 'ウガンダ' },
-        { value: 'NA', label: 'ナミビア' },
-        { value: 'MA', label: 'モロッコ' },
-        { value: 'GA', label: 'ガボン' }
-    ]
-}
-
-// 地域から国を取得する関数
-function getCountriesByRegion(region: string): { value: string; label: string }[] {
-    return regionCountries[region] || []
-}
+// regionCountries/getCountriesByRegion removed — regionCategories を直接使用
 
 // 国コードからラベルを取得する関数
 function getCountryLabel(countryCode: string): string {
@@ -616,10 +529,7 @@ function toggleSpokenLanguage(langCode: string) {
     }
 }
 
-// 言語を削除する関数（話せる言語）
-function removeSpokenLanguage(langCode: string) {
-    form.value.langSpoken = form.value.langSpoken.filter(l => l !== langCode)
-}
+// removeSpokenLanguage removed — UI では使用していないため削除
 
 // 言語を追加する関数（学びたい言語）
 function toggleLearningLanguage(langCode: string) {
@@ -630,10 +540,7 @@ function toggleLearningLanguage(langCode: string) {
     }
 }
 
-// 言語を削除する関数（学びたい言語）
-function removeLearningLanguage(langCode: string) {
-    form.value.langLearning = form.value.langLearning.filter(l => l !== langCode)
-}
+// removeLearningLanguage removed — UI では使用していないため削除
 
 // 言語コードからラベルを取得する関数
 function getLanguageLabel(langCode: string): string {
@@ -935,7 +842,7 @@ const registerProfile = async () => {
         spoken_languages: spokenLanguages,
         learning_languages: learningLanguages,
         interests: Array.isArray(form.value.hobbies) ? form.value.hobbies : [],
-        avatar_url : profileImageDataUrl.value || null,
+        avatar_url : uploadedAvatarUrl || profileImageDataUrl.value || null,
         residence: form.value.origin || form.value.residence || null,
         comment: form.value.bio || form.value.comment || null, // bioをcommentにマッピング
         last_updated: new Date().toISOString()
