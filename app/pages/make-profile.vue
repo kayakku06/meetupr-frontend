@@ -4,12 +4,20 @@
         <main class="max-w-md mx-auto p-5 ">
             <div class="flex gap-3 items-center mb-3">
                 <div
-                    class="w-20 h-20 rounded-full bg-[var(--meetup-color-3)] flex items-center justify-center border-2 border-[var(--meetupr-color-3)]">
-                    <svg viewBox="0 0 64 64" class="w-11 h-11" aria-hidden>
-                        <circle cx="32" cy="24" r="12" fill="none" stroke="#6aaea0" stroke-width="2" />
-                        <path d="M10 54c4-10 18-14 22-14s18 4 22 14" fill="none" stroke="#6aaea0" stroke-width="2" />
-                    </svg>
+                    class="w-20 h-20 rounded-full bg-[var(--meetup-color-3)] flex items-center justify-center border-2 border-[var(--meetupr-color-3)] overflow-hidden cursor-pointer"
+                    role="button" aria-label="プロフィール画像を選択" @click="onAvatarClick">
+                    <template v-if="profileImageDataUrl">
+                        <img :src="profileImageDataUrl" alt="avatar" class="w-full h-full object-cover" />
+                    </template>
+                    <template v-else>
+                        <svg viewBox="0 0 64 64" class="w-11 h-11" aria-hidden>
+                            <circle cx="32" cy="24" r="12" fill="none" stroke="#6aaea0" stroke-width="2" />
+                            <path d="M10 54c4-10 18-14 22-14s18 4 22 14" fill="none" stroke="#6aaea0" stroke-width="2" />
+                        </svg>
+                    </template>
                 </div>
+                <!-- 隠しファイル入力（アバタークリックで起動） -->
+                <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
 
                 <div class="flex-1">
                     <h2 class="m-0 mb-2 text-lg text-teal-900">プロフィール登録</h2>
@@ -293,6 +301,48 @@ const form = ref({
 
 // 一時入力用
 const newHobby = ref('')
+
+// プロフィール画像を保持するための state
+const profileImageDataUrl = ref<string | null>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
+
+// アバタークリックでファイル選択を開く
+const onAvatarClick = () => {
+    if (fileInput.value) {
+        fileInput.value.click()
+    }
+}
+
+// ファイル選択時の処理: DataURL に変換して localStorage に保存
+const onFileChange = (e: Event) => {
+    const input = e.target as HTMLInputElement
+    const file = input?.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+        try {
+            const result = reader.result as string
+            profileImageDataUrl.value = result
+            if (typeof window !== 'undefined') {
+                try { localStorage.setItem('make_profile_image', result) } catch (err) { /* ignore */ }
+            }
+        } catch (err) {
+            console.warn('[make-profile] failed to read selected image:', err)
+        }
+    }
+    reader.readAsDataURL(file)
+}
+
+// localStorage から復元
+onMounted(() => {
+    if (typeof window === 'undefined') return
+    try {
+        const saved = localStorage.getItem('make_profile_image')
+        if (saved) profileImageDataUrl.value = saved
+    } catch (err) {
+        /* ignore */
+    }
+})
 
 // 選択された地域
 const selectedRegion = ref('')
@@ -828,6 +878,40 @@ const registerProfile = async () => {
 
     console.log('[registerProfile] Sending as:', { user_id: userId, username, email })
 
+    // もし画像が選択されていれば、先に /api/profile/upload に送信して
+    // Supabase に保存された public URL を取得して avatar_url に使う
+    let uploadedAvatarUrl: string | null = null
+    if (profileImageDataUrl.value) {
+        try {
+            const uploadHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
+            try {
+                const token = await getAccessToken()
+                if (token) uploadHeaders['Authorization'] = `Bearer ${token}`
+            } catch (e) {
+                // トークン取得失敗は続行（upload エンドポイントが認証不要な場合もある）
+                console.info('[registerProfile] getAccessToken failed (continuing):', e)
+            }
+
+            console.log('[registerProfile] Uploading avatar to /api/profile/upload')
+            const uploadRes = await fetch('/api/profile/upload', {
+                method: 'POST',
+                headers: uploadHeaders,
+                body: JSON.stringify({ user_id: userId, filename: `${username || userId}-avatar.png`, dataUrl: profileImageDataUrl.value })
+            })
+
+            if (uploadRes.ok) {
+                const json = await uploadRes.json()
+                uploadedAvatarUrl = json?.url || null
+                console.log('[registerProfile] upload returned url:', uploadedAvatarUrl)
+            } else {
+                const txt = await uploadRes.text()
+                console.warn('[registerProfile] upload failed:', uploadRes.status, txt)
+            }
+        } catch (err) {
+            console.warn('[registerProfile] avatar upload error (non-fatal):', err)
+        }
+    }
+
     // ペイロード作成
     // 話せる言語を配列に変換
 
@@ -851,9 +935,11 @@ const registerProfile = async () => {
         spoken_languages: spokenLanguages,
         learning_languages: learningLanguages,
         interests: Array.isArray(form.value.hobbies) ? form.value.hobbies : [],
+        avatar_url : profileImageDataUrl.value || null,
         residence: form.value.origin || form.value.residence || null,
         comment: form.value.bio || form.value.comment || null, // bioをcommentにマッピング
         last_updated: new Date().toISOString()
+        
     }
 
     console.log('送信ペイロード:', payload)
