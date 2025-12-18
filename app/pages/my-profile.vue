@@ -16,7 +16,7 @@
 
         <div class="flex-1">
           <h2 class="m-0 mb-2 text-lg text-teal-900">{{ form.name || 'なまえ' }}</h2>
-          <button v-if="!editing"
+          <button v-if="!editing && !isLoading"
             class="border-[var(--meetupr-color-3)] text-white px-2.5 py-1.5 rounded-full inline-flex gap-1.5 items-center text-xs hover:border-[var(--meetupr-color-3)] transition bg-[var(--meetupr-color-3)]"
             @click="toggleEdit">
             <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden>
@@ -32,7 +32,7 @@
       <form class="flex flex-col gap-3" @submit.prevent>
         <label class="flex flex-col gap-1">
           <div class="text-sm text-yellow-900">学部</div>
-          <select :disabled="!editing" v-model="form.department"
+          <select :disabled="!editing || isLoading" v-model="form.department"
             class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 appearance-none ">
             <option value="" disabled>学部を選択</option>
             <option value="経営学部">経営学部</option>
@@ -47,19 +47,19 @@
         <fieldset class="flex flex-col gap-2">
           <legend class="text-xs text-amber-900">性別</legend>
           <label class="inline-flex items-center gap-1.5 text-sm text-amber-900"><input type="radio"
-              :disabled="!editing" value="男性" v-model="form.gender"
+              :disabled="!editing || isLoading" value="男性" v-model="form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed" /> 男性</label>
           <label class="inline-flex items-center gap-1.5 text-sm text-amber-900"><input type="radio"
-              :disabled="!editing" value="女性" v-model="form.gender"
+              :disabled="!editing || isLoading" value="女性" v-model="form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed" /> 女性</label>
           <label class="inline-flex items-center gap-1.5 text-sm text-amber-900"><input type="radio"
-              :disabled="!editing" value="その他" v-model="form.gender"
+              :disabled="!editing || isLoading" value="その他" v-model="form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed" /> その他</label>
         </fieldset>
 
         <label class="flex flex-col gap-2">
           <div class="text-xs text-amber-900">出身</div>
-          <input :disabled="!editing" v-model="form.origin"
+          <input :disabled="!editing || isLoading" v-model="form.origin"
             class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
             placeholder="例：日本" />
         </label>
@@ -69,32 +69,83 @@
           <!-- ネイティブ -->
           <div class="flex flex-col gap-1">
             <div class="text-[10px] text-amber-700">ネイティブ</div>
-            <select :disabled="!editing" v-model="form.nativeLanguage"
+            <select :disabled="!editing || isLoading" v-model="form.nativeLanguage"
               class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
               <option value="" disabled>選択してください</option>
               <option value="日本語">日本語</option>
               <option value="英語">英語</option>
+              <option value="中国語">中国語</option>
+              <option value="韓国語">韓国語</option>
+              <option value="スペイン語">スペイン語</option>
+              <option value="フランス語">フランス語</option>
+              <option value="ドイツ語">ドイツ語</option>
             </select>
           </div>
           <!-- 話せる言語 -->
           <div class="flex flex-col gap-1">
             <div class="text-[10px] text-amber-700">話せる言語</div>
-            <select :disabled="!editing" v-model="form.spokenLanguages"
-              class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
-              <option value="" disabled>選択してください</option>
-              <option value="日本語">日本語</option>
-              <option value="英語">英語</option>
-            </select>
+            <div class="flex gap-2 flex-wrap mb-1.5">
+              <template v-for="(lang, i) in form.spokenLanguages" :key="lang + '-' + i">
+                <div
+                  :class="[
+                    'flex items-center bg-white border-2 border-[var(--meetupr-sub)] px-2.5 py-1.5 rounded-full text-xs text-amber-900',
+                    !editing ? 'opacity-50 cursor-not-allowed' : ''
+                  ]">
+                  <span class="select-none">{{ lang }}</span>
+                  <button v-if="editing" type="button" @click="removeSpokenLanguage(lang)"
+                    class="ml-2 text-[11px] text-gray-500 hover:text-gray-800">×</button>
+                </div>
+              </template>
+            </div>
+            <div class="flex gap-2 items-center" v-if="editing">
+              <select v-model="newSpokenLanguage"
+                class="flex-1 border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
+                <option value="" disabled>言語を選択</option>
+                <option value="日本語">日本語</option>
+                <option value="英語">英語</option>
+                <option value="中国語">中国語</option>
+                <option value="韓国語">韓国語</option>
+                <option value="スペイン語">スペイン語</option>
+                <option value="フランス語">フランス語</option>
+                <option value="ドイツ語">ドイツ語</option>
+              </select>
+              <button type="button"
+                class="bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition"
+                @click="addSpokenLanguage()">追加</button>
+            </div>
           </div>
           <!-- 学びたい言語 -->
           <div class="flex flex-col gap-1">
             <div class="text-[10px] text-amber-700">学びたい言語</div>
-            <select :disabled="!editing" v-model="form.learningLanguages"
-              class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
-              <option value="" disabled>選択してください</option>
-              <option value="日本語">日本語</option>
-              <option value="英語">英語</option>
-            </select>
+            <div class="flex gap-2 flex-wrap mb-1.5">
+              <template v-for="(lang, i) in form.learningLanguages" :key="lang + '-' + i">
+                <div
+                  :class="[
+                    'flex items-center bg-white border-2 border-[var(--meetupr-sub)] px-2.5 py-1.5 rounded-full text-xs text-amber-900',
+                    !editing ? 'opacity-50 cursor-not-allowed' : ''
+                  ]">
+                  <span class="select-none">{{ lang }}</span>
+                  <button v-if="editing" type="button" @click="removeLearningLanguage(lang)"
+                    class="ml-2 text-[11px] text-gray-500 hover:text-gray-800">×</button>
+                </div>
+              </template>
+            </div>
+            <div class="flex gap-2 items-center" v-if="editing">
+              <select v-model="newLearningLanguage"
+                class="flex-1 border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
+                <option value="" disabled>言語を選択</option>
+                <option value="日本語">日本語</option>
+                <option value="英語">英語</option>
+                <option value="中国語">中国語</option>
+                <option value="韓国語">韓国語</option>
+                <option value="スペイン語">スペイン語</option>
+                <option value="フランス語">フランス語</option>
+                <option value="ドイツ語">ドイツ語</option>
+              </select>
+              <button type="button"
+                class="bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition"
+                @click="addLearningLanguage()">追加</button>
+            </div>
           </div>
         </div>
 
@@ -145,10 +196,10 @@
 
         <label class="flex flex-col gap-2">
           <div class="text-xs text-amber-900">一言（50文字以内）</div>
-          <textarea :disabled="!editing" v-model="form.bio"
+          <textarea :disabled="!editing || isLoading" v-model="form.bio"
             class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 min-h-16 resize-none"
             maxlength="50" placeholder="よろしくお願いします！！"></textarea>
-          <div class="text-xs text-amber-700 text-right mt-1">{{ form.bio.length }}/50</div>
+          <div class="text-xs text-amber-700 text-right mt-1">{{ (form.bio || '').length }}/50</div>
         </label>
 
         <div class="flex gap-2 mt-1.5" v-if="editing">
@@ -172,10 +223,13 @@ definePageMeta({
   middleware: 'auth'
 })
 
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import Footer from '~/components/Footer.vue'
+import { useAuth } from '~/composables/useAuth'
 
+const { user } = useAuth()
 const editing = ref(false)
+const isLoading = ref(true)
 
 // ★ 既存の選択肢のデータ（サンプル）
 const choiceCategories = ref([
@@ -201,34 +255,49 @@ const choiceCategories = ref([
 const activeTab = ref(choiceCategories.value[0].name)
 
 const form = ref({
-  name: 'なまえ',
-  department: '学部を選択',
-  gender: 'その他',
-  origin: '日本',
+  name: '',
+  department: '',
+  gender: '',
+  origin: '',
   nativeLanguage: '',
-  spokenLanguages: '',
-  learningLanguages: '',
-  hobbies: ['料理', '野球'],
-  bio: 'よろしくお願いします！！'
+  spokenLanguages: [],
+  learningLanguages: [],
+  hobbies: [],
+  bio: ''
 })
 
-const newLanguage = ref('')
+const newSpokenLanguage = ref('')
+const newLearningLanguage = ref('')
 const newHobby = ref('')
 
 function toggleEdit() {
   editing.value = !editing.value
 }
 
-function addLanguage() {
-  const v = newLanguage.value.trim()
-  if (v) {
-    // languages プロパティが存在しないため、この関数は削除
-    newLanguage.value = ''
+// 話せる言語の追加・削除
+function addSpokenLanguage() {
+  const v = newSpokenLanguage.value.trim()
+  if (v && !form.value.spokenLanguages.includes(v)) {
+    form.value.spokenLanguages.push(v)
+    newSpokenLanguage.value = ''
   }
 }
 
-function removeLanguage(i) {
-  // languages プロパティが存在しないため、この関数は削除
+function removeSpokenLanguage(lang) {
+  form.value.spokenLanguages = form.value.spokenLanguages.filter(l => l !== lang)
+}
+
+// 学びたい言語の追加・削除
+function addLearningLanguage() {
+  const v = newLearningLanguage.value.trim()
+  if (v && !form.value.learningLanguages.includes(v)) {
+    form.value.learningLanguages.push(v)
+    newLearningLanguage.value = ''
+  }
+}
+
+function removeLearningLanguage(lang) {
+  form.value.learningLanguages = form.value.learningLanguages.filter(l => l !== lang)
 }
 
 // addHobby: 入力からの追加（既存のボタン挙動）か、引数で名前を渡しての追加の両方に対応
@@ -265,10 +334,59 @@ function save() {
   alert('保存しました（サンプル）')
 }
 
-const original = JSON.parse(JSON.stringify(form.value))
+let original = ref(JSON.parse(JSON.stringify(form.value)))
+
 function cancel() {
-  Object.assign(form.value, JSON.parse(JSON.stringify(original)))
+  Object.assign(form.value, JSON.parse(JSON.stringify(original.value)))
   editing.value = false
 }
+
+// プロフィールデータを取得
+async function fetchProfile() {
+  if (!user.value?.sub) {
+    console.warn('User ID not available')
+    isLoading.value = false
+    return
+  }
+
+  try {
+    isLoading.value = true
+    const response = await $fetch('/api/profile', {
+      query: {
+        user_id: user.value.sub
+      }
+    })
+
+    if (response.error) {
+      console.error('Error fetching profile:', response.error)
+      // エラーが発生してもフォームは表示する（デフォルト値で）
+      isLoading.value = false
+      return
+    }
+
+    // データをフォームに反映
+    form.value.name = response.username || ''
+    form.value.department = response.major || ''
+    form.value.gender = response.gender || ''
+    form.value.origin = response.residence || ''
+    form.value.nativeLanguage = response.native_language || ''
+    form.value.spokenLanguages = Array.isArray(response.spoken_languages) ? response.spoken_languages : []
+    form.value.learningLanguages = Array.isArray(response.learning_languages) ? response.learning_languages : []
+    form.value.hobbies = Array.isArray(response.interests) ? response.interests : []
+    form.value.bio = response.comment || ''
+
+    // オリジナルデータを更新
+    original.value = JSON.parse(JSON.stringify(form.value))
+  } catch (error) {
+    console.error('Failed to fetch profile:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// ページマウント時にデータを取得
+onMounted(() => {
+  fetchProfile()
+})
 
 </script>
