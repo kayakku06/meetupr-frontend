@@ -32,6 +32,33 @@ const languageCodeToLabel: Record<string, string> = {
   'ar': 'アラビア語'
 }
 
+// 学部コードから日本語名へのマッピング
+const majorCodeToLabel: Record<string, string> = {
+  'business': '経営学部',
+  'production_science': '政策科学部',
+  'information_science': '情報理工学部',
+  'film_studies': '映像学部',
+  'psychology': '総合心理学部',
+  'global_liberal_arts': 'グローバル教養学部'
+}
+
+// 学部コードを日本語名に変換する関数
+function getMajorLabel(majorCode: string): string {
+  return majorCodeToLabel[majorCode] || majorCode
+}
+
+// 性別コードから日本語名へのマッピング
+const genderCodeToLabel: Record<string, string> = {
+  'male': '男性',
+  'female': '女性',
+  'other': 'その他'
+}
+
+// 性別コードを日本語名に変換する関数
+function getGenderLabel(genderCode: string): string {
+  return genderCodeToLabel[genderCode] || genderCode
+}
+
 // 言語コードを日本語名に変換する関数
 function getLanguageLabel(langCode: string): string {
   return languageCodeToLabel[langCode] || langCode
@@ -114,11 +141,21 @@ export default defineEventHandler(async (event: H3Event) => {
       ? getLanguageLabel(String(profileData.native_language))
       : null
 
+    // 学部コードを日本語名に変換
+    const majorLabel = profileData?.major && profileData.major !== ''
+      ? getMajorLabel(String(profileData.major))
+      : null
+
+    // 性別コードを日本語名に変換
+    const genderLabel = profileData?.gender && profileData.gender !== ''
+      ? getGenderLabel(String(profileData.gender))
+      : null
+
     // データを結合して返す
     return {
       username: userData?.username || null,
-      major: profileData?.major || null,
-      gender: profileData?.gender || null,
+      major: majorLabel,
+      gender: genderLabel,
       native_language: nativeLanguage,
       spoken_languages: spokenLanguages,
       learning_languages: learningLanguages,

@@ -254,6 +254,33 @@ const languageLabelToCode = {
   'アラビア語': 'ar'
 }
 
+// 学部名から学部コードへの逆マッピング
+const majorLabelToCode = {
+  '経営学部': 'business',
+  '政策科学部': 'production_science',
+  '情報理工学部': 'information_science',
+  '映像学部': 'film_studies',
+  '総合心理学部': 'psychology',
+  'グローバル教養学部': 'global_liberal_arts'
+}
+
+// 学部名を学部コードに変換する関数
+function getMajorCode(label: string): string {
+  return majorLabelToCode[label] || label
+}
+
+// 性別名から性別コードへの逆マッピング
+const genderLabelToCode = {
+  '男性': 'male',
+  '女性': 'female',
+  'その他': 'other'
+}
+
+// 性別名を性別コードに変換する関数
+function getGenderCode(label: string): string {
+  return genderLabelToCode[label] || label
+}
+
 // 言語名を言語コードに変換する関数
 function getLanguageCode(label: string): string {
   return languageLabelToCode[label] || label
@@ -401,13 +428,23 @@ async function save() {
       ? convertLanguageLabelsToCodes(form.value.learningLanguages)
       : []
 
+    // 学部名を学部コードに変換
+    const majorCode = form.value.department 
+      ? getMajorCode(form.value.department)
+      : null
+
+    // 性別名を性別コードに変換
+    const genderCode = form.value.gender 
+      ? getGenderCode(form.value.gender)
+      : null
+
     // ペイロード作成
     const payload = {
       user_id: userId,
       email: email,
       username: username,
-      major: form.value.department || null,
-      gender: form.value.gender || null,
+      major: majorCode,
+      gender: genderCode,
       native_language: nativeLanguageCode,
       spoken_languages: spokenLanguagesCodes,
       learning_languages: learningLanguagesCodes,
