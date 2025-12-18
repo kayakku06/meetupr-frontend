@@ -169,64 +169,107 @@ const connectWebSocket = async () => {
     const wsHost = config.public.wsHost || 'localhost:8080'
     const wsUrl = `${wsProtocol}//${wsHost}/ws/chat/${chatId.value}?token=${encodeURIComponent(token)}`
     
+    console.log('[WebSocket] Connecting to:', wsUrl)
+    console.log('[WebSocket] Chat ID:', chatId.value)
+    console.log('[WebSocket] Token length:', token.length)
+    
     ws = new WebSocket(wsUrl)
 
     ws.onopen = () => {
-      console.log('WebSocket connected')
+      console.log('[WebSocket] Connected successfully')
       connectionStatus.value = 'connected'
       reconnectAttempts = 0
+      errorMessage.value = ''
     }
 
     ws.onmessage = (event) => {
       try {
+        console.log('[WebSocket] Message received:', event.data)
         const data = JSON.parse(event.data)
+        console.log('[WebSocket] Parsed data:', data)
         
         // メッセージ履歴（配列）の場合
         if (Array.isArray(data)) {
+          console.log('[WebSocket] Received message history:', data.length, 'messages')
           messages.value = data.map((msg: Message) => ({
             ...msg,
             id: msg.id || Date.now() + Math.random()
           }))
+          scrollToBottom()
         } else {
           // 単一メッセージの場合
+          console.log('[WebSocket] Received single message:', data)
           const newMessage: Message = {
             ...data,
             id: data.id || Date.now() + Math.random()
           }
           messages.value.push(newMessage)
+          scrollToBottom()
         }
-        
-        scrollToBottom()
       } catch (error) {
-        console.error('Failed to parse message:', error)
+        console.error('[WebSocket] Failed to parse message:', error)
+        console.error('[WebSocket] Raw data:', event.data)
       }
     }
 
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error)
+      console.error('[WebSocket] Error occurred:', error)
+      console.error('[WebSocket] Error details:', {
+        type: error.type,
+        target: error.target,
+        currentTarget: (error as any).currentTarget,
+        readyState: ws?.readyState
+      })
       connectionStatus.value = 'error'
       // WebSocketのエラー詳細を取得
       const errorDetail = (error as any)?.message || '接続エラーが発生しました'
       if (errorDetail.includes('Authorization header required')) {
         errorMessage.value = 'WebSocket認証エラー: バックエンドがクエリパラメータからトークンを取得できていません。バックエンドの実装を確認してください。'
       } else {
-        errorMessage.value = `接続エラー: ${errorDetail}`
+        errorMessage.value = `接続エラー: ${errorDetail}。サーバーが起動しているか確認してください。`
       }
     }
 
     ws.onclose = (event) => {
-      console.log('WebSocket closed:', event.code, event.reason)
+      console.log('[WebSocket] Closed:', {
+        code: event.code,
+        reason: event.reason,
+        wasClean: event.wasClean
+      })
       connectionStatus.value = 'disconnected'
+      
+      // エラーコードの説明
+      let closeReason = ''
+      if (event.code === 1000) {
+        closeReason = '正常な切断'
+      } else if (event.code === 1001) {
+        closeReason = 'エンドポイントが離れました'
+      } else if (event.code === 1002) {
+        closeReason = 'プロトコルエラー'
+      } else if (event.code === 1003) {
+        closeReason = 'データタイプエラー'
+      } else if (event.code === 1006) {
+        closeReason = '異常な切断（サーバーに接続できません）'
+      } else if (event.code === 1008) {
+        closeReason = 'ポリシー違反'
+      } else if (event.code === 1011) {
+        closeReason = 'サーバーエラー'
+      } else {
+        closeReason = `エラーコード: ${event.code}`
+      }
       
       // 正常な切断（1000）でない場合、再接続を試行
       if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
         reconnectAttempts++
+        console.log(`[WebSocket] Reconnection attempt ${reconnectAttempts}/${maxReconnectAttempts}...`)
+        errorMessage.value = `接続が切断されました。再接続を試みています... (${reconnectAttempts}/${maxReconnectAttempts})`
         setTimeout(() => {
-          console.log(`Reconnection attempt ${reconnectAttempts}...`)
           connectWebSocket()
         }, reconnectDelay * reconnectAttempts)
       } else if (reconnectAttempts >= maxReconnectAttempts) {
-        errorMessage.value = '接続に失敗しました。ページを再読み込みしてください。'
+        errorMessage.value = `接続に失敗しました: ${closeReason}。ページを再読み込みしてください。`
+      } else if (event.code !== 1000) {
+        errorMessage.value = `接続が切断されました: ${closeReason}`
       }
     }
   } catch (error) {
@@ -238,10 +281,21 @@ const connectWebSocket = async () => {
 
 // メッセージ送信
 const sendMessage = async () => {
-  if (!message.value.trim() || !ws || ws.readyState !== WebSocket.OPEN) {
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      errorMessage.value = '接続が確立されていません'
-    }
+  if (!message.value.trim()) {
+    return
+  }
+
+  if (!ws) {
+    errorMessage.value = 'WebSocket接続がありません。再接続してください。'
+    console.error('[SendMessage] WebSocket is null')
+    return
+  }
+
+  if (ws.readyState !== WebSocket.OPEN) {
+    errorMessage.value = `接続が確立されていません（状態: ${ws.readyState}）。再接続してください。`
+    console.error('[SendMessage] WebSocket is not open. State:', ws.readyState)
+    // 接続を再試行
+    await connectWebSocket()
     return
   }
 
@@ -250,11 +304,12 @@ const sendMessage = async () => {
       content: message.value.trim()
     }
     
+    console.log('[SendMessage] Sending message:', messageData)
     ws.send(JSON.stringify(messageData))
     message.value = ''
     errorMessage.value = ''
   } catch (error) {
-    console.error('Failed to send message:', error)
+    console.error('[SendMessage] Failed to send message:', error)
     errorMessage.value = 'メッセージの送信に失敗しました'
   }
 }
