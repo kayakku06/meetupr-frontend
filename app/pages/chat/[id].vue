@@ -174,8 +174,23 @@ const connectWebSocket = async () => {
     console.log('[WebSocket] Token length:', token.length)
     
     ws = new WebSocket(wsUrl)
+    
+    // 接続タイムアウトの設定（10秒）
+    let connectionTimeout: NodeJS.Timeout | null = null
+    connectionTimeout = setTimeout(() => {
+      if (ws && ws.readyState !== WebSocket.OPEN && ws.readyState !== WebSocket.CLOSED) {
+        console.error('[WebSocket] Connection timeout')
+        ws.close()
+        connectionStatus.value = 'error'
+        errorMessage.value = `接続がタイムアウトしました（${wsHost}）。サーバーが起動しているか確認してください。`
+      }
+    }, 10000)
 
     ws.onopen = () => {
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout)
+        connectionTimeout = null
+      }
       console.log('[WebSocket] Connected successfully')
       connectionStatus.value = 'connected'
       reconnectAttempts = 0
@@ -218,12 +233,17 @@ const connectWebSocket = async () => {
         type: error.type,
         target: error.target,
         currentTarget: (error as any).currentTarget,
-        readyState: ws?.readyState
+        readyState: ws?.readyState,
+        url: wsUrl
       })
       connectionStatus.value = 'error'
       // WebSocketのエラー詳細を取得
       const errorDetail = (error as any)?.message || '接続エラーが発生しました'
-      if (errorDetail.includes('Authorization header required')) {
+      
+      // readyStateが3（CLOSED）の場合は、接続が確立される前に失敗したことを意味する
+      if (ws?.readyState === 3) {
+        errorMessage.value = `サーバーに接続できません（${wsHost}）。バックエンドサーバーが起動しているか確認してください。`
+      } else if (errorDetail.includes('Authorization header required')) {
         errorMessage.value = 'WebSocket認証エラー: バックエンドがクエリパラメータからトークンを取得できていません。バックエンドの実装を確認してください。'
       } else {
         errorMessage.value = `接続エラー: ${errorDetail}。サーバーが起動しているか確認してください。`
@@ -231,10 +251,17 @@ const connectWebSocket = async () => {
     }
 
     ws.onclose = (event) => {
+      // タイムアウトをクリア
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout)
+        connectionTimeout = null
+      }
+      
       console.log('[WebSocket] Closed:', {
         code: event.code,
         reason: event.reason,
-        wasClean: event.wasClean
+        wasClean: event.wasClean,
+        url: wsUrl
       })
       connectionStatus.value = 'disconnected'
       
@@ -249,11 +276,13 @@ const connectWebSocket = async () => {
       } else if (event.code === 1003) {
         closeReason = 'データタイプエラー'
       } else if (event.code === 1006) {
-        closeReason = '異常な切断（サーバーに接続できません）'
+        closeReason = `異常な切断（サーバーに接続できません）。${wsHost} が起動しているか確認してください。`
       } else if (event.code === 1008) {
-        closeReason = 'ポリシー違反'
+        closeReason = 'ポリシー違反（認証エラーの可能性があります）'
       } else if (event.code === 1011) {
         closeReason = 'サーバーエラー'
+      } else if (event.code === 1005) {
+        closeReason = '接続が確立されませんでした（サーバーが応答していません）'
       } else {
         closeReason = `エラーコード: ${event.code}`
       }
@@ -262,7 +291,7 @@ const connectWebSocket = async () => {
       if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
         reconnectAttempts++
         console.log(`[WebSocket] Reconnection attempt ${reconnectAttempts}/${maxReconnectAttempts}...`)
-        errorMessage.value = `接続が切断されました。再接続を試みています... (${reconnectAttempts}/${maxReconnectAttempts})`
+        errorMessage.value = `接続が切断されました: ${closeReason}。再接続を試みています... (${reconnectAttempts}/${maxReconnectAttempts})`
         setTimeout(() => {
           connectWebSocket()
         }, reconnectDelay * reconnectAttempts)
