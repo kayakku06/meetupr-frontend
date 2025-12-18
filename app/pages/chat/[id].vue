@@ -100,6 +100,8 @@ let ws: WebSocket | null = null
 let reconnectAttempts = 0
 const maxReconnectAttempts = 5
 const reconnectDelay = 3000
+let isReconnecting = false
+let reconnectTimeoutId: NodeJS.Timeout | null = null
 
 // 現在のユーザーIDを取得
 const currentUserId = computed(() => {
@@ -191,9 +193,14 @@ const connectWebSocket = async () => {
         clearTimeout(connectionTimeout)
         connectionTimeout = null
       }
+      if (reconnectTimeoutId) {
+        clearTimeout(reconnectTimeoutId)
+        reconnectTimeoutId = null
+      }
       console.log('[WebSocket] Connected successfully')
       connectionStatus.value = 'connected'
       reconnectAttempts = 0
+      isReconnecting = false
       errorMessage.value = ''
     }
 
@@ -288,16 +295,22 @@ const connectWebSocket = async () => {
       }
       
       // 正常な切断（1000）でない場合、再接続を試行
-      if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
+      if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts && !isReconnecting) {
         reconnectAttempts++
+        isReconnecting = true
         console.log(`[WebSocket] Reconnection attempt ${reconnectAttempts}/${maxReconnectAttempts}...`)
         errorMessage.value = `接続が切断されました: ${closeReason}。再接続を試みています... (${reconnectAttempts}/${maxReconnectAttempts})`
-        setTimeout(() => {
+        
+        reconnectTimeoutId = setTimeout(() => {
+          isReconnecting = false
           connectWebSocket()
         }, reconnectDelay * reconnectAttempts)
       } else if (reconnectAttempts >= maxReconnectAttempts) {
-        errorMessage.value = `接続に失敗しました: ${closeReason}。ページを再読み込みしてください。`
-      } else if (event.code !== 1000) {
+        isReconnecting = false
+        reconnectAttempts = 0 // リセットして手動再接続を可能にする
+        errorMessage.value = `接続に失敗しました: ${closeReason}。バックエンドサーバー（${wsHost}）が起動しているか確認してください。`
+        connectionStatus.value = 'error'
+      } else if (event.code !== 1000 && !isReconnecting) {
         errorMessage.value = `接続が切断されました: ${closeReason}`
       }
     }
@@ -348,15 +361,33 @@ const handleBack = () => {
   router.push('/home')
 }
 
+// 手動再接続
+const retryConnection = () => {
+  if (reconnectTimeoutId) {
+    clearTimeout(reconnectTimeoutId)
+    reconnectTimeoutId = null
+  }
+  reconnectAttempts = 0
+  isReconnecting = false
+  errorMessage.value = ''
+  connectionStatus.value = 'connecting'
+  connectWebSocket()
+}
+
 onMounted(async () => {
   await connectWebSocket()
 })
 
 onUnmounted(() => {
+  if (reconnectTimeoutId) {
+    clearTimeout(reconnectTimeoutId)
+    reconnectTimeoutId = null
+  }
   if (ws) {
     ws.close(1000, 'Component unmounted')
     ws = null
   }
+  isReconnecting = false
 })
 </script>
 
@@ -400,7 +431,16 @@ onUnmounted(() => {
             
             <!-- エラーメッセージ表示 -->
             <div v-if="errorMessage" class="bg-red-50 border-b border-red-200 px-4 py-2">
-                <p class="text-sm text-red-600">{{ errorMessage }}</p>
+                <div class="flex items-center justify-between">
+                    <p class="text-sm text-red-600 flex-1">{{ errorMessage }}</p>
+                    <button 
+                        v-if="connectionStatus === 'error'"
+                        @click="retryConnection"
+                        class="ml-3 px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                    >
+                        再接続
+                    </button>
+                </div>
             </div>
 
             <div ref="messagesContainer" class="flex-1 overflow-y-auto bg-[var(--meetupr-main)] p-4 space-y-4">
