@@ -1,20 +1,20 @@
 <template>
-  <div class="flex items-center justify-between p-3 border-b border-gray-200 hover:bg-gray-50 transition zen-maru"
+  <div class="flex items-center justify-between p-3 bg-[var(--meetupr-main)] hover:bg-gray-50 transition zen-maru cursor-pointer"
   @click="goProfile">
-    <!-- 左側（アイコン＋名前＋メッセージ） -->
-    <div class="flex items-center space-x-3">
+    <!-- 左側（アバター＋名前＋メッセージ） -->
+    <div class="flex items-center space-x-3 flex-1 min-w-0">
       <!-- アバター -->
-      <div :class="['w-10 h-10 rounded-full', avatarColor]"></div>
+      <div :class="['w-12 h-12 rounded-full flex-shrink-0', avatarColor]"></div>
 
       <!-- 名前とメッセージ -->
-      <div class="flex flex-col">
-        <span class="text-gray-600 font-medium">{{ name }}</span>
-        <span class="text-gray-600 text-sm">{{ message }}</span>
+      <div class="flex flex-col min-w-0 flex-1">
+        <span class="text-gray-800 font-medium text-base truncate">{{ name }}</span>
+        <span class="text-gray-500 text-sm truncate">{{ message }}</span>
       </div>
     </div>
 
     <!-- 右側（日付） -->
-    <span class="text-gray-400 text-sm">{{ date }}</span>
+    <span class="text-gray-400 text-sm ml-3 flex-shrink-0">{{ date }}</span>
   </div>
 </template>
 

@@ -28,6 +28,14 @@ interface ChatWithPartner extends Chat {
   last_message_time?: string  // last_message.sent_at から取得
 }
 
+// 日付をフォーマットする関数（月/日の形式）
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString)
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  return `${month}/${day}`
+}
+
 export const useChat = () => {
   const { getAccessToken } = useAuth()
   const config = useRuntimeConfig()
@@ -73,8 +81,8 @@ export const useChat = () => {
           last_message: chat.last_message?.content,
           // バックエンドから返ってくる last_message.sent_at を使用（created_at の代わり）
           last_message_time: chat.last_message?.sent_at
-            ? new Date(chat.last_message.sent_at).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })
-            : new Date(chat.created_at).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })
+            ? formatDate(chat.last_message.sent_at)
+            : formatDate(chat.created_at)
         }
       })
 

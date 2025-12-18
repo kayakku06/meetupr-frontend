@@ -6,6 +6,14 @@ import { onMounted } from 'vue'
 
 const { chats, isLoading, error, fetchChats } = useChat()
 
+// 日付をフォーマットする関数（月/日の形式）
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString)
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  return `${month}/${day}`
+}
+
 onMounted(async () => {
   try {
     await fetchChats()
@@ -16,9 +24,36 @@ onMounted(async () => {
 </script>
 
 <template>
-
-  <div class="min-h-screen p-4 pb-24 bg-[var(--meetupr-main)]">
-    <h1 class="text-xl mb-4 zen-maru-gothic-regular">Home</h1>
+  <div class="min-h-screen pb-24 bg-[var(--meetupr-main)]">
+    <!-- ヘッダー -->
+    <div class="bg-white px-4 pt-2 pb-3">
+      <!-- 左上の"home"テキスト -->
+      <div class="text-xs text-gray-400 mb-1">home</div>
+      
+      <!-- ロゴとタイトル -->
+      <div class="flex items-center justify-between">
+        <!-- ロゴ（Pの形で"meet"と書かれている） -->
+        <div class="flex items-center">
+          <div class="w-12 h-12 rounded-full bg-[var(--meetupr-sub)] flex items-center justify-center mr-3 relative overflow-hidden">
+            <!-- Pの形の背景 -->
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-[#ff8c69] font-bold text-2xl">P</span>
+            </div>
+            <!-- "meet"テキスト -->
+            <span class="text-xs font-handwriting relative z-10" style="color: #4b3b2b; margin-top: 8px; margin-left: 2px;">meet</span>
+          </div>
+        </div>
+        
+        <!-- タイトル"トーク" -->
+        <h1 class="text-2xl font-medium text-gray-800 flex-1 text-center">トーク</h1>
+        
+        <!-- 右側のスペーサー（ロゴとタイトルのバランスを取る） -->
+        <div class="w-12"></div>
+      </div>
+      
+      <!-- 緑の線 -->
+      <div class="mt-3 h-0.5 bg-[var(--meetupr-color-3)]"></div>
+    </div>
 
     <!-- ローディング状態 -->
     <div v-if="isLoading" class="text-center text-gray-500 py-8">
@@ -47,13 +82,13 @@ onMounted(async () => {
     </div>
 
     <!-- チャット一覧 -->
-    <div v-else-if="chats.length > 0">
+    <div v-else-if="chats.length > 0" class="bg-[var(--meetupr-main)]">
       <ChatIcon 
         v-for="chat in chats"
         :key="chat.id"
         :name="chat.partner_name || `ユーザー ${chat.partner_id.slice(0, 8)}`"
-        :message="chat.last_message || 'メッセージがありません'"
-        :date="chat.last_message_time || new Date(chat.created_at).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })"
+        :message="chat.last_message || 'メッセージ'"
+        :date="chat.last_message_time || formatDate(chat.created_at)"
         avatarColor="bg-teal-600"
         :chatId="chat.id"
         :partnerId="chat.partner_id"
@@ -61,8 +96,8 @@ onMounted(async () => {
     </div>
 
     <!-- チャットがない場合 -->
-    <div v-else class="text-center text-gray-500 py-8">
-      <p>チャットがありません</p>
+    <div v-else class="flex items-center justify-center h-[calc(100vh-200px)] bg-[var(--meetupr-main)]">
+      <p class="text-gray-600 text-lg">トーク相手がいません。</p>
     </div>
 
   </div>
