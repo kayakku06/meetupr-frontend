@@ -105,13 +105,13 @@ export default defineEventHandler(async (event: H3Event) => {
 
     // 言語コードを日本語名に変換
     const spokenLanguages = Array.isArray(profileData?.spoken_languages) 
-      ? convertLanguageCodesToLabels(profileData.spoken_languages)
+      ? convertLanguageCodesToLabels(profileData.spoken_languages.filter((code: any) => code != null && code !== ''))
       : []
     const learningLanguages = Array.isArray(profileData?.learning_languages)
-      ? convertLanguageCodesToLabels(profileData.learning_languages)
+      ? convertLanguageCodesToLabels(profileData.learning_languages.filter((code: any) => code != null && code !== ''))
       : []
-    const nativeLanguage = profileData?.native_language 
-      ? getLanguageLabel(profileData.native_language)
+    const nativeLanguage = profileData?.native_language && profileData.native_language !== ''
+      ? getLanguageLabel(String(profileData.native_language))
       : null
 
     // データを結合して返す
@@ -126,9 +126,22 @@ export default defineEventHandler(async (event: H3Event) => {
       comment: profileData?.comment || null,
       interests: Array.isArray(profileData?.interests) ? profileData.interests : []
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error in /api/profile GET handler:', err)
+    const errorMessage = err?.message || 'Internal server error'
+    const errorDetails = err?.stack || err
+    
+    // エラーの詳細をログに出力
+    console.error('Error details:', {
+      message: errorMessage,
+      details: errorDetails,
+      userId: event.node.req.url
+    })
+    
     event.res.statusCode = 500
-    return { error: 'internal_server_error' }
+    return { 
+      error: 'internal_server_error',
+      message: errorMessage
+    }
   }
 })
