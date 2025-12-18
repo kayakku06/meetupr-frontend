@@ -235,7 +235,7 @@ const isLoading = ref(true)
 const isSaving = ref(false)
 
 // 言語名から言語コードへの逆マッピング
-const languageLabelToCode: Record<string, string> = {
+const languageLabelToCode = {
   '日本語': 'ja',
   '中国語': 'zh',
   '韓国語': 'ko',
