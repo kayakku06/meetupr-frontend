@@ -56,6 +56,7 @@ onMounted(async () => {
         :date="chat.last_message_time || new Date(chat.created_at).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })"
         avatarColor="bg-teal-600"
         :chatId="chat.id"
+        :partnerId="chat.partner_id"
       />
     </div>
 

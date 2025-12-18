@@ -21,14 +21,47 @@ interface Message {
 }
 
 // チャットIDをルートパラメータまたはクエリパラメータから取得
-const chatId = computed(() => {
-  const id = route.params.id || route.query.chatId
-  if (typeof id === 'string') {
-    const parsed = parseInt(id, 10)
-    return isNaN(parsed) ? null : parsed
-  }
-  return id ? Number(id) : null
+const chatId = ref<number | null>(null)
+const partnerIdFromQuery = computed(() => {
+  return route.query.partnerId as string | undefined
 })
+
+// チャットIDを取得または生成する関数
+const fetchOrCreateChatId = async () => {
+  // ルートパラメータからチャットIDを取得
+  const idFromRoute = route.params.id || route.query.chatId
+  if (idFromRoute) {
+    const parsed = typeof idFromRoute === 'string' ? parseInt(idFromRoute, 10) : Number(idFromRoute)
+    if (!isNaN(parsed)) {
+      chatId.value = parsed
+      return
+    }
+  }
+
+  // チャットIDがない場合、partnerIdからチャットIDを取得
+  if (partnerIdFromQuery.value) {
+    try {
+      const token = await getAccessToken()
+      if (!token) {
+        errorMessage.value = '認証トークンを取得できませんでした'
+        return
+      }
+
+      const response = await $fetch<{ id: number }>(`${config.public.apiBaseUrl}/api/v1/chats/with/${partnerIdFromQuery.value}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      chatId.value = response.id
+      
+      // URLを更新してチャットIDを含める
+      router.replace(`/chat/${chatId.value}`)
+    } catch (err: any) {
+      console.error('チャットIDの取得に失敗しました:', err)
+      errorMessage.value = 'チャットIDの取得に失敗しました。ページを再読み込みしてください。'
+    }
+  }
+}
 
 const message = ref('')
 const messages = ref<Message[]>([])
@@ -76,6 +109,9 @@ const scrollToBottom = async () => {
 
 // WebSocket接続
 const connectWebSocket = async () => {
+  // チャットIDを取得または生成
+  await fetchOrCreateChatId()
+  
   if (!chatId.value) {
     errorMessage.value = 'チャットIDが取得できませんでした'
     return
@@ -201,11 +237,6 @@ const handleBack = () => {
 }
 
 onMounted(async () => {
-  if (!chatId.value) {
-    errorMessage.value = 'チャットIDが指定されていません'
-    return
-  }
-  
   await connectWebSocket()
 })
 
