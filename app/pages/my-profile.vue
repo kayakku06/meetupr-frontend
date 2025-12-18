@@ -204,10 +204,12 @@
 
         <div class="flex gap-2 mt-1.5" v-if="editing">
           <button type="button"
-            class="bg-[var(--meetupr-color-3)]  text-white px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-teal-600 transition flex-1"
-            @click="save">保存</button>
+            :disabled="isSaving"
+            class="bg-[var(--meetupr-color-3)]  text-white px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-teal-600 transition flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="save">{{ isSaving ? '保存中...' : '保存' }}</button>
           <button type="button"
-            class="bg-gray-300 text-gray-800 px-3.5  py-2 rounded text-sm cursor-pointer hover:bg-gray-400 transition flex-1"
+            :disabled="isSaving"
+            class="bg-gray-300 text-gray-800 px-3.5  py-2 rounded text-sm cursor-pointer hover:bg-gray-400 transition flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
             @click="cancel">キャンセル</button>
         </div>
       </form>
@@ -227,9 +229,40 @@ import { ref, onMounted } from 'vue'
 import Footer from '~/components/Footer.vue'
 import { useAuth } from '~/composables/useAuth'
 
-const { user } = useAuth()
+const { user, getAccessToken } = useAuth()
 const editing = ref(false)
 const isLoading = ref(true)
+const isSaving = ref(false)
+
+// 言語名から言語コードへの逆マッピング
+const languageLabelToCode: Record<string, string> = {
+  '日本語': 'ja',
+  '中国語': 'zh',
+  '韓国語': 'ko',
+  'ベトナム語': 'vi',
+  'インドネシア語': 'id',
+  'タイ語': 'th',
+  'ヒンディー語': 'hi',
+  'ベンガル語': 'bn',
+  'パンジャブ語': 'pa',
+  '英語': 'en',
+  'フランス語': 'fr',
+  'ドイツ語': 'de',
+  'スペイン語': 'es',
+  'ポルトガル語': 'pt',
+  'ロシア語': 'ru',
+  'アラビア語': 'ar'
+}
+
+// 言語名を言語コードに変換する関数
+function getLanguageCode(label: string): string {
+  return languageLabelToCode[label] || label
+}
+
+// 言語名の配列を言語コードの配列に変換
+function convertLanguageLabelsToCodes(labels: string[]): string[] {
+  return labels.map(label => getLanguageCode(label))
+}
 
 // ★ 既存の選択肢のデータ（サンプル）
 const choiceCategories = ref([
@@ -328,10 +361,101 @@ function toggleHobby(hobbyName) {
   }
 }
 
-function save() {
-  // 実際は API 呼び出しをここに入れる
-  editing.value = false
-  alert('保存しました（サンプル）')
+async function save() {
+  if (!user.value?.sub) {
+    alert('ユーザー情報の取得に失敗しました。ページを再読み込みしてください。')
+    return
+  }
+
+  const userId = user.value.sub
+  const email = user.value.email || ''
+  const username = form.value.name || user.value.nickname || user.value.name || ''
+
+  if (!userId || !email || !username) {
+    alert('ユーザー情報が不完全です。ページを再読み込みしてください。')
+    return
+  }
+
+  try {
+    isSaving.value = true
+
+    // アクセストークンを取得
+    let headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    try {
+      const token = await getAccessToken()
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+    } catch (e) {
+      console.info('アクセストークン取得失敗（続行）:', e)
+    }
+
+    // 言語名を言語コードに変換
+    const nativeLanguageCode = form.value.nativeLanguage 
+      ? getLanguageCode(form.value.nativeLanguage)
+      : 'ja' // デフォルト値
+    const spokenLanguagesCodes = Array.isArray(form.value.spokenLanguages)
+      ? convertLanguageLabelsToCodes(form.value.spokenLanguages)
+      : []
+    const learningLanguagesCodes = Array.isArray(form.value.learningLanguages)
+      ? convertLanguageLabelsToCodes(form.value.learningLanguages)
+      : []
+
+    // ペイロード作成
+    const payload = {
+      user_id: userId,
+      email: email,
+      username: username,
+      major: form.value.department || null,
+      gender: form.value.gender || null,
+      native_language: nativeLanguageCode,
+      spoken_languages: spokenLanguagesCodes,
+      learning_languages: learningLanguagesCodes,
+      interests: Array.isArray(form.value.hobbies) ? form.value.hobbies : [],
+      residence: form.value.origin || null,
+      comment: form.value.bio || null,
+      last_updated: new Date().toISOString()
+    }
+
+    console.log('[my-profile] Sending profile data to /api/profile:', payload)
+
+    // APIを呼び出して保存
+    const result = await $fetch<{ status?: string; inserted?: any; error?: string; details?: any }>('/api/profile', {
+      method: 'POST',
+      headers,
+      body: payload
+    })
+
+    console.log('[my-profile] API response:', result)
+
+    if (result && 'error' in result && result.error) {
+      console.error('[my-profile] Profile save failed:', result.error, result.details)
+      const errorDetails = result.details ? JSON.stringify(result.details) : ''
+      alert(`プロフィールの保存に失敗しました。\nエラー: ${result.error}\n${errorDetails ? `詳細: ${errorDetails}` : ''}`)
+      return
+    }
+
+    if (!result || !result.inserted) {
+      console.warn('[my-profile] No data inserted:', result)
+      alert('プロフィールの保存に失敗しました。データが挿入されませんでした。')
+      return
+    }
+
+    console.log('[my-profile] Profile saved successfully:', result)
+    
+    // オリジナルデータを更新
+    original.value = JSON.parse(JSON.stringify(form.value))
+    editing.value = false
+    alert('プロフィールを保存しました。')
+    
+    // データを再取得して最新の状態を反映
+    await fetchProfile()
+  } catch (err: any) {
+    console.error('[my-profile] Error saving profile:', err)
+    alert(`プロフィールの保存中にエラーが発生しました。\n${err.message || '不明なエラー'}`)
+  } finally {
+    isSaving.value = false
+  }
 }
 
 let original = ref(JSON.parse(JSON.stringify(form.value)))
