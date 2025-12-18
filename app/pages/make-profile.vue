@@ -360,6 +360,7 @@ const regionCategories = ref([
     {
         name: '東アジア',
         tags: [
+             { code: 'JP', label: '日本' },
             { code: 'CN', label: '中国' },
             { code: 'KR', label: '韓国' },
             { code: 'TW', label: '台湾' },

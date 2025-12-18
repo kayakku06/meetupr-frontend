@@ -65,6 +65,36 @@ export default defineEventHandler(async (event) => {
       return { error: 'supabase_not_configured' }
     }
 
+    // 既存のアバター画像を削除して、ユーザーあたり1ファイルのみを保持する
+    try {
+      // バケット内で user フォルダ以下のファイル一覧を取得
+      const listPath = safeUserId
+      const { data: existingFiles, error: listErr } = await supabase.storage
+        .from('avatars')
+        .list(listPath)
+
+      if (listErr) {
+        console.warn('[API] Failed to list existing avatar files (continuing):', listErr)
+      } else if (Array.isArray(existingFiles) && existingFiles.length > 0) {
+        // 削除対象パスを作成
+        const pathsToRemove = existingFiles.map(f => `${safeUserId}/${f.name}`)
+        try {
+          const { data: removed, error: removeErr } = await supabase.storage
+            .from('avatars')
+            .remove(pathsToRemove)
+          if (removeErr) {
+            console.warn('[API] Failed to remove existing avatar files (continuing):', removeErr)
+          } else {
+            console.log('[API] Removed existing avatar files:', pathsToRemove)
+          }
+        } catch (e) {
+          console.warn('[API] Exception while removing existing avatar files (continuing):', e)
+        }
+      }
+    } catch (e) {
+      console.warn('[API] Exception while listing/removing existing avatar files (continuing):', e)
+    }
+
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('avatars')
       .upload(destPath, buffer, { contentType, upsert: true })
