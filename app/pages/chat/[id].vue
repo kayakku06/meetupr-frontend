@@ -34,6 +34,8 @@ const fetchOrCreateChatId = async () => {
     const parsed = typeof idFromRoute === 'string' ? parseInt(idFromRoute, 10) : Number(idFromRoute)
     if (!isNaN(parsed)) {
       chatId.value = parsed
+      // チャット詳細を取得してパートナー名を取得
+      await fetchChatDetails()
       return
     }
   }
@@ -56,10 +58,34 @@ const fetchOrCreateChatId = async () => {
       
       // URLを更新してチャットIDを含める
       router.replace(`/chat/${chatId.value}`)
+      // チャット詳細を取得してパートナー名を取得
+      await fetchChatDetails()
     } catch (err: any) {
       console.error('チャットIDの取得に失敗しました:', err)
       errorMessage.value = 'チャットIDの取得に失敗しました。ページを再読み込みしてください。'
     }
+  }
+}
+
+// チャット詳細を取得してパートナー名を取得
+const fetchChatDetails = async () => {
+  if (!chatId.value) return
+
+  try {
+    const token = await getAccessToken()
+    if (!token) return
+
+    const response = await $fetch<{ other_user?: { username: string } }>(`${config.public.apiBaseUrl}/api/v1/chats/${chatId.value}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (response.other_user?.username) {
+      partnerName.value = response.other_user.username
+    }
+  } catch (err: any) {
+    console.error('チャット詳細の取得に失敗しました:', err)
   }
 }
 
@@ -68,6 +94,7 @@ const messages = ref<Message[]>([])
 const messagesContainer = ref<HTMLElement | null>(null)
 const connectionStatus = ref<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected')
 const errorMessage = ref('')
+const partnerName = ref<string>('ユーザー')
 
 let ws: WebSocket | null = null
 let reconnectAttempts = 0
@@ -79,15 +106,16 @@ const currentUserId = computed(() => {
   return user.value?.sub || ''
 })
 
-// 時刻をフォーマット
+// 時刻をフォーマット（秒単位まで表示）
 const formatTime = (dateString?: string) => {
   if (!dateString) return 'just now'
   const date = new Date(dateString)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
-  const minutes = Math.floor(diff / 60000)
+  const seconds = Math.floor(diff / 1000)
+  const minutes = Math.floor(seconds / 60)
   
-  if (minutes < 1) return 'just now'
+  if (seconds < 60) return `${seconds}秒前`
   if (minutes < 60) return `${minutes}分前`
   
   const hours = Math.floor(minutes / 60)
@@ -252,43 +280,38 @@ onUnmounted(() => {
     <div class="h-screen flex items-center justify-center bg-gray-50">
         <div
             class="max-w-[420px] w-full mx-auto bg-white border rounded-xl shadow-md overflow-hidden flex flex-col h-full">
-            <div class="bg-white border-b border-gray-200 px-4 py-4 flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <button @click="handleBack" class="text-gray-700 hover:text-gray-900">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
-                            </path>
-                        </svg>
-                    </button>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-medium text-gray-800">チャット</span>
-                        <div class="flex items-center space-x-1">
-                            <div 
-                                :class="[
-                                    'w-2 h-2 rounded-full',
-                                    connectionStatus === 'connected' ? 'bg-green-500' : 
-                                    connectionStatus === 'connecting' ? 'bg-yellow-500' : 
-                                    'bg-red-500'
-                                ]"
-                            ></div>
-                            <span class="text-xs text-gray-500">
-                                {{ connectionStatus === 'connected' ? '接続中' : 
-                                   connectionStatus === 'connecting' ? '接続中...' : 
-                                   '切断' }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <button class="text-[var(--meetupr-main)] hover:text-orange-600">
-
-
+            <!-- ヘッダー -->
+            <div class="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+                <!-- 左側：戻るボタン -->
+                <button @click="handleBack" class="text-gray-700 hover:text-gray-900">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
                         </path>
                     </svg>
                 </button>
+
+                <!-- 中央：パートナー名と?アイコン -->
+                <div class="flex items-center space-x-2 flex-1 justify-center">
+                    <span class="text-lg font-medium text-gray-800">{{ partnerName }}</span>
+                    <button class="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center hover:bg-gray-50">
+                        <span class="text-xs text-gray-600">?</span>
+                    </button>
+                </div>
+
+                <!-- 右側：禁止マークと電話アイコン -->
+                <div class="flex items-center space-x-3">
+                    <button class="text-[#ff8c69] hover:text-orange-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M8 12h8" stroke-linecap="round" />
+                        </svg>
+                    </button>
+                    <button class="text-[#ff8c69] hover:text-orange-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                    </button>
+                </div>
             </div>
             
             <!-- エラーメッセージ表示 -->
@@ -309,20 +332,27 @@ onUnmounted(() => {
                 </template>
                 <template v-else>
                     <template v-for="msg in messages" :key="msg.id">
-                        <div v-if="msg.sender_id !== currentUserId" class="flex items-start space-x-3">
-                            <div class="w-10 h-10 rounded-full bg-gray-500 flex-shrink-0"></div>
-                            <div class="space-y-2 max-w-[75%]">
-                                <div class="bg-[var(--chat-other-color)] rounded-2xl rounded-tl-sm px-4 py-3">
+                        <!-- 相手のメッセージ（左側） -->
+                        <div v-if="msg.sender_id !== currentUserId" class="flex items-start space-x-3 mb-4">
+                            <!-- 緑のアバター -->
+                            <div class="w-10 h-10 rounded-full bg-teal-600 flex-shrink-0"></div>
+                            <div class="space-y-1 max-w-[75%]">
+                                <!-- 薄いオレンジの吹き出し -->
+                                <div class="bg-[var(--meetupr-sub)] rounded-2xl rounded-tl-sm px-4 py-3">
                                     <p class="text-gray-800 text-sm leading-relaxed">{{ msg.content }}</p>
                                 </div>
+                                <!-- タイムスタンプ -->
                                 <p class="text-xs text-gray-500 px-2">{{ formatTime(msg.sent_at) }}</p>
                             </div>
                         </div>
-                        <div v-else class="flex justify-end">
+                        <!-- 自分のメッセージ（右側） -->
+                        <div v-else class="flex justify-end mb-4">
                             <div class="max-w-[75%]">
-                                <div class="bg-[var(--chat-my-color)] rounded-2xl rounded-tr-sm px-4 py-3">
-                                    <p class="text-white text-sm leading-relaxed">{{ msg.content }}</p>
+                                <!-- 薄いオレンジの吹き出し -->
+                                <div class="bg-[var(--meetupr-sub)] rounded-2xl rounded-tr-sm px-4 py-3">
+                                    <p class="text-gray-800 text-sm leading-relaxed">{{ msg.content }}</p>
                                 </div>
+                                <!-- タイムスタンプ -->
                                 <p class="text-xs text-gray-500 text-right px-2 mt-1">{{ formatTime(msg.sent_at) }}</p>
                             </div>
                         </div>
@@ -330,20 +360,23 @@ onUnmounted(() => {
                 </template>
             </div>
 
+            <!-- メッセージ入力エリア -->
             <div class="bg-[var(--meetupr-sub)] px-4 py-4">
                 <div class="flex items-center space-x-3">
-
+                    <!-- 入力フィールド -->
                     <div class="flex-1 relative">
-                        <input v-model="message" @keydown.enter.prevent="sendMessage" type="text" placeholder="メッセージを入力"
-                            class="w-full bg-yellow-50 border-2 border-orange-300 rounded-full px-6 pr-12 py-3 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-orange-400 transition-colors" />
-                        <button class="text-gray-500 hover:text-gray-700 absolute right-4 top-1/2 -translate-y-1/2">
-                            <Smile class="w-7 h-7" />
+                        <input 
+                            v-model="message" 
+                            @keydown.enter.prevent="sendMessage" 
+                            type="text" 
+                            placeholder="メッセージを入力"
+                            class="w-full bg-yellow-50 border-2 border-orange-300 rounded-full px-6 pr-14 py-3 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-orange-400 transition-colors" 
+                        />
+                        <!-- 絵文字アイコン（右側、円形） -->
+                        <button class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white flex items-center justify-center border border-gray-300 hover:bg-gray-50">
+                            <Smile class="w-5 h-5 text-gray-600" />
                         </button>
                     </div>
-                    <button @click="sendMessage" class="ml-2 bg-orange-400 text-white rounded-full px-4 py-2 hover:bg-orange-500 flex items-center justify-center">
-                        <Send class="w-5 h-5" />
-                    </button>
-
                 </div>
             </div>
 
