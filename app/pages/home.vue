@@ -32,16 +32,13 @@ onMounted(async () => {
       
       <!-- ロゴとタイトル -->
       <div class="flex items-center justify-between">
-        <!-- ロゴ（Pの形で"meet"と書かれている） -->
+        <!-- ロゴ -->
         <div class="flex items-center">
-          <div class="w-12 h-12 rounded-full bg-[var(--meetupr-sub)] flex items-center justify-center mr-3 relative">
-            <!-- Pの形の背景（オレンジ色） -->
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span class="text-[#ff8c69] font-bold text-xl leading-none">P</span>
-            </div>
-            <!-- "meet"テキスト（手書き風、Pの中に配置） -->
-            <span class="text-[10px] font-handwriting relative z-10" style="color: #4b3b2b; margin-top: 6px; margin-left: 1px;">meet</span>
-          </div>
+          <img 
+            src="/icon.png" 
+            alt="MeetUp+R ロゴ" 
+            class="w-12 h-12 rounded-full object-cover mr-3"
+          />
         </div>
         
         <!-- タイトル"トーク" -->
