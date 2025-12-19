@@ -1,6 +1,6 @@
 <template>
 
-  <div class="min-h-screen bg-[var(--meetupr-main)] pt-14 pb-20 font-['Noto_Sans_JP']">
+  <div class="min-h-screen bg-[var(--meetupr-main)] pb-20 font-['Noto_Sans_JP']">
   
    <!--　<header class="fixed top-0 left-0 right-0 h-14 bg-white shadow-md z-40"></header>　-->
 

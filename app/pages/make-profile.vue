@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-[var(--meetupr-main)] pt-14 pb-20 font-['Noto_Sans_JP']">
+    <div class="min-h-screen bg-[var(--meetupr-main)] pb-20 font-['Noto_Sans_JP']">
 
         <main class="max-w-md mx-auto p-5 ">
             <div class="flex gap-3 items-center mb-3">
