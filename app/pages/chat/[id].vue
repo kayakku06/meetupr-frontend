@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import MeetDesireSlider from '~/components/MeetDesireSlider.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Smile, Send } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
@@ -91,6 +92,7 @@ const fetchChatDetails = async () => {
 
 const message = ref('')
 const messages = ref<Message[]>([])
+const desire = ref(3)
 const messagesContainer = ref<HTMLElement | null>(null)
 const connectionStatus = ref<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected')
 const errorMessage = ref('')
@@ -412,7 +414,6 @@ onUnmounted(() => {
                         <span class="text-xs text-gray-600">?</span>
                     </button>
                 </div>
-
                 <!-- 右側：禁止マークと電話アイコン -->
                 <div class="flex items-center space-x-3">
                     <button class="text-[#ff8c69] hover:text-orange-600">
@@ -441,6 +442,13 @@ onUnmounted(() => {
                         再接続
                     </button>
                 </div>
+            </div>
+
+            <!-- MeetDesireSlider（playground と同様の表示） -->
+            <div class="p-4 border-b border-gray-100">
+              <div class="max-w-md mx-auto">
+                <MeetDesireSlider v-model="desire" />
+              </div>
             </div>
 
             <div ref="messagesContainer" class="flex-1 overflow-y-auto bg-[var(--meetupr-main)] p-4 space-y-4">
