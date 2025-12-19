@@ -35,14 +35,16 @@ Content-Type: application/json
 ```json
 {
   "languages": ["日本語", "英語"],
-  "countries": ["日本", "アメリカ"]
+  "countries": ["CN", "US"]
 }
 ```
 
 **注意**: 
+- `languages` は日本語の言語名（例: "日本語", "英語"）を配列で送信
+- `countries` は**英語の国コード（ISO 3166-1 alpha-2）**を配列で送信（例: "CN"（中国）, "US"（アメリカ）, "JP"（日本））
 - `languages` と `countries` は常に配列として送信されます
 - 空の場合は空配列 `[]` が送信されます
-- 例: `{"languages": [], "countries": ["日本"]}`
+- 例: `{"languages": [], "countries": ["CN"]}`
 
 ### 実際のリクエスト例
 
@@ -58,7 +60,7 @@ Content-Type: application/json
 ```json
 {
   "languages": [],
-  "countries": ["日本"]
+  "countries": ["CN"]
 }
 ```
 
@@ -66,7 +68,7 @@ Content-Type: application/json
 ```json
 {
   "languages": ["日本語", "英語"],
-  "countries": ["日本", "アメリカ"]
+  "countries": ["CN", "US"]
 }
 ```
 
@@ -81,7 +83,7 @@ Content-Type: application/json
     "user_id": "auth0|1234567890",
     "username": "testuser",
     "comment": "こんにちは！",
-    "residence": "日本",
+    "residence": "CN",
     "avatar_url": "https://example.com/avatar.jpg",
     "interests": [
       {
@@ -148,9 +150,18 @@ Content-Type: application/json
 フロントエンド側では以下の形式でリクエストを送信しています：
 
 ```javascript
+// 国名を国コードに変換（データベースでは英語の国コードで管理）
+const countryCodes = [];
+for (const country of selectedCountries.value) {
+    const code = normalizeCountryCode(country); // 日本語の国名を英語の国コードに変換
+    if (code) {
+        countryCodes.push(code);
+    }
+}
+
 const requestBody = {
     languages: selectedLanguages.value.length > 0 ? selectedLanguages.value : [],
-    countries: selectedCountries.value.length > 0 ? selectedCountries.value : []
+    countries: countryCodes.length > 0 ? countryCodes : []
 };
 
 const response = await $fetch(`${config.public.apiBaseUrl}/api/v1/search/users`, {
@@ -175,9 +186,11 @@ const response = await $fetch(`${config.public.apiBaseUrl}/api/v1/search/users`,
   ```json
   {
     "languages": ["日本語", "英語"],
-    "countries": ["日本", "アメリカ"]
+    "countries": ["CN", "US"]
   }
   ```
+  - `languages`: 日本語の言語名（例: "日本語", "英語"）
+  - `countries`: 英語の国コード（ISO 3166-1 alpha-2）（例: "CN"（中国）, "US"（アメリカ）, "JP"（日本））
 - **レスポンス**: ユーザー配列（上記の期待されるレスポンス参照）
 
 ---
