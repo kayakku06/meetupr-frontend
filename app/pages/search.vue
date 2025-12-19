@@ -4,7 +4,7 @@ import SearchUser from '~/components/searchuser.vue'
 import Footer from '~/components/Footer.vue'
 import { Search, UserRoundPlus, ChevronUp } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
-import { getFlagCode, normalizeCountryCode, getFlagCodeFromCountryCode } from '~/utils/countryMapping'
+import { normalizeCountryCode, getFlagCodeFromCountryCode } from '~/utils/countryMapping'
 
 const { getAccessToken } = useAuth()
 const config = useRuntimeConfig()
