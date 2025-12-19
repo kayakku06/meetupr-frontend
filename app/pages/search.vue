@@ -210,142 +210,150 @@ const formatInterests = (interests) => {
 </script>
 
 <template>
-    <!-- ヘッダー -->
-    <div
-        class="fixed top-0 left-0 w-full flex flex-col items-center gap-4 bg-[#FFF5C9] p-4 z-50 border-b-2 border-[#3c938b]">
-        <!-- 検索ボックス -->
-        <div class="p-2 bg-white border-2 border-[#f39a5e] rounded text-sm text-[#4b3b2b] min-h-[40px] w-64 flex items-center gap-2 cursor-pointer overflow-x-auto"
-            @click="toggleDropdown">
-            <!-- 🔍 検索（固定） -->
-            <div class="flex items-center gap-1 flex-shrink-0">
-                <Search class="w-5 h-5 text-[#FEBC6E]" />
-                <span>検索</span>
-            </div>
-
-            <!-- ▼ 選択されたタグを横に並べる -->
-            <div class="flex items-center gap-2 flex-wrap">
-                <span v-for="hobby in form.hobbies" :key="hobby"
-                    class="bg-[#fceb96] border border-[#FEBC6E] rounded-md px-2 py-0.5 text-xs whitespace-nowrap">
-                    {{ hobby }}
-                </span>
-
-                <!-- タグがない場合の placeholder -->
-                <span v-if="form.hobbies.length === 0" class="text-gray-400 text-xs">
-                </span>
-            </div>
-        </div>
-
-
-        <!-- おすすめプロフィール -->
-        <div v-if="!isSearching" class="flex items-center gap-2 text-[#473c3c]">
-            <UserRoundPlus class="w-5 h-5" />
-            <span>おすすめのプロフィールをチェックしよう！</span>
-        </div>
-
-
-        <!-- ▼ ドロップダウン本体 -->
-        <div v-show="showDropdown"
-            class="mt-2 bg-white border-[3px] border-[#FEBC6E] rounded-md shadow-lg p-4 absolute w-full z-50 "
-            @keydown.enter.prevent="runSearch">
-            <div>
-                <div class="flex items-center justify-between mb-1">
-                    <label class="text-sm font-semibold text-gray-800">検索</label>
-                    <ChevronUp class="w-5 h-5 cursor-pointer" @click="toggleDropdown" />
+    <div class="bg-[#FFF5C9] min-h-screen">
+        <!-- 固定ヘッダー -->
+        <div class="fixed top-0 left-0 w-full bg-[#FFF5C9] z-50 border-b border-[#3c938b]">
+            <!-- 検索バー -->
+            <div class="p-4">
+                <div 
+                    class="p-3 bg-white border-2 border-[#FEBC6E] rounded-lg flex items-center gap-2 cursor-pointer"
+                    @click="toggleDropdown">
+                    <!-- 検索アイコン -->
+                    <Search class="w-5 h-5 text-[#FEBC6E] flex-shrink-0" />
+                    
+                    <!-- 選択されたタグまたはプレースホルダー -->
+                    <div class="flex items-center gap-2 flex-1 overflow-x-auto">
+                        <span v-if="form.hobbies.length === 0 && !form.keyword" class="text-gray-400 text-sm">
+                            検索
+                        </span>
+                        <div v-else class="flex items-center gap-2 flex-wrap">
+                            <button
+                                v-for="hobby in form.hobbies" 
+                                :key="hobby"
+                                @click.stop="removeHobby(hobby)"
+                                class="bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-xs whitespace-nowrap text-[#4b3b2b] hover:bg-gray-50">
+                                {{ hobby }}
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- キーワード検索入力欄 -->
-                <div class="mb-2">
-                    <input 
-                        v-model="form.keyword"
-                        type="text"
-                        placeholder="ユーザー名で検索..."
-                        class="w-full p-2 border-[3px] border-[#FEBC6E] rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#FEBC6E]"
-                        @keydown.enter="runSearch"
+            </div>
+
+            <!-- おすすめメッセージ（検索していない場合のみ） -->
+            <div v-if="!isSearching" class="px-4 pb-3 flex items-center gap-2 text-[#473c3c] border-b border-[#3c938b]">
+                <UserRoundPlus class="w-5 h-5" />
+                <span class="text-sm">おすすめの他のプロフィールをチェックしよう。</span>
+            </div>
+
+            <!-- フィルターパネル（展開時） -->
+            <div v-show="showDropdown" class="bg-white border-t border-[#FEBC6E] shadow-lg">
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="text-sm font-semibold text-gray-800">検索</label>
+                        <ChevronUp class="w-5 h-5 cursor-pointer text-[#FEBC6E]" @click="toggleDropdown" />
+                    </div>
+                    
+                    <!-- キーワード検索入力欄 -->
+                    <div class="mb-3">
+                        <input 
+                            v-model="form.keyword"
+                            type="text"
+                            placeholder="ユーザー名で検索..."
+                            class="w-full p-2 border-2 border-[#FEBC6E] rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#FEBC6E]"
+                            @keydown.enter="runSearch"
+                        />
+                    </div>
+                    
+                    <!-- 選択されたフィルター表示エリア -->
+                    <div class="mb-3 p-2 bg-white border-2 border-[#FEBC6E] rounded-lg min-h-[46px] flex items-center gap-2">
+                        <div class="flex flex-wrap gap-2 flex-1">
+                            <button
+                                v-for="hobby in form.hobbies" 
+                                :key="hobby"
+                                @click.stop="removeHobby(hobby)"
+                                class="bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-xs whitespace-nowrap text-[#4b3b2b] hover:bg-gray-50">
+                                {{ hobby }} ×
+                            </button>
+                            <span v-if="form.hobbies.length === 0" class="text-gray-400 text-xs">
+                                フィルターを選択してください
+                            </span>
+                        </div>
+                        <Search class="w-5 h-5 cursor-pointer text-[#FEBC6E] flex-shrink-0" @click="runSearch" />
+                    </div>
+
+                    <!-- 言語・国のタブ -->
+                    <div class="bg-white p-3 border-2 border-[#FEBC6E] rounded-lg">
+                        <div class="flex gap-4 pb-3 border-b border-[#FEBC6E] mb-3">
+                            <span 
+                                v-for="category in choiceCategories" 
+                                :key="category.name"
+                                @click="activeTab = category.name" 
+                                :class="activeTab === category.name
+                                    ? 'text-[#4a90e2] font-bold border-b-2 border-[#4a90e2] pb-1'
+                                    : 'text-gray-600 font-medium cursor-pointer'">
+                                {{ category.name }}
+                            </span>
+                        </div>
+
+                        <!-- タグ選択エリア -->
+                        <div 
+                            v-for="category in choiceCategories" 
+                            :key="category.name" 
+                            v-show="activeTab === category.name"
+                            class="flex flex-wrap gap-2">
+                            <button 
+                                v-for="tag in category.tags" 
+                                :key="tag" 
+                                @click="toggleHobby(tag)" 
+                                :class="form.hobbies.includes(tag)
+                                    ? 'bg-[#fceb96] text-gray-800 border border-[#FEBC6E] rounded-full px-3 py-1 text-sm'
+                                    : 'bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-sm hover:bg-gray-50'">
+                                {{ tag }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- メインコンテンツ -->
+        <main :class="showDropdown ? 'pt-[280px]' : (isSearching ? 'pt-[120px]' : 'pt-[140px]')">
+            <div class="p-4">
+                <!-- ローディング状態 -->
+                <div v-if="isLoading" class="flex items-center justify-center py-8">
+                    <div class="text-[#4b3b2b]">検索中...</div>
+                </div>
+
+                <!-- エラー表示 -->
+                <div v-else-if="searchError" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    {{ searchError }}
+                </div>
+
+                <!-- 検索結果がない場合 -->
+                <div v-else-if="isSearching && !isLoading && searchResults.length === 0" class="flex items-center justify-center py-8">
+                    <div class="text-[#4b3b2b]">検索結果が見つかりませんでした</div>
+                </div>
+
+                <!-- 検索結果表示 -->
+                <div v-else-if="isSearching && searchResults.length > 0">
+                    <SearchUser 
+                        v-for="user in searchResults" 
+                        :key="user.user_id"
+                        :name="user.username"
+                        :message="user.comment || ''"
+                        avatarColor="bg-[var(--meetupr-color-3)]"
+                        :hobbies="formatInterests(user.interests)"
+                        :flag="getFlagCode(user.residence)"
                     />
                 </div>
-                
-                <div
-                    class="flex items-center justify-between p-2 border-[3px] border-[#FEBC6E] rounded-md bg-white min-h-[46px]">
 
-                    <!-- 左側：選択された趣味のボタン一覧 -->
-                    <div class="flex flex-wrap gap-2">
-                        <button v-for="hobby in form.hobbies" :key="hobby" @click="removeHobby(hobby)"
-                            class="bg-[#fceb96] text-gray-800 border border-[#FEBC6E] rounded-md px-3 py-1 text-sm">
-                            {{ hobby }} <span class="ml-1 font-bold opacity-70">×</span>
-                        </button>
-                    </div>
-
-                    <!-- 右端：検索アイコン -->
-                    <Search class="w-5 h-5 cursor-pointer text-[#FEBC6E] flex-shrink-0" @click="runSearch" />
-
-
-                </div>
-
-            </div>
-
-            <div class="mt-3">
-                <div class="bg-white p-3 border-[3px] border-[#FEBC6E] rounded-md">
-                    <div class="flex gap-4 pb-3 border-b border-[#FEBC6E] mb-3">
-                        <span v-for="category in choiceCategories" :key="category.name"
-                            @click="activeTab = category.name" :class="activeTab === category.name
-                                ? 'text-[#4a90e2] font-bold border-b-2 border-[#4a90e2]'
-                                : 'text-gray-600 font-medium'">
-                            {{ category.name }}
-                        </span>
-                    </div>
-
-                    <div v-for="category in choiceCategories" :key="category.name" v-show="activeTab === category.name"
-                        class="flex flex-wrap gap-2">
-                        <button v-for="tag in category.tags" :key="tag" @click="toggleHobby(tag)" :class="form.hobbies.includes(tag)
-                            ? 'bg-[#fceb96] text-gray-400 border border-[#FEBC6E] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed'
-                            : 'bg-white border border-[#FEBC6E] rounded-sm px-3 py-1 text-sm hover:bg-gray-100'">
-                            {{ tag }}
-                        </button>
-                    </div>
+                <!-- おすすめプロフィール（検索していない場合） -->
+                <div v-else-if="!isSearching" class="space-y-0">
+                    <!-- ここに検索結果が表示される -->
                 </div>
             </div>
-        </div>
 
+            <Footer class="fixed inset-x-0 bottom-0" />
+        </main>
     </div>
-    <main class="bg-[#FFF5C9] min-h-screen pt-20">
-        <div class="p-4">
-            <!-- ローディング状態 -->
-            <div v-if="isLoading" class="flex items-center justify-center py-8">
-                <div class="text-[#4b3b2b]">検索中...</div>
-            </div>
-
-            <!-- エラー表示 -->
-            <div v-else-if="searchError" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {{ searchError }}
-            </div>
-
-            <!-- 検索結果がない場合 -->
-            <div v-else-if="isSearching && !isLoading && searchResults.length === 0" class="flex items-center justify-center py-8">
-                <div class="text-[#4b3b2b]">検索結果が見つかりませんでした</div>
-            </div>
-
-            <!-- 検索結果表示 -->
-            <div v-else-if="isSearching && searchResults.length > 0">
-                <SearchUser 
-                    v-for="user in searchResults" 
-                    :key="user.user_id"
-                    :name="user.username"
-                    :message="user.comment || ''"
-                    avatarColor="bg-[var(--meetupr-color-3)]"
-                    :hobbies="formatInterests(user.interests)"
-                    :flag="getFlagCode(user.residence)"
-                />
-            </div>
-
-            <!-- おすすめプロフィール（検索していない場合） -->
-            <div v-else-if="!isSearching" class="flex items-center justify-center py-8">
-                <div class="text-[#4b3b2b] text-center">
-                    <UserRoundPlus class="w-8 h-8 mx-auto mb-2" />
-                    <p>検索条件を選択して、ユーザーを探してみましょう！</p>
-                </div>
-            </div>
-        </div>
-
-        <Footer class="fixed inset-x-0 bottom-0" />
-    </main>
 </template>
