@@ -196,12 +196,23 @@ const connectWebSocket = async () => {
     errorMessage.value = ''
 
     // WebSocket URLの構築
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsHost = config.public.wsHost || 'localhost:8080'
-    const wsUrl = `${wsProtocol}//${wsHost}/ws/chat/${chatId.value}?token=${encodeURIComponent(token)}`
+    // apiBaseUrlからホストを抽出して使用（APIとWebSocketが同じホストを使用することを保証）
+    let wsUrl: string
+    try {
+      const apiUrl = new URL(config.public.apiBaseUrl || 'http://localhost:8080')
+      const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:'
+      const wsHost = apiUrl.host // ホスト名とポートを含む
+      wsUrl = `${wsProtocol}//${wsHost}/ws/chat/${chatId.value}?token=${encodeURIComponent(token)}`
+    } catch (error) {
+      // apiBaseUrlが無効な場合は、wsHostを使用（後方互換性のため）
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      const wsHost = config.public.wsHost || 'localhost:8080'
+      wsUrl = `${wsProtocol}//${wsHost}/ws/chat/${chatId.value}?token=${encodeURIComponent(token)}`
+    }
     
     console.log('[WebSocket] Connecting to:', wsUrl)
     console.log('[WebSocket] Chat ID:', chatId.value)
+    console.log('[WebSocket] API Base URL:', config.public.apiBaseUrl)
     console.log('[WebSocket] Token length:', token.length)
     
     ws = new WebSocket(wsUrl)
@@ -213,7 +224,9 @@ const connectWebSocket = async () => {
         console.error('[WebSocket] Connection timeout')
         ws.close()
         connectionStatus.value = 'error'
-        errorMessage.value = `接続がタイムアウトしました（${wsHost}）。サーバーが起動しているか確認してください。`
+        const apiUrl = new URL(config.public.apiBaseUrl || 'http://localhost:8080')
+        const displayHost = apiUrl.host || config.public.wsHost || 'localhost:8080'
+        errorMessage.value = `接続がタイムアウトしました（${displayHost}）。サーバーが起動しているか確認してください。`
       }
     }, 10000)
 
@@ -277,8 +290,10 @@ const connectWebSocket = async () => {
       const errorDetail = (error as any)?.message || '接続エラーが発生しました'
       
       // readyStateが3（CLOSED）の場合は、接続が確立される前に失敗したことを意味する
+      const apiUrl = new URL(config.public.apiBaseUrl || 'http://localhost:8080')
+      const displayHost = apiUrl.host || config.public.wsHost || 'localhost:8080'
       if (ws?.readyState === 3) {
-        errorMessage.value = `サーバーに接続できません（${wsHost}）。バックエンドサーバーが起動しているか確認してください。`
+        errorMessage.value = `サーバーに接続できません（${displayHost}）。バックエンドサーバーが起動しているか確認してください。`
       } else if (errorDetail.includes('Authorization header required')) {
         errorMessage.value = 'WebSocket認証エラー: バックエンドがクエリパラメータからトークンを取得できていません。バックエンドの実装を確認してください。'
       } else {
@@ -312,7 +327,9 @@ const connectWebSocket = async () => {
       } else if (event.code === 1003) {
         closeReason = 'データタイプエラー'
       } else if (event.code === 1006) {
-        closeReason = `異常な切断（サーバーに接続できません）。${wsHost} が起動しているか確認してください。`
+        const apiUrl = new URL(config.public.apiBaseUrl || 'http://localhost:8080')
+        const displayHost = apiUrl.host || config.public.wsHost || 'localhost:8080'
+        closeReason = `異常な切断（サーバーに接続できません）。${displayHost} が起動しているか確認してください。`
       } else if (event.code === 1008) {
         closeReason = 'ポリシー違反（認証エラーの可能性があります）'
       } else if (event.code === 1011) {
@@ -337,7 +354,9 @@ const connectWebSocket = async () => {
       } else if (reconnectAttempts >= maxReconnectAttempts) {
         isReconnecting = false
         reconnectAttempts = 0 // リセットして手動再接続を可能にする
-        errorMessage.value = `接続に失敗しました: ${closeReason}。バックエンドサーバー（${wsHost}）が起動しているか確認してください。`
+        const apiUrl = new URL(config.public.apiBaseUrl || 'http://localhost:8080')
+        const displayHost = apiUrl.host || config.public.wsHost || 'localhost:8080'
+        errorMessage.value = `接続に失敗しました: ${closeReason}。バックエンドサーバー（${displayHost}）が起動しているか確認してください。`
         connectionStatus.value = 'error'
       } else if (event.code !== 1000 && !isReconnecting) {
         errorMessage.value = `接続が切断されました: ${closeReason}`
