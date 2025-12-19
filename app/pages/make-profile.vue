@@ -580,7 +580,28 @@ onMounted(async () => {
         // Auth0で新規登録した際に、usersテーブルとprofilesテーブルにnullの状態でデータを保存
         // 注意: この処理は既にsignup.vueで実行されているため、通常は実行されない
         const email = u.email || ''
-        const username = u.nickname || u.name || ''
+
+        // Supabaseのusersテーブルからユーザーネームを取得（signup.vueで登録されたユーザーネームを使用）
+        let username = ''
+        try {
+            const usernameResponse = await $fetch<{ username?: string | null; error?: string }>('/api/users/username', {
+                query: {
+                    user_id: userId
+                }
+            })
+
+            if (!usernameResponse.error && usernameResponse.username) {
+                username = usernameResponse.username
+            } else {
+                // ユーザーネームが取得できない場合はスキップ（既にsignup.vueで登録済みの可能性がある）
+                console.log('[make-profile] Username not found, skipping initial registration (likely already registered in signup.vue)')
+                return
+            }
+        } catch (err) {
+            // エラーが発生した場合はスキップ（既にsignup.vueで登録済みの可能性がある）
+            console.log('[make-profile] Error fetching username, skipping initial registration (likely already registered in signup.vue):', err)
+            return
+        }
 
         if (userId && email && username) {
             try {
@@ -713,11 +734,37 @@ const registerProfile = async () => {
 
     const userId = u.sub || ''
     const email = u.email || ''
-    const username = u.nickname || u.name || ''
 
-    if (!userId || !email || !username) {
-        console.error('[registerProfile] Missing user information', { userId, email, username })
+    if (!userId || !email) {
+        console.error('[registerProfile] Missing user information', { userId, email })
         alert('ユーザー情報が不完全です。ページを再読み込みしてください。')
+        return
+    }
+
+    // Supabaseのusersテーブルからユーザーネームを取得（signup.vueで登録されたユーザーネームを使用）
+    let username = ''
+    try {
+        const usernameResponse = await $fetch<{ username?: string | null; error?: string }>('/api/users/username', {
+            query: {
+                user_id: userId
+            }
+        })
+
+        if (usernameResponse.error) {
+            console.error('[registerProfile] Failed to fetch username:', usernameResponse.error)
+            alert('ユーザーネームの取得に失敗しました。ページを再読み込みしてください。')
+            return
+        }
+
+        username = usernameResponse.username || ''
+        if (!username) {
+            console.error('[registerProfile] Username not found in database')
+            alert('ユーザーネームが見つかりませんでした。新規登録からやり直してください。')
+            return
+        }
+    } catch (err) {
+        console.error('[registerProfile] Error fetching username:', err)
+        alert('ユーザーネームの取得に失敗しました。ページを再読み込みしてください。')
         return
     }
 
