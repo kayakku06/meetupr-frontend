@@ -232,9 +232,9 @@ onMounted(async () => {
 <template>
     <div class="bg-[#FFF5C9] min-h-screen">
         <!-- 固定ヘッダー -->
-        <div class="fixed top-0 left-0 w-full bg-[#FFF5C9] z-50 border-b border-[#3c938b]">
+        <div class="fixed top-0 left-0 w-full bg-transparent z-50 border-b border-[#3c938b]">
             <!-- 検索バー -->
-            <div class="p-4">
+            <div class="p-4 bg-[#FFF5C9]">
                 <div 
                     class="p-3 bg-white border-2 border-[#FEBC6E] rounded-lg flex items-center gap-2 cursor-pointer"
                     @click="toggleDropdown">
@@ -260,13 +260,13 @@ onMounted(async () => {
             </div>
 
             <!-- おすすめメッセージ（検索結果が表示されていない場合のみ） -->
-            <div v-if="!isSearching || (isSearching && searchResults.length === 0 && !isLoading)" class="px-4 pb-3 flex items-center gap-2 text-[#473c3c] border-b border-[#3c938b]">
+            <div v-if="!isSearching || (isSearching && searchResults.length === 0 && !isLoading)" class="px-4 pb-3 flex items-center gap-2 text-[#473c3c] border-b border-[#3c938b] bg-[#FFF5C9]">
                 <UserRoundPlus class="w-5 h-5" />
                 <span class="text-sm">おすすめの他のプロフィールをチェックしよう。</span>
             </div>
 
             <!-- フィルターパネル（展開時） -->
-            <div v-show="showDropdown" class="bg-transparent border-2 border-[#FEBC6E] rounded-lg shadow-lg">
+            <div v-show="showDropdown" class="bg-white border-2 border-[#FEBC6E] rounded-lg shadow-lg mx-4 mb-4">
                 <div class="p-4">
                     <div class="flex items-center justify-between mb-3">
                         <label class="text-sm font-semibold text-gray-800">検索</label>
