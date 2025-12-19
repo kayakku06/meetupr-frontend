@@ -7,16 +7,37 @@
     <!-- コンテンツ -->
     <main class="max-w-md mx-auto p-5 ">
       <div class="flex gap-3 items-center mb-3">
-        <div class="w-20 h-20 rounded-full bg-[var(--meetup-color-3)] flex items-center justify-center border-2 border-[var(--meetupr-color-3)] overflow-hidden">
-          <template v-if="avatarUrl">
-            <img :src="avatarUrl" alt="avatar" class="w-full h-full object-cover" />
-          </template>
-          <template v-else>
-            <svg viewBox="0 0 64 64" class="w-11 h-11" aria-hidden>
-              <circle cx="32" cy="24" r="12" fill="none" stroke="#6aaea0" stroke-width="2" />
-              <path d="M10 54c4-10 18-14 22-14s18 4 22 14" fill="none" stroke="#6aaea0" stroke-width="2" />
+        <!-- 画像選択用のhidden input（編集時にだけ使う） -->
+        <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
+
+        <!-- アバター + 編集時の＋ボタン（make-profile準拠） -->
+        <div class="relative inline-block">
+          <div
+            class="w-20 h-20 rounded-full bg-[var(--meetup-color-3)] flex items-center justify-center border-2 border-[var(--meetupr-color-3)] overflow-hidden"
+            :class="{ 'cursor-pointer': editing }"
+            :role="editing ? 'button' : undefined"
+            :aria-label="editing ? 'プロフィール画像を選択' : undefined"
+            @click="editing && onAvatarClick()"
+          >
+            <template v-if="avatarUrl">
+              <img :src="avatarUrl" alt="avatar" class="w-full h-full object-cover" />
+            </template>
+            <template v-else>
+              <svg viewBox="0 0 64 64" class="w-11 h-11" aria-hidden>
+                <circle cx="32" cy="24" r="12" fill="none" stroke="#6aaea0" stroke-width="2" />
+                <path d="M10 54c4-10 18-14 22-14s18 4 22 14" fill="none" stroke="#6aaea0" stroke-width="2" />
+              </svg>
+            </template>
+          </div>
+          <!-- 右下の＋バッジ（編集時のみ表示。デコレーション用でクリックイベントは親に透過） -->
+          <div
+            v-if="editing"
+            class="absolute bottom-0 right-0 w-7 h-7 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center pointer-events-none"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="4" aria-hidden>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-          </template>
+          </div>
         </div>
 
         <div class="flex-1">
@@ -225,6 +246,7 @@ const editing = ref(false)
 const isLoading = ref(true)
 const isSaving = ref(false)
 const avatarUrl = ref<string | null>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
 
 // make-profile 準拠: 地域・言語分類データとヘルパ（選択UIはCategorySelectで表示）
 
@@ -618,5 +640,66 @@ async function fetchProfile() {
 onMounted(() => {
   fetchProfile()
 })
+
+// アバター選択UI（make-profileを参考に、編集中のみ有効）
+const onAvatarClick = () => {
+  if (fileInput.value) fileInput.value.click()
+}
+
+const onFileChange = async (e: Event) => {
+  const input = e.target as HTMLInputElement
+  const file = input?.files?.[0]
+  if (!file) return
+
+  // 即時プレビュー: 一旦 object URL を表示
+  let objectUrl: string | null = null
+  try {
+    objectUrl = URL.createObjectURL(file)
+    avatarUrl.value = objectUrl
+  } catch (err) {
+    // ignore preview failures
+  }
+
+  const formData = new FormData()
+  formData.append('file', file, file.name)
+
+  try {
+    const u = user?.value
+    if (u?.sub) formData.append('user_id', u.sub)
+  } catch (_) {
+    /* ignore */
+  }
+
+  const fetchOptions: any = { method: 'POST', body: formData }
+  try {
+    const token = await getAccessToken()
+    if (token) fetchOptions.headers = { Authorization: `Bearer ${token}` }
+  } catch (e) {
+    // token 取得失敗は続行
+    console.info('[my-profile] getAccessToken failed (continuing):', e)
+  }
+
+  try {
+    const res = await fetch('/api/profile/upload', fetchOptions)
+    if (res.ok) {
+      const json = await res.json()
+      const url = json?.url || null
+      if (url) {
+        avatarUrl.value = url
+      } else {
+        console.warn('[my-profile] upload returned no url')
+      }
+    } else {
+      const txt = await res.text()
+      console.warn('[my-profile] upload failed:', res.status, txt)
+    }
+  } catch (err) {
+    console.warn('[my-profile] avatar upload error (non-fatal):', err)
+  } finally {
+    if (objectUrl) {
+      try { URL.revokeObjectURL(objectUrl) } catch (_) { /* ignore */ }
+    }
+  }
+}
 
 </script>
