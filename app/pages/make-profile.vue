@@ -72,13 +72,14 @@
 
                 <div class="flex flex-col gap-4">
                     <div class="text-sm text-amber-900">言語</div>
+                    <!-- ネイティブ（必須）ラベル -->
+                    <div class="text-sm text-amber-900">ネイティブ <span class="text-red-500">*</span></div>
                     <!-- ネイティブ: CategorySelect（話せる言語と同形式、1件のみ保持） -->
                     <CategorySelect
                         v-model="form.langNative"
                         :categories="languageCategories"
                         :multiple="true"
                         placeholder="選択してください（必須）"
-                        title="ネイティブ(必須)"
                         selectButtonLabel="選択"
                         aria-required="true"
                     />
