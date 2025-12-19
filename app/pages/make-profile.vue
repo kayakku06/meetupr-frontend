@@ -87,8 +87,8 @@
                         <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 overflow-x-auto">
                             <span v-for="category in regionCategories" :key="category.name"
                                 @click="activeRegionTab = category.name"
-                                class="cursor-pointer pb-2 transition whitespace-nowrap"
-                                :class="activeRegionTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
+                                class="cursor-pointer pb-2 transition whitespace-nowrap text-[11px]"
+                                :class="activeRegionTab === category.name ? 'text-[var(--meetupr-sub)] font-normal border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-normal'">
                                 {{ category.name }}
                             </span>
                         </div>
@@ -130,7 +130,8 @@
                                 <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
                                     <span v-for="category in languageCategories" :key="category.name"
                                         @click="activeLanguageTab = category.name"
-                                        :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
+                                        class="cursor-pointer pb-1 transition whitespace-nowrap text-[11px]"
+                                        :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-normal border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-normal'">
                                         {{ category.name }}
                                     </span>
                                 </div>
@@ -169,7 +170,8 @@
                             <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
                                 <span v-for="category in languageCategories" :key="category.name"
                                     @click="activeLanguageTab = category.name"
-                                    :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
+                                    class="cursor-pointer pb-1 transition whitespace-nowrap text-[11px]"
+                                    :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-normal border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-normal'">
                                     {{ category.name }}
                                 </span>
                             </div>
@@ -206,7 +208,8 @@
                             <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
                                 <span v-for="category in languageCategories" :key="category.name"
                                     @click="activeLanguageTab = category.name"
-                                    :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
+                                    class="cursor-pointer pb-1 transition whitespace-nowrap text-[11px]"
+                                    :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-normal border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-normal'">
                                     {{ category.name }}
                                 </span>
                             </div>
@@ -252,7 +255,8 @@
                         <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
                             <span v-for="category in (Array.isArray(choiceCategories) ? choiceCategories : [])"
                                 :key="category.name" @click="activeTab = category.name"
-                                :class="activeTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
+                                class="cursor-pointer pb-1 transition whitespace-nowrap text-[11px]"
+                                :class="activeTab === category.name ? 'text-[var(--meetupr-sub)] font-normal border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-normal'">
                                 {{ category.name }}
                             </span>
                         </div>
