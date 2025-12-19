@@ -35,6 +35,7 @@ const languageCodeToLabel: Record<string, string> = {
 // 学部コードから日本語名へのマッピング
 const majorCodeToLabel: Record<string, string> = {
   'business': '経営学部',
+  'economics': '経営学部', // 旧コード（後方互換性のため）
   'production_science': '政策科学部',
   'information_science': '情報理工学部',
   'film_studies': '映像学部',
