@@ -4,7 +4,7 @@
         <div class="relative w-[150px]">
 
             <!-- 吹き出し（ロゴの左上） -->
-            <div class="absolute -top-[220px] -left-[240px] w-[306px] h-[228px]">
+            <div class="absolute -top-[220px] -left-[210px] w-[306px] h-[228px]">
                 <!-- SVG -->
                 <img src="/bubble.svg" class="absolute inset-0 w-full h-full z-0" />
 
@@ -13,7 +13,7 @@
                  flex items-center justify-center
                  px-12 pt-8 pb-16
                  text-sm text-black
-                 text-center leading-relaxed">
+                 text-center leading-relaxed  whitespace-pre-line">
                     {{ text }}
                 </div>
             </div>
