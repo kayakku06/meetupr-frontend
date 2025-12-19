@@ -30,16 +30,25 @@ watch(() => route.path, () => {
 })
 
 // --- ボタン押したとき --- //
-const onSearch = () => router.push('/search')
-const onMessage = () => router.push('/home')
-const onUser = () => router.push('/my-profile')
+const onSearch = () => {
+  console.log('[Footer] Search button clicked')
+  router.push('/search')
+}
+const onMessage = () => {
+  console.log('[Footer] Message button clicked')
+  router.push('/home')
+}
+const onUser = () => {
+  console.log('[Footer] User button clicked')
+  router.push('/my-profile')
+}
 </script>
 
 <template>
   <div class="flex justify-around items-center p-3 relative z-50" :class="['bg-[var(--meetupr-sub)]']">
     
     <!-- 検索ボタン -->
-    <button @click="onSearch" class="p-2 transition relative z-10">
+    <button @click.stop="onSearch" class="p-2 transition relative z-10 cursor-pointer">
       <Search
         class="w-8 h-8"
         :class="selected === 'search' ? 'text-[var(--meetupr-color-3)]' : 'text-[var(--meetupr-main)]'"
@@ -47,7 +56,7 @@ const onUser = () => router.push('/my-profile')
     </button>
 
     <!-- メッセージボタン -->
-    <button @click="onMessage" class="p-2 transition relative z-10">
+    <button @click.stop="onMessage" class="p-2 transition relative z-10 cursor-pointer">
       <MessageCircleMore
         class="w-8 h-8"
         :class="selected === 'message' ? 'text-[var(--meetupr-color-3)]' : 'text-[var(--meetupr-main)]'"
@@ -55,7 +64,7 @@ const onUser = () => router.push('/my-profile')
     </button>
 
     <!-- ユーザーボタン -->
-    <button @click="onUser" class="p-2 transition relative z-10">
+    <button @click.stop="onUser" class="p-2 transition relative z-10 cursor-pointer">
       <UserRound
         class="w-8 h-8"
         :class="selected === 'user' ? 'text-[var(--meetupr-color-3)]' : 'text-[var(--meetupr-main)]'"
