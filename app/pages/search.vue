@@ -260,13 +260,19 @@ onMounted(async () => {
             </div>
 
             <!-- おすすめメッセージ（検索結果が表示されていない場合のみ） -->
-            <div v-if="!isSearching || (isSearching && searchResults.length === 0 && !isLoading)" class="px-4 pb-3 flex items-center gap-2 text-[#473c3c] border-b border-[#3c938b] bg-[#FFF5C9]">
+            <div v-if="(!isSearching || (isSearching && searchResults.length === 0 && !isLoading)) && !showDropdown" class="px-4 pb-3 flex items-center gap-2 text-[#473c3c] border-b border-[#3c938b] bg-[#FFF5C9]">
                 <UserRoundPlus class="w-5 h-5" />
                 <span class="text-sm">おすすめの他のプロフィールをチェックしよう。</span>
             </div>
+        </div>
 
-            <!-- フィルターパネル（展開時） -->
-            <div v-show="showDropdown" class="bg-white border-2 border-[#FEBC6E] rounded-lg shadow-lg mx-4 mb-4">
+        <!-- フィルターパネル（モーダル表示） -->
+        <div v-show="showDropdown" class="fixed top-0 left-0 w-full h-full z-[60] pointer-events-none">
+            <!-- オーバーレイ背景 -->
+            <div class="absolute inset-0 bg-black bg-opacity-20 pointer-events-auto" @click="toggleDropdown"></div>
+            
+            <!-- フィルターパネル -->
+            <div class="absolute top-20 left-4 right-4 bg-white border-2 border-[#FEBC6E] rounded-lg shadow-lg pointer-events-auto max-h-[80vh] overflow-y-auto">
                 <div class="p-4">
                     <div class="flex items-center justify-between mb-3">
                         <label class="text-sm font-semibold text-gray-800">検索</label>
@@ -326,7 +332,7 @@ onMounted(async () => {
         </div>
 
         <!-- メインコンテンツ -->
-        <main :class="showDropdown ? 'pt-[280px]' : (isSearching ? 'pt-[120px]' : 'pt-[140px]')">
+        <main :class="isSearching ? 'pt-[120px]' : 'pt-[140px]'">
             <div class="p-4">
                 <!-- ローディング状態 -->
                 <div v-if="isLoading" class="flex items-center justify-center py-8">
