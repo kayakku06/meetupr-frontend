@@ -15,8 +15,7 @@ const toggleDropdown = () => {
 };
 
 const form = ref({
-    hobbies: [],
-    keyword: ''
+    hobbies: []
 });
 
 const choiceCategories = ref([
@@ -42,7 +41,7 @@ const addHobby = (hobby) => {
 const removeHobby = (hobby) => {
     form.value.hobbies = form.value.hobbies.filter(h => h !== hobby);
     // 検索タグが0になったらおすすめを再表示
-    if (form.value.hobbies.length === 0 && !form.value.keyword) {
+    if (form.value.hobbies.length === 0) {
         isSearching.value = false;
         searchResults.value = [];
     }
@@ -130,10 +129,8 @@ const getFlagCode = (country) => {
 
 // 検索APIを呼び出す
 const runSearch = async () => {
-    // 検索条件がない場合は全ユーザーを検索（または何もしない）
-    const hasSearchConditions = form.value.hobbies.length > 0 || form.value.keyword.trim().length > 0;
-    
-    if (!hasSearchConditions) {
+    // 検索条件がない場合は何もしない
+    if (form.value.hobbies.length === 0) {
         isSearching.value = false;
         searchResults.value = [];
         showDropdown.value = false;
@@ -153,10 +150,6 @@ const runSearch = async () => {
 
         // リクエストボディを構築
         const requestBody = {};
-        
-        if (form.value.keyword.trim()) {
-            requestBody.keyword = form.value.keyword.trim();
-        }
         
         if (selectedLanguages.value.length > 0) {
             requestBody.languages = selectedLanguages.value;
@@ -223,7 +216,7 @@ const formatInterests = (interests) => {
                     
                     <!-- 選択されたタグまたはプレースホルダー -->
                     <div class="flex items-center gap-2 flex-1 overflow-x-auto">
-                        <span v-if="form.hobbies.length === 0 && !form.keyword" class="text-gray-400 text-sm">
+                        <span v-if="form.hobbies.length === 0" class="text-gray-400 text-sm">
                             検索
                         </span>
                         <div v-else class="flex items-center gap-2 flex-wrap">
@@ -251,17 +244,6 @@ const formatInterests = (interests) => {
                     <div class="flex items-center justify-between mb-3">
                         <label class="text-sm font-semibold text-gray-800">検索</label>
                         <ChevronUp class="w-5 h-5 cursor-pointer text-[#FEBC6E]" @click="toggleDropdown" />
-                    </div>
-                    
-                    <!-- キーワード検索入力欄 -->
-                    <div class="mb-3">
-                        <input 
-                            v-model="form.keyword"
-                            type="text"
-                            placeholder="ユーザー名で検索..."
-                            class="w-full p-2 border-2 border-[#FEBC6E] rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#FEBC6E]"
-                            @keydown.enter="runSearch"
-                        />
                     </div>
                     
                     <!-- 選択されたフィルター表示エリア -->
