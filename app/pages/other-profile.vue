@@ -93,6 +93,8 @@ import { useRuntimeConfig } from '#app'
 import { useAuth } from '~/composables/useAuth'
 import { getJapaneseCountryName } from '~/utils/countryMapping'
 import { getMajorLabel } from '~/utils/majorMapping'
+import { getGenderLabel } from '~/utils/genderMapping'
+import { getLanguageLabel } from '~/utils/languageMapping'
 import { MessageCircle } from 'lucide-vue-next'
 import Footer from '~/components/Footer.vue'
 
@@ -152,14 +154,17 @@ async function fetchProfile() {
     }
     // 重複を削除
     const uniqueLanguages = [...new Set(allLanguages)]
+    const languageLabels = uniqueLanguages
+      .map((l) => getLanguageLabel(l))
+      .filter((l) => l != null && l !== '')
 
     // データを反映
     user.value = {
       name: response.username || '',
       department: getMajorLabel(response.major) || '',
-      gender: response.gender || '',
+      gender: getGenderLabel(response.gender) || '',
       origin: getJapaneseCountryName(response.residence) || response.residence || '',
-      languages: uniqueLanguages,
+      languages: languageLabels,
       hobbies: Array.isArray(response.interests) ? response.interests.map((i) => i.name || i) : [],
       bio: response.comment || '',
       id: userId,
