@@ -99,6 +99,12 @@ Content-Type: application/json
 ]
 ```
 
+**重要**: 
+- **`residence`フィールドは常に含まれる必要があります**（言語のみで検索した場合でも）
+- `residence`は英語の国コード（ISO 3166-1 alpha-2）形式で返してください（例: "CN", "US", "JP"）
+- フロントエンドで国旗を表示するために必要です
+- `residence`が`null`の場合は`null`を返してください（フロントエンドで適切に処理します）
+
 ### エラー時
 - **401 Unauthorized**: 認証エラー
 - **400 Bad Request**: リクエスト形式が不正

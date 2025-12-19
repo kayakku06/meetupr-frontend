@@ -181,6 +181,10 @@ const runSearch = async () => {
             console.log('[search] User residences:', searchResults.value.map(u => {
                 const flagCode = getFlagCodeFromCountryCode(u.residence);
                 console.log(`[search] User ${u.username}: residence="${u.residence}", flagCode="${flagCode}"`);
+                // residenceが存在しない場合の警告
+                if (!u.residence) {
+                    console.warn(`[search] User ${u.username} has no residence field - flag will not be displayed`);
+                }
                 return { 
                     username: u.username, 
                     residence: u.residence,
