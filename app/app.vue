@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const router = useRouter()
 const isAuthPage = computed(() => route.path === '/' || route.path === '/signup')
+const isSearchPage = computed(() => route.path === '/search')
 
 // Auth0のコールバック処理
 onMounted(() => {
@@ -36,7 +37,7 @@ onMounted(() => {
 
 <template>
   <div>
-    <Header v-if="!isAuthPage" />
+    <Header v-if="!isAuthPage && !isSearchPage" />
     <NuxtPage />
   </div>
 </template>
