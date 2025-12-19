@@ -25,7 +25,7 @@
               v-model="form.name"
               :disabled="isLoading"
               rows="1"
-              class="w-full border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-lg outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 min-h-16 disabled:opacity-50 disabled:cursor-not-allowed mb-2"
+              class="w-full border-2 border-[var(--meetupr-sub)] p-1.5 rounded bg-white text-lg outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 h-10 leading-tight disabled:opacity-50 disabled:cursor-not-allowed mb-1"
               placeholder="ユーザー名を入力"
             ></textarea>
           </template>
