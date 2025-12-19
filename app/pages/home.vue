@@ -27,7 +27,7 @@ onMounted(async () => {
 <template>
 
   <HomeHeader class="fixed inset-x-0 top-0 z-50"/>
-  <div class="min-h-screen p-4 pt-28 pb-24 bg-[var(--meetupr-main)]">
+  <div class="min-h-screen p-4 pt-36 pb-24 bg-[var(--meetupr-main)]">
     <!-- ローディング状態 -->
     <div v-if="isLoading" class="text-center text-gray-500 py-8">
       <p>チャット一覧を読み込み中...</p>
