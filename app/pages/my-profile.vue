@@ -1,6 +1,6 @@
 <template>
 
-  <div class="min-h-screen bg-[var(--meetupr-main)] pt-14 pb-20 font-['Noto_Sans_JP']">
+  <div class="min-h-screen bg-[var(--meetupr-main)] pb-20 font-['Noto_Sans_JP']">
   
    <!--　<header class="fixed top-0 left-0 right-0 h-14 bg-white shadow-md z-40"></header>　-->
 
@@ -213,6 +213,16 @@
             @click="cancel">キャンセル</button>
         </div>
       </form>
+
+      <!-- ログアウトボタン -->
+      <div class="mt-8 mb-4">
+        <button
+          @click="handleLogout"
+          class="w-full px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+        >
+          ログアウト
+        </button>
+      </div>
     </main>
 
     
@@ -229,7 +239,16 @@ import { ref, onMounted } from 'vue'
 import Footer from '~/components/Footer.vue'
 import { useAuth } from '~/composables/useAuth'
 
-const { user, getAccessToken } = useAuth()
+const { user, getAccessToken, logout } = useAuth()
+
+// ログアウト処理
+const handleLogout = async () => {
+  await logout({
+    logoutParams: {
+      returnTo: window.location.origin
+    }
+  })
+}
 const editing = ref(false)
 const isLoading = ref(true)
 const isSaving = ref(false)
