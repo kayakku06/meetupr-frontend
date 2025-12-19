@@ -2,7 +2,14 @@
   <div class="relative flex items-start space-x-3 p-3 border-b border-gray-200 hover:bg-gray-50 transition cursor-pointer" @click="goProfile">
 
     <!-- アバター -->
-    <div :class="['w-16 h-16 rounded-full flex-shrink-0', avatarColor]"></div>
+    <div class="w-16 h-16 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center"
+      :class="avatarUrl ? '' : avatarColor">
+      <img v-if="avatarUrl" :src="avatarUrl" :alt="name || 'ユーザー'" class="w-full h-full object-cover" />
+      <svg v-else viewBox="0 0 64 64" class="w-10 h-10" aria-hidden>
+        <circle cx="32" cy="24" r="12" fill="none" stroke="#6aaea0" stroke-width="2" />
+        <path d="M10 54c4-10 18-14 22-14s18 4 22 14" fill="none" stroke="#6aaea0" stroke-width="2" />
+      </svg>
+    </div>
 
     <div class="flex flex-col flex-1">
       <!-- 名前と国旗を横並び -->
@@ -39,7 +46,8 @@ const props = defineProps({
     default: () => []
   },
   flag: String, // ISOコードで国旗指定（例: 'jp', 'us'）
-  userId: String // ユーザーID（user_id）
+  userId: String, // ユーザーID（user_id）
+  avatarUrl: String // アバター画像のURL
 })
 
 const goProfile = () => {
