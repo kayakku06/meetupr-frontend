@@ -66,8 +66,8 @@
           @click="onSelect(tagCode(tag))"
           :disabled="disabled"
           :class="isSelected(tagCode(tag))
-            ? 'bg-[var(--meetupr-sub)] text-white border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm cursor-pointer'
-            : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'"
+            ? 'bg-[var(--meetupr-sub)] text-white border border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-sm cursor-pointer'
+            : 'bg-white border border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'"
         >
           {{ tagLabel(tag) }}
         </button>
