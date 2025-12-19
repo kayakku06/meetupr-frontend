@@ -40,10 +40,11 @@ const addHobby = (hobby) => {
 
 const removeHobby = (hobby) => {
     form.value.hobbies = form.value.hobbies.filter(h => h !== hobby);
-    // 検索タグが0になったらおすすめを再表示
-    if (form.value.hobbies.length === 0) {
-        isSearching.value = false;
-        searchResults.value = [];
+    // フィルターを削除した場合、全ユーザーを取得するために検索を実行
+    // ただし、検索中でない場合は自動実行しない（ユーザーが検索ボタンをクリックするまで待つ）
+    if (isSearching.value && form.value.hobbies.length === 0) {
+        // 既に検索中の場合は、フィルターなしで再検索（全ユーザー取得）
+        runSearch();
     }
 };
 
@@ -129,14 +130,7 @@ const getFlagCode = (country) => {
 
 // 検索APIを呼び出す
 const runSearch = async () => {
-    // 検索条件がない場合は何もしない
-    if (form.value.hobbies.length === 0) {
-        isSearching.value = false;
-        searchResults.value = [];
-        showDropdown.value = false;
-        return;
-    }
-
+    // フィルター条件がない場合でも全ユーザーを取得する
     isSearching.value = true;
     isLoading.value = true;
     searchError.value = null;
@@ -148,7 +142,10 @@ const runSearch = async () => {
             throw new Error('認証トークンを取得できませんでした');
         }
 
-        // リクエストボディを構築（常にlanguagesとcountriesを含める）
+        // リクエストボディを構築
+        // 要件: フィルター条件がない場合（空配列）でもAPIを呼び出して全ユーザー（自分以外）を取得
+        // - フィルター条件がない場合: 全ユーザー（自分以外）を返す。プロフィール情報（comment, residence, avatar_url）も取得
+        // - フィルター条件がある場合: 条件に一致するユーザーのみを返す。フィルタリングに必要なプロフィール情報のみを取得
         const requestBody = {
             languages: selectedLanguages.value.length > 0 ? selectedLanguages.value : [],
             countries: selectedCountries.value.length > 0 ? selectedCountries.value : []
@@ -337,11 +334,13 @@ const formatInterests = (interests) => {
 
                 <!-- 検索結果がない場合 -->
                 <div v-else-if="isSearching && !isLoading && searchResults.length === 0" class="flex items-center justify-center py-8">
-                    <div class="text-[#4b3b2b]">検索結果が見つかりませんでした</div>
+                    <div class="text-[#4b3b2b]">
+                        {{ form.hobbies.length === 0 ? 'ユーザーが見つかりませんでした' : '検索結果が見つかりませんでした' }}
+                    </div>
                 </div>
 
                 <!-- 検索結果表示 -->
-                <div v-else-if="isSearching && searchResults.length > 0">
+                <div v-else-if="isSearching && !isLoading && searchResults.length > 0">
                     <SearchUser 
                         v-for="user in searchResults" 
                         :key="user.user_id"
@@ -354,8 +353,12 @@ const formatInterests = (interests) => {
                 </div>
 
                 <!-- おすすめプロフィール（検索していない場合） -->
-                <div v-else-if="!isSearching" class="space-y-0">
-                    <!-- ここに検索結果が表示される -->
+                <div v-else-if="!isSearching" class="flex items-center justify-center py-8">
+                    <div class="text-[#4b3b2b] text-center">
+                        <UserRoundPlus class="w-8 h-8 mx-auto mb-2" />
+                        <p>検索条件を選択して、ユーザーを探してみましょう！</p>
+                        <p class="text-sm mt-2 text-gray-600">フィルターなしで検索すると、全ユーザーが表示されます。</p>
+                    </div>
                 </div>
             </div>
 
