@@ -638,7 +638,13 @@ async function save() {
     alert('プロフィールを保存しました。')
     
     // データを再取得して最新の状態を反映
+    // ただし、画像をアップロードした直後の場合は、avatarUrl.valueを保持する
+    const currentAvatarUrl = avatarUrl.value
     await fetchProfile()
+    // アップロード直後の画像URLを保持（APIから取得した値がnullの場合）
+    if (currentAvatarUrl && !avatarUrl.value) {
+      avatarUrl.value = currentAvatarUrl
+    }
   } catch (err: any) {
     console.error('[my-profile] Error saving profile:', err)
     alert(`プロフィールの保存中にエラーが発生しました。\n${err.message || '不明なエラー'}`)
@@ -709,13 +715,30 @@ async function fetchProfile() {
     form.value.bio = response.comment || ''
     
     // avatar_urlを設定（null、空文字列、undefinedの場合はnullに統一）
+    // ただし、blob: URL（一時的なプレビュー）の場合は上書きする
     const avatarUrlValue = response.avatar_url
     if (avatarUrlValue && typeof avatarUrlValue === 'string' && avatarUrlValue.trim() !== '') {
-      avatarUrl.value = avatarUrlValue.trim()
-      console.log('[my-profile] Avatar URL set:', avatarUrl.value)
+      // blob: URL（一時的なプレビュー）の場合は、APIから取得した値で上書き
+      if (!avatarUrl.value || avatarUrl.value.startsWith('blob:') || avatarUrl.value.startsWith('data:')) {
+        avatarUrl.value = avatarUrlValue.trim()
+        console.log('[my-profile] Avatar URL set from API:', avatarUrl.value)
+      } else {
+        // 既に有効なURLが設定されている場合は保持（アップロード直後など）
+        console.log('[my-profile] Avatar URL already set (keeping current):', avatarUrl.value)
+      }
     } else {
-      avatarUrl.value = null
-      console.log('[my-profile] Avatar URL not available:', avatarUrlValue)
+      // APIからavatar_urlが取得できない場合
+      // blob: URLやdata: URL（一時的なプレビュー）の場合はnullに設定
+      if (avatarUrl.value && (avatarUrl.value.startsWith('blob:') || avatarUrl.value.startsWith('data:'))) {
+        avatarUrl.value = null
+        console.log('[my-profile] Avatar URL not available, cleared temporary preview')
+      } else if (avatarUrl.value) {
+        // 既に有効なURLが設定されている場合は保持
+        console.log('[my-profile] Avatar URL not in API, but keeping current:', avatarUrl.value)
+      } else {
+        avatarUrl.value = null
+        console.log('[my-profile] Avatar URL not available:', avatarUrlValue)
+      }
     }
 
     // オリジナルデータを更新
@@ -798,8 +821,9 @@ const onFileChange = async (e: Event) => {
       if (url) {
         avatarUrl.value = url
         console.log('[my-profile] Avatar uploaded successfully:', url)
-        // プロフィール保存時にavatar_urlが含まれるように、ここで保存を促すか、自動保存する
-        // ただし、ユーザーが「保存」ボタンを押すまで待つ方が良いかもしれない
+        // /api/profile/uploadは既にprofiles.avatar_urlを更新しているため、
+        // ここではavatarUrl.valueを設定するだけでOK
+        // プロフィール保存時にavatar_urlが含まれるように、save関数で処理される
       } else {
         console.error('[my-profile] upload returned no url:', json)
         alert('画像のアップロードに失敗しました。URLが取得できませんでした。')
