@@ -18,7 +18,7 @@
 
     <!-- 複数選択のチップ表示（multiple=trueのとき） -->
     <div v-else-if="!panelOnly" class="flex flex-col gap-2">
-      <div class="text-[10px] text-amber-700" v-if="title">{{ title }}</div>
+      <div class="text-[10px] text-amber-700" v-if="title">{{ title }}<span v-if="required" class="ml-0.5 text-red-500">*</span></div>
       <div class="flex gap-2 flex-wrap mb-1.5">
         <template v-for="(code, i) in arrayValue" :key="code + '-' + i">
           <div
@@ -103,6 +103,7 @@ const props = defineProps<{
   readonly?: boolean // パネル操作無効、表示のみ
   disabled?: boolean // ボタンや選択操作を無効
   panelOnly?: boolean
+  required?: boolean
 }>()
 
 const emit = defineEmits<{
