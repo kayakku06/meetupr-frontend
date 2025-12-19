@@ -63,6 +63,7 @@ onMounted(async () => {
         :message="chat.last_message || ''"
         :date="chat.last_message_time || ''"
         avatarColor="bg-teal-600"
+        :avatarUrl="chat.partner_avatar_url || null"
         :chatId="chat.id"
         :partnerId="chat.partner_id"
       />

@@ -11,6 +11,7 @@ interface Chat {
   other_user?: {
     id: string
     username: string
+    avatar_url?: string | null
     // その他のフィールド...
   }
   last_message?: {
@@ -24,6 +25,7 @@ interface Chat {
 interface ChatWithPartner extends Chat {
   partner_id: string
   partner_name?: string  // other_user.username から取得
+  partner_avatar_url?: string | null  // other_user.avatar_url から取得
   last_message?: string  // last_message.content から取得
   last_message_time?: string  // last_message.sent_at から取得
 }
@@ -80,6 +82,8 @@ export const useChat = () => {
             partner_id: partnerId,
             // バックエンドから返ってくる other_user.username を使用
             partner_name: chat.other_user?.username,
+            // バックエンドから返ってくる other_user.avatar_url を使用
+            partner_avatar_url: chat.other_user?.avatar_url || null,
             // バックエンドから返ってくる last_message.content を使用
             last_message: chat.last_message?.content,
             // バックエンドから返ってくる last_message.sent_at を使用
