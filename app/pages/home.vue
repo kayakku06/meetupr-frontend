@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import ChatIcon from '~/components/chaticon.vue'
 import Footer from '~/components/Footer.vue'
+import HomeHeader from '~/components/home-header.vue'
 import { useChat } from '~/composables/useChat'
 import { onMounted } from 'vue'
 
@@ -18,7 +19,7 @@ onMounted(async () => {
 <template>
 
   <div class="min-h-screen p-4 pb-24 bg-[var(--meetupr-main)]">
-    <h1 class="text-xl mb-4 zen-maru-gothic-regular">Home</h1>
+    <HomeHeader />
 
     <!-- ローディング状態 -->
     <div v-if="isLoading" class="text-center text-gray-500 py-8">
