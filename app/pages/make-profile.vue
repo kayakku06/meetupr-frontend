@@ -63,145 +63,47 @@
                             class="disabled:opacity-50 disabled:cursor-not-allowed" /> その他</label>
                 </fieldset>
 
-                <!-- 出身（言語セクションと同じ構造に統一） -->
+                <!-- 出身（CategorySelectへ統一） -->
                 <div class="flex flex-col gap-4">
                     <div class="text-xs text-amber-900">出身</div>
-                    <div class="flex flex-col gap-2">
-                        <button type="button" @click="showOrigin = !showOrigin"
-                            class="flex justify-between items-center bg-white border-[3px] border-[var(--meetupr-sub)] rounded-md px-3 py-2 text-sm outline-none hover:bg-gray-50 transition">
-                            <span class="text-amber-900">
-                                {{ form.origin ? getCountryLabel(form.origin) : '選択してください' }}
-                            </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-800" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-
-                        <div v-if="showOrigin" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
-                            <!-- 地域タブ（my-profile準拠） -->
-                            <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 text-sm overflow-x-auto flex-nowrap -mx-3 px-3 snap-x">
-                                <span v-for="category in regionCategories" :key="category.name" @click="activeRegionTab = category.name"
-                                  class="shrink-0 snap-start px-1"
-                                  :class="activeRegionTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)] cursor-pointer' : 'text-gray-600 font-medium cursor-pointer'">
-                                  {{ category.name }}
-                                </span>
-                            </div>
-                            <!-- 国選択ボタン -->
-                            <div v-for="category in regionCategories" :key="category.name"
-                                v-show="activeRegionTab === category.name" class="flex flex-wrap gap-2">
-                                <button v-for="country in category.tags" :key="country.code" type="button"
-                                    @click="form.origin = country.code"
-                                    :class="form.origin === country.code ? 'bg-[var(--meetupr-sub)] text-white border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm cursor-pointer' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
-                                    {{ country.label }}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <CategorySelect
+                      v-model="form.origin"
+                      :categories="regionCategories"
+                      :multiple="false"
+                      placeholder="選択してください"
+                    />
                 </div>
 
                 <div class="flex flex-col gap-4">
                     <div class="text-xs text-amber-900">言語</div>
-                    <div class="flex flex-col gap-2">
+                    <!-- ネイティブ: CategorySelect -->
+                    <CategorySelect
+                      v-model="form.langNative"
+                      :categories="languageCategories"
+                      :multiple="false"
+                      placeholder="選択してください"
+                      headerPrefix="ネイティブ:"
+                    />
 
-                        <!-- ネイティブ -->
-                        <div class="flex flex-col gap-2">
-                            <button type="button" @click="showNativeLanguage = !showNativeLanguage"
-                                class="flex justify-between items-center bg-white border-[3px] border-[var(--meetupr-sub)] rounded-md px-3 py-2 text-sm outline-none hover:bg-gray-50 transition">
-                                <span class="text-amber-900">ネイティブ: {{ form.langNative ? getLanguageLabel(form.langNative) : '選択してください' }}</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-800" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
+                                        <!-- 話せる言語: CategorySelect -->
+                                        <CategorySelect
+                                            v-model="form.langSpoken"
+                                            :categories="languageCategories"
+                                            :multiple="true"
+                                            placeholder="選択してください"
+                                            title="話せる言語"
+                                            selectButtonLabel="選択"
+                                        />
 
-                            <div v-if="showNativeLanguage"
-                                class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
-                                <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 text-sm">
-                                    <span v-for="category in languageCategories" :key="category.name" @click="activeLanguageTab = category.name"
-                                      :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)] cursor-pointer' : 'text-gray-600 font-medium cursor-pointer'">
-                                      {{ category.name }}
-                                    </span>
-                                </div>
-                                <div v-for="category in languageCategories" :key="category.name"
-                                    v-show="activeLanguageTab === category.name" class="flex flex-wrap gap-2">
-                                    <button v-for="lang in category.tags" :key="lang.code" type="button"
-                                        @click="form.langNative = lang.code"
-                                        :class="form.langNative === lang.code ? 'bg-[var(--meetupr-sub)] text-white border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm cursor-pointer' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
-                                        {{ lang.label }}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 話せる言語 -->
-                    <div class="flex flex-col gap-2">
-                        <div class="text-[10px] text-amber-700">話せる言語</div>
-                        <div class="flex gap-2 flex-wrap mb-1.5">
-                          <template v-for="(lang, i) in form.langSpoken" :key="lang + '-' + i">
-                            <div class="flex items-center bg-white border-2 border-[var(--meetupr-sub)] px-2.5 py-1.5 rounded-full text-xs text-amber-900">
-                              <span class="select-none">{{ getLanguageLabel(lang) }}</span>
-                              <button type="button" @click="removeSpokenLanguage(lang)" class="ml-2 text-[11px] text-gray-500 hover:text-gray-800">×</button>
-                            </div>
-                          </template>
-                          <span v-if="!(Array.isArray(form.langSpoken) && form.langSpoken.length > 0)" class="text-gray-400 text-sm">選択してください</span>
-                        </div>
-                        <button type="button" @click="showSpokenLanguages = !showSpokenLanguages"
-                          class="self-start bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition">選択</button>
-
-                        <div v-if="showSpokenLanguages"
-                            class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
-
-                            <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 text-sm">
-                                <span v-for="category in languageCategories" :key="category.name" @click="activeLanguageTab = category.name"
-                                  :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)] cursor-pointer' : 'text-gray-600 font-medium cursor-pointer'">
-                                  {{ category.name }}
-                                </span>
-                            </div>
-                            <div v-for="category in languageCategories" :key="category.name"
-                                v-show="activeLanguageTab === category.name" class="flex flex-wrap gap-2">
-                                <button v-for="lang in category.tags" :key="lang.code" type="button"
-                                    @click="toggleSpokenLanguage(lang.code)"
-                                    :class="form.langSpoken.includes(lang.code) ? 'bg-[var(--meetupr-sub)] text-white border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm cursor-pointer' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
-                                    {{ lang.label }}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 学びたい言語 -->
-                    <div class="flex flex-col gap-2">
-                        <div class="text-[10px] text-amber-700">学びたい言語</div>
-                        <div class="flex gap-2 flex-wrap mb-1.5">
-                          <template v-for="(lang, i) in form.langLearning" :key="lang + '-' + i">
-                            <div class="flex items-center bg-white border-2 border-[var(--meetupr-sub)] px-2.5 py-1.5 rounded-full text-xs text-amber-900">
-                              <span class="select-none">{{ getLanguageLabel(lang) }}</span>
-                              <button type="button" @click="removeLearningLanguage(lang)" class="ml-2 text-[11px] text-gray-500 hover:text-gray-800">×</button>
-                            </div>
-                          </template>
-                          <span v-if="!(Array.isArray(form.langLearning) && form.langLearning.length > 0)" class="text-gray-400 text-sm">選択してください</span>
-                        </div>
-                        <button type="button" @click="showLearningLanguages = !showLearningLanguages"
-                          class="self-start bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition">選択</button>
-
-                        <div v-if="showLearningLanguages"
-                            class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
-                            <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 text-sm">
-                                <span v-for="category in languageCategories" :key="category.name" @click="activeLanguageTab = category.name"
-                                  :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)] cursor-pointer' : 'text-gray-600 font-medium cursor-pointer'">
-                                  {{ category.name }}
-                                </span>
-                            </div>
-                            <div v-for="category in languageCategories" :key="category.name"
-                                v-show="activeLanguageTab === category.name" class="flex flex-wrap gap-2">
-                                <button v-for="lang in category.tags" :key="lang.code" type="button"
-                                    @click="toggleLearningLanguage(lang.code)"
-                                    :class="form.langLearning.includes(lang.code) ? 'bg-[var(--meetupr-sub)] text-white border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm cursor-pointer' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
-                                    {{ lang.label }}
-                                </button>
-                            </div>
-                        </div>
-
-                    </div>
+                                        <!-- 学びたい言語: CategorySelect -->
+                                        <CategorySelect
+                                            v-model="form.langLearning"
+                                            :categories="languageCategories"
+                                            :multiple="true"
+                                            placeholder="選択してください"
+                                            title="学びたい言語"
+                                            selectButtonLabel="選択"
+                                        />
                 </div>
 
                 <div class="flex flex-col gap-2">
@@ -275,6 +177,7 @@ definePageMeta({
 
 import { ref, onMounted } from 'vue';
 import Footer from '~/components/Footer.vue'
+import CategorySelect from '~/components/CategorySelect.vue'
 
 // フォームデータをrefで管理
 const form = ref({
@@ -395,13 +298,9 @@ onMounted(() => {
 // (selectedRegion removed — not used)
 
 // 各セクションの展開状態
-const showOrigin = ref(false)
-const showNativeLanguage = ref(false)
-const showSpokenLanguages = ref(false)
-const showLearningLanguages = ref(false)
+// CategorySelect に統一したため、各表示切替フラグは不要
 
-// 現在選択されている地域タブ
-const activeRegionTab = ref('')
+// CategorySelect が内部でタブ管理するため不要
 
 // 地域ごとの国分類（言語と同じ形式）
 const regionCategories = ref([
@@ -517,16 +416,12 @@ const regionCategories = ref([
     }
 ])
 
-// 初期タブを設定
-activeRegionTab.value = regionCategories.value[0]?.name || '東アジア'
+// 初期タブ設定は CategorySelect 側で管理するため不要
 
 // regionCountries/getCountriesByRegion removed — regionCategories を直接使用
 
 // 国コードからラベルを取得する関数
-function getCountryLabel(countryCode: string): string {
-    const allCountries = regionCategories.value.flatMap(region => region.tags)
-    return allCountries.find(country => country.code === countryCode)?.label || countryCode
-}
+// ラベル取得は CategorySelect 内で実施
 
 // 言語カテゴリーのデータ
 const languageCategories = ref([
@@ -563,42 +458,16 @@ const languageCategories = ref([
     }
 ]);
 
-// 現在選択されている言語タブ
-const activeLanguageTab = ref(languageCategories.value[0]?.name || 'アジア');
+// CategorySelect が内部でタブ管理するため不要
 
 // 言語を追加する関数（話せる言語）
-function toggleSpokenLanguage(langCode: string) {
-    if (form.value.langSpoken.includes(langCode)) {
-        form.value.langSpoken = form.value.langSpoken.filter(l => l !== langCode)
-    } else {
-        form.value.langSpoken.push(langCode)
-    }
-}
-
-// 話せる言語の削除（チップの×ボタン用）
-function removeSpokenLanguage(lang: string) {
-    form.value.langSpoken = form.value.langSpoken.filter(l => l !== lang)
-}
+// 話せる言語の追加/削除は CategorySelect に委譲
 
 // 言語を追加する関数（学びたい言語）
-function toggleLearningLanguage(langCode: string) {
-    if (form.value.langLearning.includes(langCode)) {
-        form.value.langLearning = form.value.langLearning.filter(l => l !== langCode)
-    } else {
-        form.value.langLearning.push(langCode)
-    }
-}
-
-// 学びたい言語の削除（チップの×ボタン用）
-function removeLearningLanguage(lang: string) {
-    form.value.langLearning = form.value.langLearning.filter(l => l !== lang)
-}
+// 学びたい言語の追加/削除は CategorySelect に委譲
 
 // 言語コードからラベルを取得する関数
-function getLanguageLabel(langCode: string): string {
-    const allLanguages = languageCategories.value.flatMap(cat => cat.tags)
-    return allLanguages.find(tag => tag.code === langCode)?.label || langCode
-}
+// ラベル取得は CategorySelect 内で実施
 
 const choiceCategories = ref([
     {
