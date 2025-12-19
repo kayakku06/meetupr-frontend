@@ -15,7 +15,20 @@
         </div>
 
         <div class="flex-1">
-          <h2 class="m-0 mb-2 text-lg text-teal-900">{{ form.name || 'なまえ' }}</h2>
+          <template v-if="!editing">
+            <h2 class="m-0 mb-2 text-lg text-teal-900">{{ form.name || 'なまえ' }}</h2>
+          </template>
+          <template v-else>
+            <label class="sr-only" for="username-input">ユーザー名</label>
+            <textarea
+              id="username-input"
+              v-model="form.name"
+              :disabled="isLoading"
+              rows="1"
+              class="w-full border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-lg outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 min-h-16 disabled:opacity-50 disabled:cursor-not-allowed mb-2"
+              placeholder="ユーザー名を入力"
+            ></textarea>
+          </template>
           <button v-if="!editing && !isLoading"
             class="border-[var(--meetupr-color-3)] text-white px-2.5 py-1.5 rounded-full inline-flex gap-1.5 items-center text-xs hover:border-[var(--meetupr-color-3)] transition bg-[var(--meetupr-color-3)]"
             @click="toggleEdit">
