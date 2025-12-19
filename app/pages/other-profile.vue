@@ -26,7 +26,10 @@
           </div>
 
           <div class="flex-1">
-            <h2 class="m-0 mb-2 text-lg text-[#2f5f56]">{{ user.name || 'ユーザー' }}</h2>
+            <div class="flex items-center gap-2 mb-2">
+              <h2 class="m-0 text-lg text-[#2f5f56]">{{ user.name || 'ユーザー' }}</h2>
+              <span v-if="user.flag" :class="['flag', `fi fi-${user.flag}`, 'w-6 h-6']"></span>
+            </div>
             <button v-if="user.id" @click="sendMessage(user.id)"
               class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed"
               :class="['bg-[var(--meetupr-color-3)]']">
@@ -43,11 +46,18 @@
             :class="['border-[var(--meetupr-sub)]']">{{ user.department }}</div>
         </label>
 
-        <label class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2">
           <div class="text-sm text-[#6a5a3b]">性別</div>
-          <div class="px-2 py-2 bg-white border-2 rounded-md text-sm text-[#4b3b2b]"
-            :class="['border-[var(--meetupr-sub)]']">{{ user.gender || '' }}</div>
-        </label>
+          <div class="inline-flex items-center gap-1.5 text-sm text-[#4b3b2b]">
+            <input
+              type="radio"
+              disabled
+              :checked="!!user.gender"
+              class="disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            {{ user.gender || '未設定' }}
+          </div>
+        </div>
 
         <label class="flex flex-col gap-2">
           <div class="text-sm text-[#6a5a3b]">出身</div>
@@ -55,11 +65,46 @@
             :class="['border-[var(--meetupr-sub)]']">{{ user.origin }}</div>
         </label>
 
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-3">
           <div class="text-sm text-[#6a5a3b]">言語</div>
-          <div class="flex flex-wrap gap-2">
-            <span v-for="(l, i) in user.languages" :key="i" class="px-3 py-1 rounded-full text-sm bg-white"
-              :class="['border-2', 'border-[var(--meetupr-sub)]', 'text-[#4b3b2b]']">{{ l }}</span>
+
+          <div class="flex flex-col gap-2">
+            <div class="text-xs text-[#6a5a3b]">ネイティブ</div>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="(l, i) in user.nativeLanguages"
+                :key="`native-${i}`"
+                class="px-3 py-1 rounded-full text-sm bg-white"
+                :class="['border-2', 'border-[var(--meetupr-sub)]', 'text-[#4b3b2b]']"
+              >{{ l }}</span>
+              <span v-if="!(Array.isArray(user.nativeLanguages) && user.nativeLanguages.length)" class="text-sm text-gray-400">未設定</span>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <div class="text-xs text-[#6a5a3b]">話せる言語</div>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="(l, i) in user.spokenLanguages"
+                :key="`spoken-${i}`"
+                class="px-3 py-1 rounded-full text-sm bg-white"
+                :class="['border-2', 'border-[var(--meetupr-sub)]', 'text-[#4b3b2b]']"
+              >{{ l }}</span>
+              <span v-if="!(Array.isArray(user.spokenLanguages) && user.spokenLanguages.length)" class="text-sm text-gray-400">未設定</span>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <div class="text-xs text-[#6a5a3b]">学びたい言語</div>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="(l, i) in user.learningLanguages"
+                :key="`learning-${i}`"
+                class="px-3 py-1 rounded-full text-sm bg-white"
+                :class="['border-2', 'border-[var(--meetupr-sub)]', 'text-[#4b3b2b]']"
+              >{{ l }}</span>
+              <span v-if="!(Array.isArray(user.learningLanguages) && user.learningLanguages.length)" class="text-sm text-gray-400">未設定</span>
+            </div>
           </div>
         </div>
 
@@ -91,7 +136,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useRuntimeConfig } from '#app'
 import { useAuth } from '~/composables/useAuth'
-import { getJapaneseCountryName } from '~/utils/countryMapping'
+import { getFlagCodeFromCountryCode, getJapaneseCountryName } from '~/utils/countryMapping'
 import { getMajorLabel } from '~/utils/majorMapping'
 import { getGenderLabel } from '~/utils/genderMapping'
 import { getLanguageLabel } from '~/utils/languageMapping'
@@ -108,7 +153,11 @@ const user = ref({
   department: '',
   gender: '',
   origin: '',
+  flag: '',
   languages: [],
+  nativeLanguages: [],
+  spokenLanguages: [],
+  learningLanguages: [],
   hobbies: [],
   bio: '',
   id: '',
@@ -141,22 +190,21 @@ async function fetchProfile() {
       return
     }
 
-    // 言語を結合（母国語、話せる言語、学習中の言語）
-    const allLanguages = []
-    if (response.native_language) {
-      allLanguages.push(response.native_language)
-    }
-    if (Array.isArray(response.spoken_languages)) {
-      allLanguages.push(...response.spoken_languages)
-    }
-    if (Array.isArray(response.learning_languages)) {
-      allLanguages.push(...response.learning_languages)
-    }
-    // 重複を削除
-    const uniqueLanguages = [...new Set(allLanguages)]
-    const languageLabels = uniqueLanguages
-      .map((l) => getLanguageLabel(l))
-      .filter((l) => l != null && l !== '')
+    const nativeLanguages = response.native_language
+      ? [getLanguageLabel(response.native_language)].filter((l) => l != null && l !== '')
+      : []
+    const spokenLanguages = Array.isArray(response.spoken_languages)
+      ? response.spoken_languages
+          .map((l) => getLanguageLabel(l))
+          .filter((l) => l != null && l !== '')
+      : []
+    const learningLanguages = Array.isArray(response.learning_languages)
+      ? response.learning_languages
+          .map((l) => getLanguageLabel(l))
+          .filter((l) => l != null && l !== '')
+      : []
+
+    const languageLabels = [...new Set([...nativeLanguages, ...spokenLanguages, ...learningLanguages])]
 
     // データを反映
     user.value = {
@@ -164,7 +212,11 @@ async function fetchProfile() {
       department: getMajorLabel(response.major) || '',
       gender: getGenderLabel(response.gender) || '',
       origin: getJapaneseCountryName(response.residence) || response.residence || '',
+      flag: getFlagCodeFromCountryCode(response.residence) || '',
       languages: languageLabels,
+      nativeLanguages,
+      spokenLanguages,
+      learningLanguages,
       hobbies: Array.isArray(response.interests) ? response.interests.map((i) => i.name || i) : [],
       bio: response.comment || '',
       id: userId,
