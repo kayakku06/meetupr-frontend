@@ -59,6 +59,7 @@ export default defineEventHandler(async (event: H3Event) => {
       interests: Array.isArray(payload.interests) ? payload.interests : (payload.interests ? [payload.interests] : []),
       residence: toNullIfEmpty(payload.residence),
       comment: toNullIfEmpty(payload.comment),
+      avatar_url: toNullIfEmpty(payload.avatar_url),
       last_updated: payload.last_updated || new Date().toISOString()
     }
 
@@ -159,6 +160,7 @@ export default defineEventHandler(async (event: H3Event) => {
         : [],
       residence: profileRow.residence,
       comment: profileRow.comment,
+      avatar_url: profileRow.avatar_url,
       last_updated: profileRow.last_updated || new Date().toISOString()
     }
 

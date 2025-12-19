@@ -602,6 +602,7 @@ async function save() {
       interests: Array.isArray(form.value.hobbies) ? form.value.hobbies : [],
       residence: normalizeCountryCode(form.value.origin) || null,
       comment: form.value.bio || null,
+      avatar_url: avatarUrl.value || null, // アップロードされた画像URLを含める
       last_updated: new Date().toISOString()
     }
 
@@ -637,7 +638,13 @@ async function save() {
     alert('プロフィールを保存しました。')
     
     // データを再取得して最新の状態を反映
+    // ただし、画像をアップロードした直後の場合は、avatarUrl.valueを保持する
+    const currentAvatarUrl = avatarUrl.value
     await fetchProfile()
+    // アップロード直後の画像URLを保持（APIから取得した値がnullの場合）
+    if (currentAvatarUrl && !avatarUrl.value) {
+      avatarUrl.value = currentAvatarUrl
+    }
   } catch (err: any) {
     console.error('[my-profile] Error saving profile:', err)
     alert(`プロフィールの保存中にエラーが発生しました。\n${err.message || '不明なエラー'}`)
@@ -706,7 +713,33 @@ async function fetchProfile() {
   form.value.learningLanguages = Array.isArray(response.learning_languages) ? response.learning_languages : []
   form.value.hobbies = Array.isArray(response.interests) ? response.interests : []
     form.value.bio = response.comment || ''
-    avatarUrl.value = response.avatar_url || null
+    
+    // avatar_urlを設定（null、空文字列、undefinedの場合はnullに統一）
+    // ただし、blob: URL（一時的なプレビュー）の場合は上書きする
+    const avatarUrlValue = response.avatar_url
+    if (avatarUrlValue && typeof avatarUrlValue === 'string' && avatarUrlValue.trim() !== '') {
+      // blob: URL（一時的なプレビュー）の場合は、APIから取得した値で上書き
+      if (!avatarUrl.value || avatarUrl.value.startsWith('blob:') || avatarUrl.value.startsWith('data:')) {
+        avatarUrl.value = avatarUrlValue.trim()
+        console.log('[my-profile] Avatar URL set from API:', avatarUrl.value)
+      } else {
+        // 既に有効なURLが設定されている場合は保持（アップロード直後など）
+        console.log('[my-profile] Avatar URL already set (keeping current):', avatarUrl.value)
+      }
+    } else {
+      // APIからavatar_urlが取得できない場合
+      // blob: URLやdata: URL（一時的なプレビュー）の場合はnullに設定
+      if (avatarUrl.value && (avatarUrl.value.startsWith('blob:') || avatarUrl.value.startsWith('data:'))) {
+        avatarUrl.value = null
+        console.log('[my-profile] Avatar URL not available, cleared temporary preview')
+      } else if (avatarUrl.value) {
+        // 既に有効なURLが設定されている場合は保持
+        console.log('[my-profile] Avatar URL not in API, but keeping current:', avatarUrl.value)
+      } else {
+        avatarUrl.value = null
+        console.log('[my-profile] Avatar URL not available:', avatarUrlValue)
+      }
+    }
 
     // オリジナルデータを更新
     original.value = JSON.parse(JSON.stringify(form.value))
@@ -732,54 +765,103 @@ const onFileChange = async (e: Event) => {
   const file = input?.files?.[0]
   if (!file) return
 
+  // ファイルサイズチェック（例: 5MB制限）
+  const maxSize = 5 * 1024 * 1024 // 5MB
+  if (file.size > maxSize) {
+    alert('画像ファイルのサイズが大きすぎます。5MB以下のファイルを選択してください。')
+    // 入力フィールドをリセット
+    if (input) input.value = ''
+    return
+  }
+
   // 即時プレビュー: 一旦 object URL を表示
   let objectUrl: string | null = null
   try {
     objectUrl = URL.createObjectURL(file)
     avatarUrl.value = objectUrl
   } catch (err) {
-    // ignore preview failures
+    console.error('[my-profile] Failed to create object URL:', err)
+    alert('画像のプレビューに失敗しました。')
+    return
   }
 
   const formData = new FormData()
   formData.append('file', file, file.name)
 
-  try {
-    const u = user?.value
-    if (u?.sub) formData.append('user_id', u.sub)
-  } catch (_) {
-    /* ignore */
+  // user_idを取得
+  const u = user?.value
+  if (!u?.sub) {
+    alert('ユーザー情報の取得に失敗しました。ページを再読み込みしてください。')
+    if (objectUrl) {
+      try { URL.revokeObjectURL(objectUrl) } catch (_) { /* ignore */ }
+    }
+    avatarUrl.value = null
+    return
   }
+  formData.append('user_id', u.sub)
 
   const fetchOptions: any = { method: 'POST', body: formData }
   try {
     const token = await getAccessToken()
-    if (token) fetchOptions.headers = { Authorization: `Bearer ${token}` }
+    if (token) {
+      fetchOptions.headers = { Authorization: `Bearer ${token}` }
+    }
   } catch (e) {
-    // token 取得失敗は続行
-    console.info('[my-profile] getAccessToken failed (continuing):', e)
+    console.warn('[my-profile] getAccessToken failed (continuing):', e)
+    // tokenがなくても続行（サーバー側で認証が必要な場合はエラーが返る）
   }
 
   try {
+    console.log('[my-profile] Uploading avatar file:', { fileName: file.name, fileSize: file.size, userId: u.sub })
     const res = await fetch('/api/profile/upload', fetchOptions)
+    
     if (res.ok) {
       const json = await res.json()
       const url = json?.url || null
       if (url) {
         avatarUrl.value = url
+        console.log('[my-profile] Avatar uploaded successfully:', url)
+        // /api/profile/uploadは既にprofiles.avatar_urlを更新しているため、
+        // ここではavatarUrl.valueを設定するだけでOK
+        // プロフィール保存時にavatar_urlが含まれるように、save関数で処理される
       } else {
-        console.warn('[my-profile] upload returned no url')
+        console.error('[my-profile] upload returned no url:', json)
+        alert('画像のアップロードに失敗しました。URLが取得できませんでした。')
+        if (objectUrl) {
+          try { URL.revokeObjectURL(objectUrl) } catch (_) { /* ignore */ }
+        }
+        avatarUrl.value = null
       }
     } else {
       const txt = await res.text()
-      console.warn('[my-profile] upload failed:', res.status, txt)
+      let errorMessage = '画像のアップロードに失敗しました。'
+      try {
+        const errorJson = JSON.parse(txt)
+        errorMessage = errorJson.error || errorJson.message || errorMessage
+      } catch (_) {
+        errorMessage = txt || errorMessage
+      }
+      console.error('[my-profile] upload failed:', res.status, errorMessage)
+      alert(errorMessage)
+      if (objectUrl) {
+        try { URL.revokeObjectURL(objectUrl) } catch (_) { /* ignore */ }
+      }
+      avatarUrl.value = null
     }
   } catch (err) {
-    console.warn('[my-profile] avatar upload error (non-fatal):', err)
-  } finally {
+    console.error('[my-profile] avatar upload error:', err)
+    alert('画像のアップロード中にエラーが発生しました。もう一度お試しください。')
     if (objectUrl) {
       try { URL.revokeObjectURL(objectUrl) } catch (_) { /* ignore */ }
     }
+    avatarUrl.value = null
+  } finally {
+    if (objectUrl && avatarUrl.value !== objectUrl) {
+      // 新しいURLが設定されている場合のみ、古いobject URLを解放
+      try { URL.revokeObjectURL(objectUrl) } catch (_) { /* ignore */ }
+    }
+    // 入力フィールドをリセット（同じファイルを再度選択できるように）
+    if (input) input.value = ''
   }
 }
 

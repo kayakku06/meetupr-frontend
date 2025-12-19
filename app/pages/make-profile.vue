@@ -580,7 +580,28 @@ onMounted(async () => {
         // Auth0で新規登録した際に、usersテーブルとprofilesテーブルにnullの状態でデータを保存
         // 注意: この処理は既にsignup.vueで実行されているため、通常は実行されない
         const email = u.email || ''
-        const username = u.nickname || u.name || ''
+
+        // Supabaseのusersテーブルからユーザーネームを取得（signup.vueで登録されたユーザーネームを使用）
+        let username = ''
+        try {
+            const usernameResponse = await $fetch<{ username?: string | null; error?: string }>('/api/users/username', {
+                query: {
+                    user_id: userId
+                }
+            })
+
+            if (!usernameResponse.error && usernameResponse.username) {
+                username = usernameResponse.username
+            } else {
+                // ユーザーネームが取得できない場合はスキップ（既にsignup.vueで登録済みの可能性がある）
+                console.log('[make-profile] Username not found, skipping initial registration (likely already registered in signup.vue)')
+                return
+            }
+        } catch (err) {
+            // エラーが発生した場合はスキップ（既にsignup.vueで登録済みの可能性がある）
+            console.log('[make-profile] Error fetching username, skipping initial registration (likely already registered in signup.vue):', err)
+            return
+        }
 
         if (userId && email && username) {
             try {
@@ -713,11 +734,73 @@ const registerProfile = async () => {
 
     const userId = u.sub || ''
     const email = u.email || ''
-    const username = u.nickname || u.name || ''
 
-    if (!userId || !email || !username) {
-        console.error('[registerProfile] Missing user information', { userId, email, username })
+    if (!userId || !email) {
+        console.error('[registerProfile] Missing user information', { userId, email })
         alert('ユーザー情報が不完全です。ページを再読み込みしてください。')
+        return
+    }
+
+    // Supabaseのusersテーブルからユーザーネームを取得（signup.vueで登録されたユーザーネームを使用）
+    // リトライロジックを追加（Supabaseへの保存が完了するまで待機）
+    let username = ''
+    const maxRetries = 5
+    const retryDelay = 500 // 500ms待機
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            if (attempt > 0) {
+                // リトライ時は少し待機（Supabaseへの保存が完了するまで待つ）
+                await new Promise(resolve => setTimeout(resolve, retryDelay))
+                console.log(`[registerProfile] Retrying username fetch (attempt ${attempt + 1}/${maxRetries})...`)
+            }
+            
+            const usernameResponse = await $fetch<{ username?: string | null; error?: string }>('/api/users/username', {
+                query: {
+                    user_id: userId
+                }
+            })
+
+            if (usernameResponse.error) {
+                console.warn(`[registerProfile] Failed to fetch username (attempt ${attempt + 1}/${maxRetries}):`, usernameResponse.error)
+                if (attempt === maxRetries - 1) {
+                    // 最後の試行でも失敗した場合
+                    console.error('[registerProfile] Failed to fetch username after all retries')
+                    alert('ユーザーネームの取得に失敗しました。ページを再読み込みしてください。')
+                    return
+                }
+                continue // リトライ
+            }
+
+            username = usernameResponse.username || ''
+            if (username) {
+                console.log(`[registerProfile] Username fetched successfully (attempt ${attempt + 1}/${maxRetries}):`, username)
+                break // 成功したらループを抜ける
+            } else {
+                console.warn(`[registerProfile] Username not found (attempt ${attempt + 1}/${maxRetries})`)
+                if (attempt === maxRetries - 1) {
+                    // 最後の試行でもユーザーネームが見つからない場合
+                    console.error('[registerProfile] Username not found in database after all retries')
+                    alert('ユーザーネームが見つかりませんでした。新規登録からやり直してください。')
+                    return
+                }
+                continue // リトライ
+            }
+        } catch (err) {
+            console.warn(`[registerProfile] Error fetching username (attempt ${attempt + 1}/${maxRetries}):`, err)
+            if (attempt === maxRetries - 1) {
+                // 最後の試行でも失敗した場合
+                console.error('[registerProfile] Error fetching username after all retries:', err)
+                alert('ユーザーネームの取得に失敗しました。ページを再読み込みしてください。')
+                return
+            }
+            // リトライ
+        }
+    }
+    
+    if (!username) {
+        console.error('[registerProfile] Username is still empty after all retries')
+        alert('ユーザーネームの取得に失敗しました。ページを再読み込みしてください。')
         return
     }
 
