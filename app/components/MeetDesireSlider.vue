@@ -1,5 +1,9 @@
 <template>
-  <div class="mood-container">
+  <div
+    class="mood-container"
+    :class="{ minimized: !isExpanded }"
+  >
+
     <div
       v-if="!isExpanded"
       class="minimized-box"
@@ -141,29 +145,42 @@ function onInput(e) {
 
 <style scoped>
 .mood-container {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 10px;
+  position: fixed;      /* ← ここ重要 */
+  right: 16px;
+  top: 80px;
+  z-index: 50;          /* チャットより前に出す */
+  background: transparent;
+
+  /* レイアウトを占有しない */
+  width: auto;
+  height: auto;
+  padding: 0;
 }
+
+
+.mood-container.minimized {
+  position: fixed;
+  right: 16px;
+  top: 80px;
+  padding: 0;
+  background: transparent;
+}
+
 
 /* ▼ 最小化時のボックス ▼ */
 .minimized-box {
-  width: 70px;
-  height: 70px;
+  width: 55px;
+  height: 55px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  margin-left: 300px; 
-  /* 数値を大きくするとより右へ、小さくすると中央寄りになります */
 }
+
 .icon-white-face {
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
+  display: block;   /* ← 重要 */
 }
 
 /* ▼ 展開時のカード ▼ */
@@ -171,11 +188,10 @@ function onInput(e) {
   background: white;
   border-radius: 16px;
   padding: 16px 20px;
-  width: 100%;
-  max-width: 400px;
+  width: 360px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  animation: fadeIn 0.3s ease;
 }
+
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-5px); }
