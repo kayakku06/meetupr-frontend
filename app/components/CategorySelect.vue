@@ -21,9 +21,18 @@
       <div class="text-[10px] text-amber-700" v-if="title">{{ title }}</div>
       <div class="flex gap-2 flex-wrap mb-1.5">
         <template v-for="(code, i) in arrayValue" :key="code + '-' + i">
-          <div class="flex items-center bg-white border-2 border-[var(--meetupr-sub)] px-2.5 py-1.5 rounded-full text-xs text-amber-900">
+          <div
+            :class="[
+              'flex items-center bg-white border-2 border-[var(--meetupr-sub)] px-2.5 py-1.5 rounded-full text-xs text-amber-900',
+              readonlyOrDisabled ? 'opacity-50 cursor-not-allowed' : ''
+            ]">
             <span class="select-none">{{ getLabel(code) }}</span>
-            <button type="button" @click="toggle(code)" :disabled="isReadOnly || disabled" class="ml-2 text-[11px] text-gray-500 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed">×</button>
+            <button
+              v-if="!readonlyOrDisabled"
+              type="button"
+              @click="toggle(code)"
+              class="ml-2 text-[11px] text-gray-500 hover:text-gray-800"
+            >×</button>
           </div>
         </template>
         <span v-if="arrayValue.length === 0" class="text-gray-400 text-sm">{{ placeholder }}</span>
@@ -103,6 +112,7 @@ const emit = defineEmits<{
 const isMultiple = computed(() => !!props.multiple)
 const selectButtonLabel = computed(() => props.selectButtonLabel ?? '選択')
 const isReadOnly = computed(() => !!props.readonly)
+const readonlyOrDisabled = computed(() => isReadOnly.value || !!props.disabled)
 
 // パネルの開閉とタブ状態
 const open = ref(false)
