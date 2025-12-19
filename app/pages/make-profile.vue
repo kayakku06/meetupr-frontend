@@ -72,9 +72,16 @@
 
                 <div class="flex flex-col gap-4">
                     <div class="text-xs text-amber-900">言語</div>
-                    <!-- ネイティブ: CategorySelect -->
-                    <CategorySelect v-model="form.langNative" :categories="languageCategories" :multiple="false"
-                        placeholder="選択してください）" headerPrefix="ネイティブ(必須):" aria-required="true" />
+                    <!-- ネイティブ: CategorySelect（話せる言語と同形式、1件のみ保持） -->
+                    <CategorySelect
+                        v-model="form.langNative"
+                        :categories="languageCategories"
+                        :multiple="true"
+                        placeholder="選択してください（必須）"
+                        title="ネイティブ(必須)"
+                        selectButtonLabel="選択"
+                        aria-required="true"
+                    />
 
                     <!-- 話せる言語: CategorySelect -->
                     <CategorySelect v-model="form.langSpoken" :categories="languageCategories" :multiple="true"
@@ -144,7 +151,7 @@ definePageMeta({
     middleware: 'auth'
 })
 
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 
 import Footer from '~/components/Footer.vue'
 import CategorySelect from '~/components/CategorySelect.vue'
@@ -162,7 +169,8 @@ const form = ref({
     residence: '',
     native_language: '日本語',
     // テンプレートでは langNative/langSpoken/langLearning を使用しているため両方用意
-    langNative: '',
+    // ネイティブはUIを話せる言語と同形式に合わせるため配列で管理（ただし1件のみ保持）
+    langNative: [] as string[],
 
     langSpoken: [] as string[],
     langLearning: [] as string[],
@@ -496,8 +504,23 @@ const { user, isAuthenticated, isLoading, getAccessToken } = useAuth()
 
 // 必須入力の簡易バリデーション（ボタン制御用）
 const isSubmitDisabled = computed(() => {
-    return !form.value.faculty || !form.value.origin || !form.value.langNative || isLoading.value
+    const hasNative = Array.isArray(form.value.langNative) ? form.value.langNative.length > 0 : !!form.value.langNative
+    return !form.value.faculty || !form.value.origin || !hasNative || isLoading.value
 })
+
+// ネイティブ言語は常に1件のみ保持（multiple UIだが1件制限）
+watch(
+    () => form.value.langNative,
+    (nv, ov) => {
+        const next = Array.isArray(nv) ? nv : (nv ? [nv] : [])
+        if (next.length > 1) {
+            const prev = Array.isArray(ov) ? ov : (ov ? [ov] : [])
+            const added = next.find(x => !prev.includes(x))
+            const candidate = added ?? next[0]
+            form.value.langNative = candidate ? [candidate] : []
+        }
+    }
+)
 
 onMounted(async () => {
     // Auth0のロードが完了するまで待機
@@ -616,7 +639,7 @@ const registerProfile = async () => {
     console.log('[registerProfile] Auth state:', { isAuthenticated: isAuthenticated.value, isLoading: isLoading.value, user: user.value })
 
     // 必須項目チェック（母国語・出身・学部）
-    if (!form.value.langNative) {
+    if (!Array.isArray(form.value.langNative) || form.value.langNative.length === 0) {
         alert('母国語は必須です。選択してください。')
         return
     }
@@ -752,7 +775,9 @@ const registerProfile = async () => {
         username: username,
         major: form.value.faculty || form.value.major || null, // facultyをmajorにマッピング
         gender: form.value.gender || null,
-        native_language: form.value.langNative || form.value.native_language || '日本語',
+        native_language: (Array.isArray(form.value.langNative) && form.value.langNative[0])
+            ? form.value.langNative[0]
+            : (form.value.native_language || '日本語'),
         spoken_languages: spokenLanguages,
         learning_languages: learningLanguages,
         interests: Array.isArray(form.value.hobbies) ? form.value.hobbies : [],
