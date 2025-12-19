@@ -32,7 +32,7 @@
                     </div>
                 </div>
 
-                
+
             </div>
             <form @submit.prevent="registerProfile" class="flex flex-col gap-3">
 
@@ -66,46 +66,26 @@
                 <!-- 出身（CategorySelectへ統一） -->
                 <div class="flex flex-col gap-4">
                     <div class="text-xs text-amber-900">出身</div>
-                    <CategorySelect
-                      v-model="form.origin"
-                      :categories="regionCategories"
-                      :multiple="false"
-                      placeholder="選択してください"
-                    />
+                    <CategorySelect v-model="form.origin" :categories="regionCategories" :multiple="false"
+                        placeholder="選択してください" />
                 </div>
 
                 <div class="flex flex-col gap-4">
                     <div class="text-xs text-amber-900">言語</div>
                     <!-- ネイティブ: CategorySelect -->
-                    <CategorySelect
-                      v-model="form.langNative"
-                      :categories="languageCategories"
-                      :multiple="false"
-                      placeholder="選択してください"
-                      headerPrefix="ネイティブ:"
-                    />
+                    <CategorySelect v-model="form.langNative" :categories="languageCategories" :multiple="false"
+                        placeholder="選択してください" headerPrefix="ネイティブ:" />
 
-                                        <!-- 話せる言語: CategorySelect -->
-                                        <CategorySelect
-                                            v-model="form.langSpoken"
-                                            :categories="languageCategories"
-                                            :multiple="true"
-                                            placeholder="選択してください"
-                                            title="話せる言語"
-                                            selectButtonLabel="選択"
-                                        />
+                    <!-- 話せる言語: CategorySelect -->
+                    <CategorySelect v-model="form.langSpoken" :categories="languageCategories" :multiple="true"
+                        placeholder="選択してください" title="話せる言語" selectButtonLabel="選択" />
 
-                                        <!-- 学びたい言語: CategorySelect -->
-                                        <CategorySelect
-                                            v-model="form.langLearning"
-                                            :categories="languageCategories"
-                                            :multiple="true"
-                                            placeholder="選択してください"
-                                            title="学びたい言語"
-                                            selectButtonLabel="選択"
-                                        />
+                    <!-- 学びたい言語: CategorySelect -->
+                    <CategorySelect v-model="form.langLearning" :categories="languageCategories" :multiple="true"
+                        placeholder="選択してください" title="学びたい言語" selectButtonLabel="選択" />
                 </div>
 
+                <!-- 趣味（従来のchips＋入力＋既存選択肢UIを維持） -->
                 <div class="flex flex-col gap-2">
                     <div class="text-xs text-amber-900">趣味</div>
                     <div class="flex flex-wrap gap-2">
@@ -131,23 +111,11 @@
                             @click="addHobby()">追加</button>
                     </div>
 
-                    <div class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
-                        <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
-                            <span v-for="category in (Array.isArray(choiceCategories) ? choiceCategories : [])"
-                                :key="category.name" @click="activeTab = category.name"
-                                class="cursor-pointer pb-1 transition whitespace-nowrap text-[11px]"
-                                :class="activeTab === category.name ? 'text-[var(--meetupr-sub)] font-normal border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-normal'">
-                                {{ category.name }}
-                            </span>
-                        </div>
-                        <div v-for="category in choiceCategories" :key="category.name"
-                            v-show="activeTab === category.name" class="flex flex-wrap gap-2">
-                            <button v-for="tag in (Array.isArray(category.tags) ? category.tags : [])" :key="tag"
-                                type="button" @click="toggleHobby(tag)" :disabled="false"
-                                :class="(Array.isArray(form.hobbies) && form.hobbies.includes(tag)) ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
-                                {{ tag }}
-                            </button>
-                        </div>
+                    
+                    <!-- 下の選択欄をCategorySelectで統一 -->
+                    <div class="mt-3">
+                        <CategorySelect v-model="form.hobbies" :categories="choiceCategories" :multiple="true"
+                            :panelOnly="true" placeholder="選択してください" title="趣味" selectButtonLabel="選択" />
                     </div>
                 </div>
 
@@ -204,6 +172,7 @@ const form = ref({
 });
 
 // 一時入力用
+// 趣味の自由入力を維持
 const newHobby = ref('')
 
 // プロフィール画像を保持するための state
@@ -312,7 +281,7 @@ const regionCategories = ref([
             { code: 'KR', label: '韓国' },
             { code: 'TW', label: '台湾' },
             { code: 'HK', label: '香港' }
-           
+
         ]
     },
     {
@@ -360,7 +329,7 @@ const regionCategories = ref([
             { code: 'OM', label: 'オマーン' }
         ]
     },
-        
+
     {
         name: 'オセアニア',
         tags: [

@@ -472,6 +472,7 @@ const choiceCategories = ref([
 ])
 
 // ★ 現在選択されているタブ（初期は最初のカテゴリ）
+
 const activeTab = ref(choiceCategories.value[0]?.name || 'スポーツ')
 
 type FormState = {
@@ -548,6 +549,7 @@ function toggleLearningLanguage(langCode: string) {
   }
 }
 
+// addHobby: 入力からの追加（既存のボタン挙動）か、引数で名前を渡しての追加の両方に対応
 // addHobby: 入力からの追加（既存のボタン挙動）か、引数で名前を渡しての追加の両方に対応
 function addHobby(hobby?: string) {
   const v = hobby !== undefined ? String(hobby).trim() : newHobby.value.trim()

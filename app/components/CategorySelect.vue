@@ -2,10 +2,11 @@
   <div class="flex flex-col gap-2">
     <!-- 単一選択ヘッダ（multiple=falseのとき） -->
     <button
-      v-if="!isMultiple"
+      v-if="!isMultiple && !panelOnly"
       type="button"
-      @click="open = !open"
-      class="flex justify-between items-center bg-white border-[3px] border-[var(--meetupr-sub)] rounded-md px-3 py-2 text-sm outline-none hover:bg-gray-50 transition"
+      @click="toggleOpen"
+      :disabled="isReadOnly || disabled"
+      class="flex justify-between items-center bg-white border-[3px] border-[var(--meetupr-sub)] rounded-md px-3 py-2 text-sm outline-none hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <span class="text-amber-900">
         {{ headerPrefix ? headerPrefix + ' ' : '' }}{{ singleLabel || placeholder }}
@@ -16,28 +17,30 @@
     </button>
 
     <!-- 複数選択のチップ表示（multiple=trueのとき） -->
-    <div v-else class="flex flex-col gap-2">
+    <div v-else-if="!panelOnly" class="flex flex-col gap-2">
       <div class="text-[10px] text-amber-700" v-if="title">{{ title }}</div>
       <div class="flex gap-2 flex-wrap mb-1.5">
         <template v-for="(code, i) in arrayValue" :key="code + '-' + i">
           <div class="flex items-center bg-white border-2 border-[var(--meetupr-sub)] px-2.5 py-1.5 rounded-full text-xs text-amber-900">
             <span class="select-none">{{ getLabel(code) }}</span>
-            <button type="button" @click="toggle(code)" class="ml-2 text-[11px] text-gray-500 hover:text-gray-800">×</button>
+            <button type="button" @click="toggle(code)" :disabled="isReadOnly || disabled" class="ml-2 text-[11px] text-gray-500 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed">×</button>
           </div>
         </template>
         <span v-if="arrayValue.length === 0" class="text-gray-400 text-sm">{{ placeholder }}</span>
       </div>
       <button
+        v-if="!isReadOnly"
         type="button"
-        @click="open = !open"
-        class="self-start bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition"
+        @click="toggleOpen"
+        :disabled="disabled"
+        class="self-start bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {{ selectButtonLabel }}
       </button>
     </div>
 
     <!-- 共通選択パネル -->
-    <div v-if="open" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+  <div v-if="showPanel" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
       <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 text-sm overflow-x-auto flex-nowrap -mx-3 px-3 snap-x">
         <span
           v-for="cat in categories"
@@ -58,14 +61,15 @@
       >
         <button
           v-for="tag in (Array.isArray(cat.tags) ? cat.tags : [])"
-          :key="tag.code"
+          :key="tagKey(tag)"
           type="button"
-          @click="onSelect(tag.code)"
-          :class="isSelected(tag.code)
+          @click="onSelect(tagCode(tag))"
+          :disabled="disabled"
+          :class="isSelected(tagCode(tag))
             ? 'bg-[var(--meetupr-sub)] text-white border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm cursor-pointer'
             : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'"
         >
-          {{ tag.label }}
+          {{ tagLabel(tag) }}
         </button>
       </div>
     </div>
@@ -75,7 +79,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
-type Tag = { code: string; label: string }
+type TagObj = { code: string; label: string }
+type Tag = TagObj | string
 type Category = { name: string; tags: Tag[] }
 
 const props = defineProps<{
@@ -86,6 +91,9 @@ const props = defineProps<{
   modelValue: string | string[]
   headerPrefix?: string // 例: 'ネイティブ:'
   selectButtonLabel?: string // 複数選択時のボタン文言（デフォルト: '選択'）
+  readonly?: boolean // パネル操作無効、表示のみ
+  disabled?: boolean // ボタンや選択操作を無効
+  panelOnly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -94,10 +102,19 @@ const emit = defineEmits<{
 
 const isMultiple = computed(() => !!props.multiple)
 const selectButtonLabel = computed(() => props.selectButtonLabel ?? '選択')
+const isReadOnly = computed(() => !!props.readonly)
 
 // パネルの開閉とタブ状態
 const open = ref(false)
 const activeTab = ref(props.categories?.[0]?.name || '')
+
+function toggleOpen() {
+  if (isReadOnly.value || props.disabled) return
+  open.value = !open.value
+}
+
+const panelOnly = computed(() => !!props.panelOnly)
+const showPanel = computed(() => panelOnly.value ? true : open.value)
 
 // 値の正規化
 const arrayValue = computed<string[]>(() =>
@@ -109,7 +126,9 @@ const singleValue = computed<string>(() =>
 
 // ラベル取得
 function getLabel(code: string): string {
-  const all = props.categories.flatMap(c => c.tags)
+  const all: TagObj[] = props.categories.flatMap(c => c.tags).map(t =>
+    typeof t === 'string' ? { code: t, label: t } : t
+  )
   return all.find(t => t.code === code)?.label || code
 }
 const singleLabel = computed(() => (singleValue.value ? getLabel(singleValue.value) : undefined))
@@ -121,6 +140,7 @@ function isSelected(code: string): boolean {
 
 // トグルと選択
 function toggle(code: string) {
+  if (isReadOnly.value || props.disabled) return
   if (!isMultiple.value) {
     emit('update:modelValue', code)
     return
@@ -137,5 +157,16 @@ function onSelect(code: string) {
     // 単一選択は選択後自動で閉じる
     open.value = false
   }
+}
+
+// タグユーティリティ（string or object対応）
+function tagCode(tag: Tag): string {
+  return typeof tag === 'string' ? tag : tag.code
+}
+function tagLabel(tag: Tag): string {
+  return typeof tag === 'string' ? tag : tag.label
+}
+function tagKey(tag: Tag): string {
+  return tagCode(tag)
 }
 </script>
