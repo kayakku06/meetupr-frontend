@@ -18,6 +18,9 @@ interface Message {
   chat_id?: number
   sender_id: string
   sent_at?: string
+  translatedText?: string
+  isTranslating?: boolean
+  showTranslation?: boolean
 }
 
 // チャットIDをルートパラメータまたはクエリパラメータから取得
@@ -67,7 +70,7 @@ const fetchOrCreateChatId = async () => {
   }
 }
 
-// チャット詳細を取得してパートナー名を取得
+// チャット詳細を取得してパートナー名とIDを取得
 const fetchChatDetails = async () => {
   if (!chatId.value) return
 
@@ -75,7 +78,7 @@ const fetchChatDetails = async () => {
     const token = await getAccessToken()
     if (!token) return
 
-    const response = await $fetch<{ other_user?: { username: string } }>(`${config.public.apiBaseUrl}/api/v1/chats/${chatId.value}`, {
+    const response = await $fetch<{ other_user?: { username: string, id?: string } }>(`${config.public.apiBaseUrl}/api/v1/chats/${chatId.value}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -84,8 +87,32 @@ const fetchChatDetails = async () => {
     if (response.other_user?.username) {
       partnerName.value = response.other_user.username
     }
+    
+    if (response.other_user?.id) {
+      partnerId.value = response.other_user.id
+      // パートナーのプロフィールを取得してネイティブ言語を取得
+      await fetchPartnerProfile(response.other_user.id)
+    }
   } catch (err: any) {
     console.error('チャット詳細の取得に失敗しました:', err)
+  }
+}
+
+// パートナーのプロフィールを取得してネイティブ言語を取得
+const fetchPartnerProfile = async (userId: string) => {
+  try {
+    const profileResponse = await $fetch<{ native_language?: string }>('/api/profile', {
+      query: {
+        user_id: userId
+      }
+    })
+
+    if (profileResponse.native_language) {
+      partnerNativeLanguage.value = profileResponse.native_language
+    }
+  } catch (err: any) {
+    console.error('パートナーのプロフィール取得に失敗しました:', err)
+    // エラーが発生してもデフォルト値を使用
   }
 }
 
@@ -95,6 +122,8 @@ const messagesContainer = ref<HTMLElement | null>(null)
 const connectionStatus = ref<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected')
 const errorMessage = ref('')
 const partnerName = ref<string>('ユーザー')
+const partnerNativeLanguage = ref<string>('ja') // デフォルトは日本語
+const partnerId = ref<string | null>(null)
 
 let ws: WebSocket | null = null
 let reconnectAttempts = 0
@@ -167,12 +196,23 @@ const connectWebSocket = async () => {
     errorMessage.value = ''
 
     // WebSocket URLの構築
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsHost = config.public.wsHost || 'localhost:8080'
-    const wsUrl = `${wsProtocol}//${wsHost}/ws/chat/${chatId.value}?token=${encodeURIComponent(token)}`
+    // apiBaseUrlからホストを抽出して使用（APIとWebSocketが同じホストを使用することを保証）
+    let wsUrl: string
+    try {
+      const apiUrl = new URL(config.public.apiBaseUrl || 'http://localhost:8080')
+      const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:'
+      const wsHost = apiUrl.host // ホスト名とポートを含む
+      wsUrl = `${wsProtocol}//${wsHost}/ws/chat/${chatId.value}?token=${encodeURIComponent(token)}`
+    } catch (error) {
+      // apiBaseUrlが無効な場合は、wsHostを使用（後方互換性のため）
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      const wsHost = config.public.wsHost || 'localhost:8080'
+      wsUrl = `${wsProtocol}//${wsHost}/ws/chat/${chatId.value}?token=${encodeURIComponent(token)}`
+    }
     
     console.log('[WebSocket] Connecting to:', wsUrl)
     console.log('[WebSocket] Chat ID:', chatId.value)
+    console.log('[WebSocket] API Base URL:', config.public.apiBaseUrl)
     console.log('[WebSocket] Token length:', token.length)
     
     ws = new WebSocket(wsUrl)
@@ -184,7 +224,9 @@ const connectWebSocket = async () => {
         console.error('[WebSocket] Connection timeout')
         ws.close()
         connectionStatus.value = 'error'
-        errorMessage.value = `接続がタイムアウトしました（${wsHost}）。サーバーが起動しているか確認してください。`
+        const apiUrl = new URL(config.public.apiBaseUrl || 'http://localhost:8080')
+        const displayHost = apiUrl.host || config.public.wsHost || 'localhost:8080'
+        errorMessage.value = `接続がタイムアウトしました（${displayHost}）。サーバーが起動しているか確認してください。`
       }
     }, 10000)
 
@@ -248,8 +290,10 @@ const connectWebSocket = async () => {
       const errorDetail = (error as any)?.message || '接続エラーが発生しました'
       
       // readyStateが3（CLOSED）の場合は、接続が確立される前に失敗したことを意味する
+      const apiUrl = new URL(config.public.apiBaseUrl || 'http://localhost:8080')
+      const displayHost = apiUrl.host || config.public.wsHost || 'localhost:8080'
       if (ws?.readyState === 3) {
-        errorMessage.value = `サーバーに接続できません（${wsHost}）。バックエンドサーバーが起動しているか確認してください。`
+        errorMessage.value = `サーバーに接続できません（${displayHost}）。バックエンドサーバーが起動しているか確認してください。`
       } else if (errorDetail.includes('Authorization header required')) {
         errorMessage.value = 'WebSocket認証エラー: バックエンドがクエリパラメータからトークンを取得できていません。バックエンドの実装を確認してください。'
       } else {
@@ -283,7 +327,9 @@ const connectWebSocket = async () => {
       } else if (event.code === 1003) {
         closeReason = 'データタイプエラー'
       } else if (event.code === 1006) {
-        closeReason = `異常な切断（サーバーに接続できません）。${wsHost} が起動しているか確認してください。`
+        const apiUrl = new URL(config.public.apiBaseUrl || 'http://localhost:8080')
+        const displayHost = apiUrl.host || config.public.wsHost || 'localhost:8080'
+        closeReason = `異常な切断（サーバーに接続できません）。${displayHost} が起動しているか確認してください。`
       } else if (event.code === 1008) {
         closeReason = 'ポリシー違反（認証エラーの可能性があります）'
       } else if (event.code === 1011) {
@@ -308,7 +354,9 @@ const connectWebSocket = async () => {
       } else if (reconnectAttempts >= maxReconnectAttempts) {
         isReconnecting = false
         reconnectAttempts = 0 // リセットして手動再接続を可能にする
-        errorMessage.value = `接続に失敗しました: ${closeReason}。バックエンドサーバー（${wsHost}）が起動しているか確認してください。`
+        const apiUrl = new URL(config.public.apiBaseUrl || 'http://localhost:8080')
+        const displayHost = apiUrl.host || config.public.wsHost || 'localhost:8080'
+        errorMessage.value = `接続に失敗しました: ${closeReason}。バックエンドサーバー（${displayHost}）が起動しているか確認してください。`
         connectionStatus.value = 'error'
       } else if (event.code !== 1000 && !isReconnecting) {
         errorMessage.value = `接続が切断されました: ${closeReason}`
@@ -372,6 +420,51 @@ const retryConnection = () => {
   errorMessage.value = ''
   connectionStatus.value = 'connecting'
   connectWebSocket()
+}
+
+// メッセージを翻訳（日本語⇔英語のみ）
+const translateMessage = async (msg: Message) => {
+  // 既に翻訳が表示されている場合は非表示にする
+  if (msg.showTranslation) {
+    msg.showTranslation = false
+    return
+  }
+
+  // 既に翻訳済みの場合は表示するだけ
+  if (msg.translatedText) {
+    msg.showTranslation = true
+    return
+  }
+
+  // 翻訳中フラグを設定
+  msg.isTranslating = true
+  msg.showTranslation = true
+
+  try {
+    // 翻訳APIを呼び出し（言語は自動検出、日本語⇔英語のみ）
+    const response = await $fetch<{ translatedText?: string, error?: string, message?: string }>('/api/translate', {
+      method: 'POST',
+      body: {
+        text: msg.content
+      }
+    })
+
+    if (response.error) {
+      console.error('[Translate] API Error:', response.error, response.message)
+      throw new Error(response.message || response.error || '翻訳に失敗しました')
+    }
+
+    if (response.translatedText) {
+      msg.translatedText = response.translatedText
+    } else {
+      throw new Error('翻訳結果が取得できませんでした')
+    }
+  } catch (error: any) {
+    console.error('[Translate] Error:', error)
+    msg.translatedText = error.message || '翻訳に失敗しました'
+  } finally {
+    msg.isTranslating = false
+  }
 }
 
 onMounted(async () => {
@@ -461,9 +554,21 @@ onUnmounted(() => {
                             <!-- 緑のアバター -->
                             <div class="w-10 h-10 rounded-full bg-teal-600 flex-shrink-0"></div>
                             <div class="space-y-1 max-w-[75%]">
-                                <!-- 薄いオレンジの吹き出し -->
-                                <div class="bg-[var(--meetupr-sub)] rounded-2xl rounded-tl-sm px-4 py-3">
+                                <!-- 薄いオレンジの吹き出し（タップ可能） -->
+                                <div 
+                                    @click="translateMessage(msg)"
+                                    class="bg-[var(--meetupr-sub)] rounded-2xl rounded-tl-sm px-4 py-3 cursor-pointer hover:opacity-90 transition-opacity"
+                                >
                                     <p class="text-gray-800 text-sm leading-relaxed">{{ msg.content }}</p>
+                                    <!-- 翻訳表示 -->
+                                    <template v-if="msg.showTranslation">
+                                        <div v-if="msg.isTranslating" class="mt-2 pt-2 border-t border-gray-300">
+                                            <p class="text-gray-600 text-xs">翻訳中...</p>
+                                        </div>
+                                        <div v-else-if="msg.translatedText" class="mt-2 pt-2 border-t border-gray-300">
+                                            <p class="text-gray-600 text-xs leading-relaxed">{{ msg.translatedText }}</p>
+                                        </div>
+                                    </template>
                                 </div>
                                 <!-- タイムスタンプ -->
                                 <p class="text-xs text-gray-500 px-2">{{ formatTime(msg.sent_at) }}</p>
@@ -472,9 +577,21 @@ onUnmounted(() => {
                         <!-- 自分のメッセージ（右側） -->
                         <div v-else class="flex justify-end mb-4">
                             <div class="max-w-[75%]">
-                                <!-- 薄いオレンジの吹き出し -->
-                                <div class="bg-[var(--meetupr-sub)] rounded-2xl rounded-tr-sm px-4 py-3">
+                                <!-- 薄いオレンジの吹き出し（タップ可能） -->
+                                <div 
+                                    @click="translateMessage(msg)"
+                                    class="bg-[var(--meetupr-sub)] rounded-2xl rounded-tr-sm px-4 py-3 cursor-pointer hover:opacity-90 transition-opacity"
+                                >
                                     <p class="text-gray-800 text-sm leading-relaxed">{{ msg.content }}</p>
+                                    <!-- 翻訳表示 -->
+                                    <template v-if="msg.showTranslation">
+                                        <div v-if="msg.isTranslating" class="mt-2 pt-2 border-t border-gray-300">
+                                            <p class="text-gray-600 text-xs">翻訳中...</p>
+                                        </div>
+                                        <div v-else-if="msg.translatedText" class="mt-2 pt-2 border-t border-gray-300">
+                                            <p class="text-gray-600 text-xs leading-relaxed">{{ msg.translatedText }}</p>
+                                        </div>
+                                    </template>
                                 </div>
                                 <!-- タイムスタンプ -->
                                 <p class="text-xs text-gray-500 text-right px-2 mt-1">{{ formatTime(msg.sent_at) }}</p>
