@@ -1,29 +1,38 @@
 <template>
     <div class="min-h-screen bg-[var(--meetupr-main)] pt-14 pb-20 font-['Noto_Sans_JP']">
 
-        <main class="max-w-md mx-auto p-5 ">
-            <div class="flex gap-3 items-center mb-3">
-                <div
-                    class="w-20 h-20 rounded-full bg-[var(--meetup-color-3)] flex items-center justify-center border-2 border-[var(--meetupr-color-3)] overflow-hidden cursor-pointer"
-                    role="button" aria-label="プロフィール画像を選択" @click="onAvatarClick">
-                    <template v-if="profileImageDataUrl">
-                        <img :src="profileImageDataUrl" alt="avatar" class="w-full h-full object-cover" />
-                    </template>
-                    <template v-else>
-                        <svg viewBox="0 0 64 64" class="w-11 h-11" aria-hidden>
-                            <circle cx="32" cy="24" r="12" fill="none" stroke="#6aaea0" stroke-width="2" />
-                            <path d="M10 54c4-10 18-14 22-14s18 4 22 14" fill="none" stroke="#6aaea0" stroke-width="2" />
+        <main class="max-w-md mx-auto p-5">
+            <div class="flex gap-3 items-center mb-3  justify-center ">
+                <div class="relative inline-block">
+                    <div class="w-20 h-20 rounded-full bg-[var(--meetup-color-3)] flex items-center justify-center border-2 border-[var(--meetupr-color-3)] overflow-hidden cursor-pointer"
+                        role="button" aria-label="プロフィール画像を選択" @click="onAvatarClick">
+                        <template v-if="profileImageDataUrl">
+                            <img :src="profileImageDataUrl" alt="avatar" class="w-full h-full object-cover" />
+                        </template>
+                        <template v-else>
+                            <svg viewBox="0 0 64 64" class="w-11 h-11" aria-hidden>
+                                <circle cx="32" cy="24" r="12" fill="none" stroke="#6aaea0" stroke-width="2" />
+                                <path d="M10 54c4-10 18-14 22-14s18 4 22 14" fill="none" stroke="#6aaea0"
+                                    stroke-width="2" />
+                            </svg>
+                        </template>
+                    </div>
+
+                    <div
+                        class="absolute bottom-0 right-0 w-7 h-7 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
-                    </template>
+                    </div>
                 </div>
-                <!-- 隠しファイル入力（アバタークリックで起動） -->
+
                 <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
 
                 <div class="flex-1">
                     <h2 class="m-0 mb-2 text-lg text-teal-900">プロフィール登録</h2>
                 </div>
             </div>
-
             <form @submit.prevent="registerProfile" class="flex flex-col gap-3">
 
                 <label class="flex flex-col gap-1">
@@ -34,9 +43,9 @@
                         <option value="business">経営</option>
                         <option value="production_science">政策科学</option>
                         <option value="information_science">情報理工</option>
-                         <option value="film_studies">映像</option>
-                          <option value="psychology">総合心理</option>
-                          <option value="global_liberal_arts">グローバル教養</option>
+                        <option value="film_studies">映像</option>
+                        <option value="psychology">総合心理</option>
+                        <option value="global_liberal_arts">グローバル教養</option>
 
 
                     </select>
@@ -64,7 +73,8 @@
                             <span :class="showOrigin ? 'rotate-180' : ''">▼</span>
                         </div>
                         <div v-if="form.origin">
-                            <span class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
+                            <span
+                                class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
                                 {{ getCountryLabel(form.origin) }}
                             </span>
                         </div>
@@ -74,16 +84,18 @@
                     <div v-if="showOrigin" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
                         <!-- 地域タブ -->
                         <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 overflow-x-auto">
-                            <span v-for="category in regionCategories" :key="category.name" @click="activeRegionTab = category.name"
+                            <span v-for="category in regionCategories" :key="category.name"
+                                @click="activeRegionTab = category.name"
                                 class="cursor-pointer pb-2 transition whitespace-nowrap"
                                 :class="activeRegionTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
                                 {{ category.name }}
                             </span>
                         </div>
                         <!-- 国選択ボタン -->
-                        <div v-for="category in regionCategories" :key="category.name" v-show="activeRegionTab === category.name" class="flex flex-wrap gap-2">
-                            <button v-for="country in category.tags"
-                                :key="country.code" type="button" @click="form.origin = country.code"
+                        <div v-for="category in regionCategories" :key="category.name"
+                            v-show="activeRegionTab === category.name" class="flex flex-wrap gap-2">
+                            <button v-for="country in category.tags" :key="country.code" type="button"
+                                @click="form.origin = country.code"
                                 :class="form.origin === country.code ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
                                 {{ country.label }}
                             </button>
@@ -104,14 +116,16 @@
                                     <span :class="showNativeLanguage ? 'rotate-180' : ''">▼</span>
                                 </div>
                                 <div v-if="form.langNative">
-                                    <span class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
+                                    <span
+                                        class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
                                         {{ getLanguageLabel(form.langNative) }}
                                     </span>
                                 </div>
                                 <span v-else class="text-gray-400 text-sm">選択してください</span>
                             </button>
 
-                            <div v-if="showNativeLanguage" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+                            <div v-if="showNativeLanguage"
+                                class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
                                 <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
                                     <span v-for="category in languageCategories" :key="category.name"
                                         @click="activeLanguageTab = category.name"
@@ -121,8 +135,8 @@
                                 </div>
                                 <div v-for="category in languageCategories" :key="category.name"
                                     v-show="activeLanguageTab === category.name" class="flex flex-wrap gap-2">
-                                    <button v-for="lang in category.tags" :key="lang.code" type="button" @click="form.langNative = lang.code"
-                                        :disabled="false"
+                                    <button v-for="lang in category.tags" :key="lang.code" type="button"
+                                        @click="form.langNative = lang.code" :disabled="false"
                                         :class="form.langNative === lang.code ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
                                         {{ lang.label }}
                                     </button>
@@ -148,7 +162,8 @@
                             <span v-else class="text-gray-400 text-sm">選択してください</span>
                         </button>
 
-                        <div v-if="showSpokenLanguages" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+                        <div v-if="showSpokenLanguages"
+                            class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
 
                             <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
                                 <span v-for="category in languageCategories" :key="category.name"
@@ -159,8 +174,8 @@
                             </div>
                             <div v-for="category in languageCategories" :key="category.name"
                                 v-show="activeLanguageTab === category.name" class="flex flex-wrap gap-2">
-                                <button v-for="lang in category.tags" :key="lang.code" type="button" @click="toggleSpokenLanguage(lang.code)"
-                                    :disabled="false"
+                                <button v-for="lang in category.tags" :key="lang.code" type="button"
+                                    @click="toggleSpokenLanguage(lang.code)" :disabled="false"
                                     :class="form.langSpoken.includes(lang.code) ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
                                     {{ lang.label }}
                                 </button>
@@ -185,7 +200,8 @@
                             <span v-else class="text-gray-400 text-sm">選択してください</span>
                         </button>
 
-                        <div v-if="showLearningLanguages" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+                        <div v-if="showLearningLanguages"
+                            class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
                             <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
                                 <span v-for="category in languageCategories" :key="category.name"
                                     @click="activeLanguageTab = category.name"
@@ -195,8 +211,8 @@
                             </div>
                             <div v-for="category in languageCategories" :key="category.name"
                                 v-show="activeLanguageTab === category.name" class="flex flex-wrap gap-2">
-                                <button v-for="lang in category.tags" :key="lang.code" type="button" @click="toggleLearningLanguage(lang.code)"
-                                    :disabled="false"
+                                <button v-for="lang in category.tags" :key="lang.code" type="button"
+                                    @click="toggleLearningLanguage(lang.code)" :disabled="false"
                                     :class="form.langLearning.includes(lang.code) ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
                                     {{ lang.label }}
                                 </button>
@@ -407,7 +423,7 @@ const regionCategories = ref([
     {
         name: '東アジア',
         tags: [
-             { code: 'JP', label: '日本' },
+            { code: 'JP', label: '日本' },
             { code: 'CN', label: '中国' },
             { code: 'KR', label: '韓国' },
             { code: 'TW', label: '台湾' },
@@ -870,15 +886,15 @@ const registerProfile = async () => {
     // ペイロード作成
     // 話せる言語を配列に変換
 
-    const spokenLanguages = Array.isArray(form.value.langSpoken) 
-        ? form.value.langSpoken 
+    const spokenLanguages = Array.isArray(form.value.langSpoken)
+        ? form.value.langSpoken
         : (form.value.langSpoken ? [form.value.langSpoken] : (Array.isArray(form.value.spoken_languages) ? form.value.spoken_languages : []))
-    
+
     // 学びたい言語を配列に変換
-    const learningLanguages = Array.isArray(form.value.langLearning) 
-        ? form.value.langLearning 
+    const learningLanguages = Array.isArray(form.value.langLearning)
+        ? form.value.langLearning
         : (form.value.langLearning ? [form.value.langLearning] : (Array.isArray(form.value.learning_languages) ? form.value.learning_languages : []))
-    
+
 
     const payload = {
         user_id: userId,
@@ -890,11 +906,11 @@ const registerProfile = async () => {
         spoken_languages: spokenLanguages,
         learning_languages: learningLanguages,
         interests: Array.isArray(form.value.hobbies) ? form.value.hobbies : [],
-        avatar_url : uploadedAvatarUrl || profileImageDataUrl.value || null,
+        avatar_url: uploadedAvatarUrl || profileImageDataUrl.value || null,
         residence: form.value.origin || form.value.residence || null,
         comment: form.value.bio || form.value.comment || null, // bioをcommentにマッピング
         last_updated: new Date().toISOString()
-        
+
     }
 
     console.log('送信ペイロード:', payload)
