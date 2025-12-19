@@ -262,7 +262,8 @@ const recommendedUsers = ref([
         <!-- ドロップダウン本体 -->
         <div
           v-show="showDropdown"
-          class="mt-2 bg-white border-[3px] border-[#FEBC6E] rounded-md shadow-lg p-4 w-full max-w-[calc(100%-2rem)] z-50 relative"
+          class="mt-2 bg-white border-[3px] border-[#FEBC6E] rounded-md shadow-lg p-4 w-full max-w-[calc(100%-2rem)] z-40 relative"
+          @click.stop
         >
           <div>
             <div class="flex items-center justify-between mb-1">
@@ -389,7 +390,7 @@ const recommendedUsers = ref([
         </div>
       </div>
 
-      <Footer class="fixed inset-x-0 bottom-0" />
+      <Footer class="fixed inset-x-0 bottom-0 z-50" />
     </main>
   </div>
 </template>

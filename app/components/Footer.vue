@@ -36,10 +36,10 @@ const onUser = () => router.push('/my-profile')
 </script>
 
 <template>
-  <div class="flex justify-around items-center p-3" :class="['bg-[var(--meetupr-sub)]']">
+  <div class="flex justify-around items-center p-3 relative z-50" :class="['bg-[var(--meetupr-sub)]']">
     
     <!-- 検索ボタン -->
-    <button @click="onSearch" class="p-2 transition">
+    <button @click="onSearch" class="p-2 transition relative z-10">
       <Search
         class="w-8 h-8"
         :class="selected === 'search' ? 'text-[var(--meetupr-color-3)]' : 'text-[var(--meetupr-main)]'"
@@ -47,7 +47,7 @@ const onUser = () => router.push('/my-profile')
     </button>
 
     <!-- メッセージボタン -->
-    <button @click="onMessage" class="p-2 transition">
+    <button @click="onMessage" class="p-2 transition relative z-10">
       <MessageCircleMore
         class="w-8 h-8"
         :class="selected === 'message' ? 'text-[var(--meetupr-color-3)]' : 'text-[var(--meetupr-main)]'"
@@ -55,7 +55,7 @@ const onUser = () => router.push('/my-profile')
     </button>
 
     <!-- ユーザーボタン -->
-    <button @click="onUser" class="p-2 transition">
+    <button @click="onUser" class="p-2 transition relative z-10">
       <UserRound
         class="w-8 h-8"
         :class="selected === 'user' ? 'text-[var(--meetupr-color-3)]' : 'text-[var(--meetupr-main)]'"
