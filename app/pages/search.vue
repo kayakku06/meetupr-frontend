@@ -394,6 +394,8 @@ onMounted(async () => {
                         avatarColor="bg-[var(--meetupr-color-3)]"
                         :hobbies="formatInterests(user.interests)"
                         :flag="getFlagCodeFromCountryCode(user.residence)"
+                        :userId="user.user_id"
+                        :avatarUrl="user.avatar_url || ''"
                     />
                 </div>
 
