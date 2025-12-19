@@ -706,7 +706,16 @@ async function fetchProfile() {
   form.value.learningLanguages = Array.isArray(response.learning_languages) ? response.learning_languages : []
   form.value.hobbies = Array.isArray(response.interests) ? response.interests : []
     form.value.bio = response.comment || ''
-    avatarUrl.value = response.avatar_url || null
+    
+    // avatar_urlを設定（null、空文字列、undefinedの場合はnullに統一）
+    const avatarUrlValue = response.avatar_url
+    if (avatarUrlValue && typeof avatarUrlValue === 'string' && avatarUrlValue.trim() !== '') {
+      avatarUrl.value = avatarUrlValue.trim()
+      console.log('[my-profile] Avatar URL set:', avatarUrl.value)
+    } else {
+      avatarUrl.value = null
+      console.log('[my-profile] Avatar URL not available:', avatarUrlValue)
+    }
 
     // オリジナルデータを更新
     original.value = JSON.parse(JSON.stringify(form.value))
