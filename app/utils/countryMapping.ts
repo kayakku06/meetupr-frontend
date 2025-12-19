@@ -187,21 +187,32 @@ export function getFlagCode(country: string | null | undefined): string {
 
 // 国コードを正規化（英語の国コードに変換）
 export function normalizeCountryCode(country: string | null | undefined): string | null {
-  if (!country) return null
+  console.log('[countryMapping] normalizeCountryCode called with:', country)
+  if (!country) {
+    console.log('[countryMapping] Country is null/undefined')
+    return null
+  }
   
   // 既に国コード（大文字2文字）の場合はそのまま返す
   if (country.length === 2 && country.toUpperCase() === country) {
+    console.log('[countryMapping] Already a country code:', country)
     return country.toUpperCase()
   }
   
   // 日本語の国名から国コードに変換
+  console.log('[countryMapping] Looking up in japaneseToCountryCode:', country)
+  console.log('[countryMapping] japaneseToCountryCode keys:', Object.keys(japaneseToCountryCode).slice(0, 10))
   const countryCode = japaneseToCountryCode[country]
+  console.log('[countryMapping] Lookup result:', countryCode)
+  
   if (countryCode) {
+    console.log('[countryMapping] Converted:', { original: country, code: countryCode })
     return countryCode
   }
   
   // マッピングが見つからない場合は警告を出力してnullを返す
   console.warn('[countryMapping] Cannot normalize country:', country)
+  console.warn('[countryMapping] Available mappings:', Object.keys(japaneseToCountryCode))
   return null
 }
 

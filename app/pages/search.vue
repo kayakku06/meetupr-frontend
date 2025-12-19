@@ -139,12 +139,14 @@ const runSearch = async () => {
         // 国名を国コードに変換（データベースでは英語の国コードで管理）
         const countryCodes = [];
         for (const country of selectedCountries.value) {
+            console.log('[search] Processing country:', country);
             const code = normalizeCountryCode(country);
-            console.log('[search] Country conversion:', { original: country, code: code });
-            if (code) {
+            console.log('[search] Country conversion result:', { original: country, code: code, type: typeof code });
+            if (code && code !== country) {
                 countryCodes.push(code);
+                console.log('[search] Added country code:', code);
             } else {
-                console.warn('[search] Failed to convert country to code:', country);
+                console.warn('[search] Failed to convert country to code:', country, 'result:', code);
             }
         }
         
