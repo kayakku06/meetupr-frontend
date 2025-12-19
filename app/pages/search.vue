@@ -1,8 +1,12 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import SearchUser from '~/components/searchuser.vue'
 import Footer from '~/components/Footer.vue'
 import { Search, UserRoundPlus, ChevronUp } from 'lucide-vue-next'
+import { useAuth } from '~/composables/useAuth'
+
+const { getAccessToken } = useAuth()
+const config = useRuntimeConfig()
 
 const showDropdown = ref(false);
 
@@ -11,7 +15,8 @@ const toggleDropdown = () => {
 };
 
 const form = ref({
-    hobbies: []
+    hobbies: [],
+    keyword: ''
 });
 
 const choiceCategories = ref([
@@ -25,7 +30,6 @@ const choiceCategories = ref([
     }
 ]);
 
-
 // ★ 初期タブ
 const activeTab = ref(choiceCategories.value[0].name);
 
@@ -38,8 +42,9 @@ const addHobby = (hobby) => {
 const removeHobby = (hobby) => {
     form.value.hobbies = form.value.hobbies.filter(h => h !== hobby);
     // 検索タグが0になったらおすすめを再表示
-    if (form.value.hobbies.length === 0) {
+    if (form.value.hobbies.length === 0 && !form.value.keyword) {
         isSearching.value = false;
+        searchResults.value = [];
     }
 };
 
@@ -95,25 +100,111 @@ const getCategoryByTag = (tag) => {
     return null;
 };
 
-const tempSelected = ref([]);
+// 検索結果とローディング状態
+const searchResults = ref([]);
+const isLoading = ref(false);
+const searchError = ref(null);
 const isSearching = ref(false);
 
-const runSearch = () => {
-    // 選択が 1 つ以上 → 検索モードへ
-    if (form.value.hobbies.length > 0) {
-        isSearching.value = true;
-    } else {
-        isSearching.value = false;
-    }
+// 言語と国を分離
+const selectedLanguages = computed(() => {
+    return form.value.hobbies.filter(h => getCategoryByTag(h) === '言語');
+});
 
-    // ドロップダウン閉じる
-    showDropdown.value = false;
+const selectedCountries = computed(() => {
+    return form.value.hobbies.filter(h => getCategoryByTag(h) === '国');
+});
+
+// 国旗コードのマッピング（簡易版）
+const getFlagCode = (country) => {
+    const flagMap = {
+        '日本': 'jp',
+        'アメリカ': 'us',
+        '韓国': 'kr',
+        '中国': 'cn',
+        'イギリス': 'gb',
+        'フランス': 'fr'
+    };
+    return flagMap[country] || '';
 };
 
-const handleSearch = () => {
-    isOpen.value = false;           // ドロップダウン閉じる
-    selectedItems.value = [...tempSelected.value]; // 追加
-    runSearch();
+// 検索APIを呼び出す
+const runSearch = async () => {
+    // 検索条件がない場合は全ユーザーを検索（または何もしない）
+    const hasSearchConditions = form.value.hobbies.length > 0 || form.value.keyword.trim().length > 0;
+    
+    if (!hasSearchConditions) {
+        isSearching.value = false;
+        searchResults.value = [];
+        showDropdown.value = false;
+        return;
+    }
+
+    isSearching.value = true;
+    isLoading.value = true;
+    searchError.value = null;
+    showDropdown.value = false;
+
+    try {
+        const token = await getAccessToken();
+        if (!token) {
+            throw new Error('認証トークンを取得できませんでした');
+        }
+
+        // リクエストボディを構築
+        const requestBody = {};
+        
+        if (form.value.keyword.trim()) {
+            requestBody.keyword = form.value.keyword.trim();
+        }
+        
+        if (selectedLanguages.value.length > 0) {
+            requestBody.languages = selectedLanguages.value;
+        }
+        
+        if (selectedCountries.value.length > 0) {
+            requestBody.countries = selectedCountries.value;
+        }
+
+        // APIを呼び出し
+        const response = await $fetch(`${config.public.apiBaseUrl}/api/v1/search/users`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: requestBody
+        });
+
+        // レスポンスを検索結果に設定
+        searchResults.value = response || [];
+        
+    } catch (error) {
+        console.error('検索エラー:', error);
+        const errorMessage = (error && error.message) || (error && error.data && error.data.message) || '検索に失敗しました';
+        const statusCode = (error && error.statusCode) || (error && error.status);
+        searchError.value = errorMessage;
+        searchResults.value = [];
+        
+        // エラーメッセージを表示
+        if (statusCode === 401) {
+            alert('認証に失敗しました。再度ログインしてください。');
+        } else if (statusCode === 400) {
+            alert('検索条件が無効です。');
+        } else {
+            alert(`検索エラー: ${errorMessage}`);
+        }
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+// 興味・趣味を文字列配列に変換
+const formatInterests = (interests) => {
+    if (!interests || !Array.isArray(interests)) {
+        return [];
+    }
+    return interests.map(interest => interest.name || interest);
 };
 
 </script>
@@ -161,6 +252,18 @@ const handleSearch = () => {
                     <label class="text-sm font-semibold text-gray-800">検索</label>
                     <ChevronUp class="w-5 h-5 cursor-pointer" @click="toggleDropdown" />
                 </div>
+                
+                <!-- キーワード検索入力欄 -->
+                <div class="mb-2">
+                    <input 
+                        v-model="form.keyword"
+                        type="text"
+                        placeholder="ユーザー名で検索..."
+                        class="w-full p-2 border-[3px] border-[#FEBC6E] rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#FEBC6E]"
+                        @keydown.enter="runSearch"
+                    />
+                </div>
+                
                 <div
                     class="flex items-center justify-between p-2 border-[3px] border-[#FEBC6E] rounded-md bg-white min-h-[46px]">
 
@@ -206,11 +309,41 @@ const handleSearch = () => {
     </div>
     <main class="bg-[#FFF5C9] min-h-screen pt-20">
         <div class="p-4">
-            <SearchUser name="ユーザー１" message="よろしくお願いします！" avatarColor="bg-[var(--meetupr-color-3)]" :hobbies="['サッカー', 'ゲーム']"
-                flag="jp" />
+            <!-- ローディング状態 -->
+            <div v-if="isLoading" class="flex items-center justify-center py-8">
+                <div class="text-[#4b3b2b]">検索中...</div>
+            </div>
 
-            <SearchUser name="ユーザー２" message="仲良くしてください！" avatarColor="bg-[var(--meetupr-color-3)]" :hobbies="['アニメ', '旅行']"
-                flag="us" />
+            <!-- エラー表示 -->
+            <div v-else-if="searchError" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {{ searchError }}
+            </div>
+
+            <!-- 検索結果がない場合 -->
+            <div v-else-if="isSearching && !isLoading && searchResults.length === 0" class="flex items-center justify-center py-8">
+                <div class="text-[#4b3b2b]">検索結果が見つかりませんでした</div>
+            </div>
+
+            <!-- 検索結果表示 -->
+            <div v-else-if="isSearching && searchResults.length > 0">
+                <SearchUser 
+                    v-for="user in searchResults" 
+                    :key="user.user_id"
+                    :name="user.username"
+                    :message="user.comment || ''"
+                    avatarColor="bg-[var(--meetupr-color-3)]"
+                    :hobbies="formatInterests(user.interests)"
+                    :flag="getFlagCode(user.residence)"
+                />
+            </div>
+
+            <!-- おすすめプロフィール（検索していない場合） -->
+            <div v-else-if="!isSearching" class="flex items-center justify-center py-8">
+                <div class="text-[#4b3b2b] text-center">
+                    <UserRoundPlus class="w-8 h-8 mx-auto mb-2" />
+                    <p>検索条件を選択して、ユーザーを探してみましょう！</p>
+                </div>
+            </div>
         </div>
 
         <Footer class="fixed inset-x-0 bottom-0" />
