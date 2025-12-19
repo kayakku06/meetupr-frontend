@@ -135,20 +135,18 @@
 
                     <!-- 話せる言語 -->
                     <div class="flex flex-col gap-2">
-                        <button type="button" @click="showSpokenLanguages = !showSpokenLanguages"
-                            class="flex justify-between items-center bg-white border-[3px] border-[var(--meetupr-sub)] rounded-md px-3 py-2 text-sm outline-none hover:bg-gray-50 transition">
-                            <span class="text-amber-900">話せる言語</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-800" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                            <div class="flex flex-wrap gap-2" v-if="form.langSpoken.length > 0">
-                                <span v-for="langCode in form.langSpoken" :key="langCode"
-                                    class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
-                                    {{ getLanguageLabel(langCode) }}
-                                </span>
+                        <div class="text-[10px] text-amber-700">話せる言語</div>
+                        <div class="flex gap-2 flex-wrap mb-1.5">
+                          <template v-for="(lang, i) in form.langSpoken" :key="lang + '-' + i">
+                            <div class="flex items-center bg-white border-2 border-[var(--meetupr-sub)] px-2.5 py-1.5 rounded-full text-xs text-amber-900">
+                              <span class="select-none">{{ getLanguageLabel(lang) }}</span>
+                              <button type="button" @click="removeSpokenLanguage(lang)" class="ml-2 text-[11px] text-gray-500 hover:text-gray-800">×</button>
                             </div>
-                            <span v-else class="text-gray-400 text-sm">選択してください</span>
+                          </template>
+                          <span v-if="!(Array.isArray(form.langSpoken) && form.langSpoken.length > 0)" class="text-gray-400 text-sm">選択してください</span>
+                        </div>
+                        <button type="button" @click="showSpokenLanguages = !showSpokenLanguages"
+                          class="self-start bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition">選択</button>
 
                         <div v-if="showSpokenLanguages"
                             class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
@@ -172,20 +170,18 @@
 
                     <!-- 学びたい言語 -->
                     <div class="flex flex-col gap-2">
-                        <button type="button" @click="showLearningLanguages = !showLearningLanguages"
-                            class="flex justify-between items-center bg-white border-[3px] border-[var(--meetupr-sub)] rounded-md px-3 py-2 text-sm outline-none hover:bg-gray-50 transition">
-                            <span class="text-amber-900">学びたい言語</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-800" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                            <div class="flex flex-wrap gap-2" v-if="form.langLearning.length > 0">
-                                <span v-for="langCode in form.langLearning" :key="langCode"
-                                    class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
-                                    {{ getLanguageLabel(langCode) }}
-                                </span>
+                        <div class="text-[10px] text-amber-700">学びたい言語</div>
+                        <div class="flex gap-2 flex-wrap mb-1.5">
+                          <template v-for="(lang, i) in form.langLearning" :key="lang + '-' + i">
+                            <div class="flex items-center bg-white border-2 border-[var(--meetupr-sub)] px-2.5 py-1.5 rounded-full text-xs text-amber-900">
+                              <span class="select-none">{{ getLanguageLabel(lang) }}</span>
+                              <button type="button" @click="removeLearningLanguage(lang)" class="ml-2 text-[11px] text-gray-500 hover:text-gray-800">×</button>
                             </div>
-                            <span v-else class="text-gray-400 text-sm">選択してください</span>
+                          </template>
+                          <span v-if="!(Array.isArray(form.langLearning) && form.langLearning.length > 0)" class="text-gray-400 text-sm">選択してください</span>
+                        </div>
+                        <button type="button" @click="showLearningLanguages = !showLearningLanguages"
+                          class="self-start bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition">選択</button>
 
                         <div v-if="showLearningLanguages"
                             class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
@@ -579,7 +575,10 @@ function toggleSpokenLanguage(langCode: string) {
     }
 }
 
-// removeSpokenLanguage removed — UI では使用していないため削除
+// 話せる言語の削除（チップの×ボタン用）
+function removeSpokenLanguage(lang: string) {
+    form.value.langSpoken = form.value.langSpoken.filter(l => l !== lang)
+}
 
 // 言語を追加する関数（学びたい言語）
 function toggleLearningLanguage(langCode: string) {
@@ -590,7 +589,10 @@ function toggleLearningLanguage(langCode: string) {
     }
 }
 
-// removeLearningLanguage removed — UI では使用していないため削除
+// 学びたい言語の削除（チップの×ボタン用）
+function removeLearningLanguage(lang: string) {
+    form.value.langLearning = form.value.langLearning.filter(l => l !== lang)
+}
 
 // 言語コードからラベルを取得する関数
 function getLanguageLabel(langCode: string): string {
