@@ -98,12 +98,20 @@ export const countryCodeToFlagCode: Record<string, string> = {
 }
 
 // 国コードから国旗コードを取得
+// 日本語の国名、英語の国コード、国旗コードのいずれでも受け取れる
 export function getFlagCodeFromCountryCode(countryCode: string | null | undefined): string {
   if (!countryCode) return ''
   
   // 既に国旗コードの形式（小文字2文字）の場合はそのまま返す
-  if (countryCode.length === 2 && countryCode.toLowerCase() === countryCode) {
+  if (countryCode.length === 2 && countryCode.toLowerCase() === countryCode && /^[a-z]{2}$/.test(countryCode)) {
     return countryCode.toLowerCase()
+  }
+  
+  // まず日本語の国名から国コードに変換を試す
+  const normalizedCode = normalizeCountryCode(countryCode)
+  if (normalizedCode) {
+    // 正規化された国コードから国旗コードに変換
+    return countryCodeToFlagCode[normalizedCode] || ''
   }
   
   // 国コード（大文字2文字）から国旗コードに変換

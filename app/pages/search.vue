@@ -178,11 +178,16 @@ const runSearch = async () => {
         
         // デバッグ: 国旗マッピングの確認
         if (searchResults.value.length > 0) {
-            console.log('[search] User residences:', searchResults.value.map(u => ({ 
-                username: u.username, 
-                residence: u.residence,
-                flagCode: getFlagCodeFromCountryCode(u.residence)
-            })));
+            console.log('[search] User residences:', searchResults.value.map(u => {
+                const flagCode = getFlagCodeFromCountryCode(u.residence);
+                console.log(`[search] User ${u.username}: residence="${u.residence}", flagCode="${flagCode}"`);
+                return { 
+                    username: u.username, 
+                    residence: u.residence,
+                    residenceType: typeof u.residence,
+                    flagCode: flagCode
+                };
+            }));
         }
         
     } catch (error) {
