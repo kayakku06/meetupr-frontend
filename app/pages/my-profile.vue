@@ -84,18 +84,51 @@
           </select>
         </label>
 
-        <fieldset class="flex flex-col gap-2">
+        <fieldset v-if="editing" class="flex flex-col gap-2">
           <legend class="text-xs text-amber-900">性別</legend>
-          <label class="inline-flex items-center gap-1.5 text-sm text-amber-900"><input type="radio"
-              :disabled="!editing || isLoading" value="male" v-model="form.gender"
-              class="disabled:opacity-50 disabled:cursor-not-allowed" /> 男性</label>
-          <label class="inline-flex items-center gap-1.5 text-sm text-amber-900"><input type="radio"
-              :disabled="!editing || isLoading" value="female" v-model="form.gender"
-              class="disabled:opacity-50 disabled:cursor-not-allowed" /> 女性</label>
-          <label class="inline-flex items-center gap-1.5 text-sm text-amber-900"><input type="radio"
-              :disabled="!editing || isLoading" value="other" v-model="form.gender"
-              class="disabled:opacity-50 disabled:cursor-not-allowed" /> その他</label>
+          <label class="inline-flex items-center gap-1.5 text-sm text-amber-900">
+            <input
+              type="radio"
+              :disabled="isLoading"
+              value="male"
+              v-model="form.gender"
+              class="disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            男性
+          </label>
+          <label class="inline-flex items-center gap-1.5 text-sm text-amber-900">
+            <input
+              type="radio"
+              :disabled="isLoading"
+              value="female"
+              v-model="form.gender"
+              class="disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            女性
+          </label>
+          <label class="inline-flex items-center gap-1.5 text-sm text-amber-900">
+            <input
+              type="radio"
+              :disabled="isLoading"
+              value="other"
+              v-model="form.gender"
+              class="disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            その他
+          </label>
         </fieldset>
+        <div v-else class="flex flex-col gap-1">
+          <div class="text-xs text-amber-900">性別</div>
+          <div class="inline-flex items-center gap-1.5 text-sm text-amber-900">
+            <input
+              type="radio"
+              disabled
+              :checked="!!form.gender"
+              class="disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            {{ getGenderLabel(form.gender) || '未設定' }}
+          </div>
+        </div>
 
         <!-- 出身（選択UIのみコンポーネント化） -->
         <div class="flex flex-col gap-4">
@@ -406,6 +439,19 @@ function getCountryLabel(countryCode: string): string {
 function getLanguageLabel(langCode: string): string {
   const all = languageCategories.value.flatMap(c => c.tags)
   return all.find(t => t.code === langCode)?.label || langCode
+}
+
+function getGenderLabel(g: string): string {
+  switch (g) {
+    case 'male':
+      return '男性'
+    case 'female':
+      return '女性'
+    case 'other':
+      return 'その他'
+    default:
+      return ''
+  }
 }
 
 // ★ 既存の選択肢のデータ（サンプル）
