@@ -6,7 +6,7 @@
                 <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
 
                 <div class="w-full">
-                    <h2 class="m-0 mb-2 text-lg text-teal-900 text-center">プロフィール登録</h2>
+                    <h2 class="m-0 mb-2 text-xl sm:text-2xl font-bold text-teal-900 text-center">プロフィール登録</h2>
                 </div>
                 <div class="relative inline-block">
                     <div class="w-20 h-20 rounded-full bg-[var(--meetup-color-3)] flex items-center justify-center border-2 border-[var(--meetupr-color-3)] overflow-hidden cursor-pointer"
