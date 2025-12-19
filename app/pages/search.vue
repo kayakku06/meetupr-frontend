@@ -140,8 +140,11 @@ const runSearch = async () => {
         const countryCodes = [];
         for (const country of selectedCountries.value) {
             const code = normalizeCountryCode(country);
+            console.log('[search] Country conversion:', { original: country, code: code });
             if (code) {
                 countryCodes.push(code);
+            } else {
+                console.warn('[search] Failed to convert country to code:', country);
             }
         }
         
@@ -152,7 +155,8 @@ const runSearch = async () => {
 
         console.log('[search] Request body:', JSON.stringify(requestBody, null, 2));
         console.log('[search] Selected languages:', selectedLanguages.value);
-        console.log('[search] Selected countries:', selectedCountries.value);
+        console.log('[search] Selected countries (original):', selectedCountries.value);
+        console.log('[search] Country codes (converted):', countryCodes);
         console.log('[search] API URL:', `${config.public.apiBaseUrl}/api/v1/search/users`);
         console.log('[search] Token length:', token ? token.length : 0);
 
