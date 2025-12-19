@@ -19,8 +19,7 @@ body {
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
   background-color: #f3f4f6; /* gray-100 */
   margin: 0;
-  padding-top: 20px;
-  padding-bottom: 20px;
+  padding: 0;
 }
 
 /* select のカスタム矢印（Tailwind のみだと微調整が必要なため残す） */
