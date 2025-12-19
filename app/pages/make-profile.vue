@@ -2,7 +2,12 @@
     <div class="min-h-screen bg-[var(--meetupr-main)] pb-20 font-['Noto_Sans_JP']">
 
         <main class="max-w-md mx-auto p-5">
-            <div class="flex gap-3 items-center mb-3  justify-center ">
+            <div class="flex flex-col items-center justify-center gap-3 mb-3">
+                <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
+
+                <div class="w-full">
+                    <h2 class="m-0 mb-2 text-xl sm:text-2xl font-bold text-teal-900 text-center">プロフィール登録</h2>
+                </div>
                 <div class="relative inline-block">
                     <div class="w-20 h-20 rounded-full bg-[var(--meetup-color-3)] flex items-center justify-center border-2 border-[var(--meetupr-color-3)] overflow-hidden cursor-pointer"
                         role="button" aria-label="プロフィール画像を選択" @click="onAvatarClick">
@@ -27,11 +32,7 @@
                     </div>
                 </div>
 
-                <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
-
-                <div class="flex-1">
-                    <h2 class="m-0 mb-2 text-lg text-teal-900">プロフィール登録</h2>
-                </div>
+                
             </div>
             <form @submit.prevent="registerProfile" class="flex flex-col gap-3">
 
@@ -64,41 +65,44 @@
                             class="disabled:opacity-50 disabled:cursor-not-allowed" /> その他</label>
                 </fieldset>
 
-                <!-- 出身 -->
-                <div class="flex flex-col gap-2">
-                    <button type="button" @click="showOrigin = !showOrigin"
-                        class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none text-left hover:bg-gray-50 transition">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-medium text-xs text-amber-900">出身</span>
-                            <span :class="showOrigin ? 'rotate-180' : ''">▼</span>
-                        </div>
-                        <div v-if="form.origin">
-                            <span
-                                class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
-                                {{ getCountryLabel(form.origin) }}
-                            </span>
-                        </div>
-                        <span v-else class="text-gray-400 text-sm">選択してください</span>
-                    </button>
+                <!-- 出身（言語セクションと同じ構造に統一） -->
+                <div class="flex flex-col gap-4">
+                    <div class="text-xs text-amber-900">出身</div>
+                    <div class="flex flex-col gap-2">
+                        <button type="button" @click="showOrigin = !showOrigin"
+                            class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none text-left hover:bg-gray-50 transition">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-medium">出身を選択</span>
+                                <span :class="showOrigin ? 'rotate-180' : ''">▼</span>
+                            </div>
+                            <div v-if="form.origin">
+                                <span
+                                    class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
+                                    {{ getCountryLabel(form.origin) }}
+                                </span>
+                            </div>
+                            <span v-else class="text-gray-400 text-sm">選択してください</span>
+                        </button>
 
-                    <div v-if="showOrigin" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
-                        <!-- 地域タブ -->
-                        <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 overflow-x-auto">
-                            <span v-for="category in regionCategories" :key="category.name"
-                                @click="activeRegionTab = category.name"
-                                class="cursor-pointer pb-2 transition whitespace-nowrap"
-                                :class="activeRegionTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
-                                {{ category.name }}
-                            </span>
-                        </div>
-                        <!-- 国選択ボタン -->
-                        <div v-for="category in regionCategories" :key="category.name"
-                            v-show="activeRegionTab === category.name" class="flex flex-wrap gap-2">
-                            <button v-for="country in category.tags" :key="country.code" type="button"
-                                @click="form.origin = country.code"
-                                :class="form.origin === country.code ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
-                                {{ country.label }}
-                            </button>
+                        <div v-if="showOrigin" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+                            <!-- 地域タブ -->
+                            <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 overflow-x-auto">
+                                <span v-for="category in regionCategories" :key="category.name"
+                                    @click="activeRegionTab = category.name"
+                                    class="cursor-pointer pb-2 transition whitespace-nowrap text-[11px]"
+                                    :class="activeRegionTab === category.name ? 'text-[var(--meetupr-sub)] font-normal border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-normal'">
+                                    {{ category.name }}
+                                </span>
+                            </div>
+                            <!-- 国選択ボタン -->
+                            <div v-for="category in regionCategories" :key="category.name"
+                                v-show="activeRegionTab === category.name" class="flex flex-wrap gap-2">
+                                <button v-for="country in category.tags" :key="country.code" type="button"
+                                    @click="form.origin = country.code"
+                                    :class="form.origin === country.code ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
+                                    {{ country.label }}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -129,7 +133,8 @@
                                 <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
                                     <span v-for="category in languageCategories" :key="category.name"
                                         @click="activeLanguageTab = category.name"
-                                        :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
+                                        class="cursor-pointer pb-1 transition whitespace-nowrap text-[11px]"
+                                        :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-normal border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-normal'">
                                         {{ category.name }}
                                     </span>
                                 </div>
@@ -168,7 +173,8 @@
                             <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
                                 <span v-for="category in languageCategories" :key="category.name"
                                     @click="activeLanguageTab = category.name"
-                                    :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
+                                    class="cursor-pointer pb-1 transition whitespace-nowrap text-[11px]"
+                                    :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-normal border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-normal'">
                                     {{ category.name }}
                                 </span>
                             </div>
@@ -205,7 +211,8 @@
                             <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
                                 <span v-for="category in languageCategories" :key="category.name"
                                     @click="activeLanguageTab = category.name"
-                                    :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
+                                    class="cursor-pointer pb-1 transition whitespace-nowrap text-[11px]"
+                                    :class="activeLanguageTab === category.name ? 'text-[var(--meetupr-sub)] font-normal border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-normal'">
                                     {{ category.name }}
                                 </span>
                             </div>
@@ -251,7 +258,8 @@
                         <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
                             <span v-for="category in (Array.isArray(choiceCategories) ? choiceCategories : [])"
                                 :key="category.name" @click="activeTab = category.name"
-                                :class="activeTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
+                                class="cursor-pointer pb-1 transition whitespace-nowrap text-[11px]"
+                                :class="activeTab === category.name ? 'text-[var(--meetupr-sub)] font-normal border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-normal'">
                                 {{ category.name }}
                             </span>
                         </div>
