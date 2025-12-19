@@ -9,19 +9,13 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <header class="bg-[var(--meetupr-main)]">
-    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-      <div class="flex items-center space-x-4">
-        <NuxtLink to="/" class="text-2xl font-bold text-primary">
-          MeetUpr
-        </NuxtLink>
-      </div>
-      
+  <header class="bg-[var(--meetupr-main)]" v-if="!isAuthenticated">
+    <div class="container mx-auto px-4 py-4 flex justify-end items-center">
       <nav class="flex items-center space-x-4">
         <template v-if="isLoading">
           <div class="text-gray-500">読み込み中...</div>
         </template>
-        <template v-else-if="!isAuthenticated">
+        <template v-else>
           <button
             @click="handleLogin"
             class="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded hover:bg-blue-600 transition-colors"
