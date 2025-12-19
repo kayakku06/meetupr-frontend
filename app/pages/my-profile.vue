@@ -70,7 +70,7 @@
 
       <form class="flex flex-col gap-3" @submit.prevent>
         <label class="flex flex-col gap-1">
-          <div class="text-sm text-yellow-900">学部</div>
+          <div class="text-sm text-yellow-900">学部 <span class="text-red-500">*</span></div>
           <!-- 値はコードに統一（make-profile準拠） -->
           <select :disabled="!editing || isLoading" v-model="form.department"
             class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 appearance-none ">
@@ -132,7 +132,7 @@
 
         <!-- 出身（選択UIのみコンポーネント化） -->
         <div class="flex flex-col gap-4">
-          <div class="text-xs text-amber-900">出身</div>
+          <div class="text-sm text-amber-900">出身 <span class="text-red-500">*</span></div>
           <CategorySelect
             :categories="regionCategories"
             v-model="form.origin"
@@ -144,16 +144,17 @@
         </div>
 
         <div class="flex flex-col gap-4">
-          <div class="text-xs text-amber-900">言語</div>
+          <div class="text-sm text-amber-900">言語</div>
           <!-- ネイティブ・話せる・学びたい をCategorySelectへ統一（選択UIのみコンポーネント化） -->
           <CategorySelect
+            title="ネイティブ"
+            :required="true"
             :categories="languageCategories"
             v-model="form.nativeLanguage"
-            :multiple="false"
+            :multiple="true"
             :readonly="!editing"
             :disabled="!editing || isLoading"
-            headerPrefix="ネイティブ:"
-            placeholder="選択してください"
+            placeholder="選択してください（必須）"
           />
 
           <CategorySelect
@@ -229,7 +230,7 @@
 
         <div class="flex gap-2 mt-1.5" v-if="editing">
           <button type="button"
-            :disabled="isSaving"
+            :disabled="isSaveDisabled"
             class="bg-[var(--meetupr-color-3)]  text-white px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-teal-600 transition flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
             @click="save">{{ isSaving ? '保存中...' : '保存' }}</button>
           <button type="button"
@@ -260,7 +261,7 @@ definePageMeta({
   middleware: 'auth'
 })
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import CategorySelect from '~/components/CategorySelect.vue'
 import Footer from '~/components/Footer.vue'
 import { useAuth } from '~/composables/useAuth'
@@ -483,7 +484,7 @@ type FormState = {
   department: string // major code
   gender: string // male/female/other
   origin: string // country code
-  nativeLanguage: string // lang code
+  nativeLanguage: string[] // lang codes (UIはchips形式、先頭1件のみ保持)
   spokenLanguages: string[]
   learningLanguages: string[]
   hobbies: string[]
@@ -495,7 +496,7 @@ const form = ref<FormState>({
   department: '',
   gender: '',
   origin: '',
-  nativeLanguage: 'ja',
+  nativeLanguage: ['ja'],
   spokenLanguages: [],
   learningLanguages: [],
   hobbies: [],
@@ -540,6 +541,19 @@ function toggleHobby(hobbyName: string) {
 }
 
 async function save() {
+  // 必須チェック（学部・出身・母国語）
+  if (!form.value.department) {
+    alert('学部は必須です。選択してください。')
+    return
+  }
+  if (!form.value.origin) {
+    alert('出身は必須です。選択してください。')
+    return
+  }
+  if (!Array.isArray(form.value.nativeLanguage) || form.value.nativeLanguage.length === 0) {
+    alert('母国語は必須です。選択してください。')
+    return
+  }
   if (!user.value?.sub) {
     alert('ユーザー情報の取得に失敗しました。ページを再読み込みしてください。')
     return
@@ -569,7 +583,7 @@ async function save() {
     }
 
     // すでにコードで保持する（make-profile準拠）
-    const nativeLanguageCode = form.value.nativeLanguage || 'ja'
+  const nativeLanguageCode = (Array.isArray(form.value.nativeLanguage) && form.value.nativeLanguage[0]) ? form.value.nativeLanguage[0] : 'ja'
     const spokenLanguagesCodes = Array.isArray(form.value.spokenLanguages) ? form.value.spokenLanguages : []
     const learningLanguagesCodes = Array.isArray(form.value.learningLanguages) ? form.value.learningLanguages : []
     const majorCode = form.value.department || null
@@ -632,6 +646,26 @@ async function save() {
   }
 }
 
+// 保存ボタンの無効判定
+const isSaveDisabled = computed(() => {
+  const hasNative = Array.isArray(form.value.nativeLanguage) ? form.value.nativeLanguage.length > 0 : false
+  return isSaving.value || !form.value.department || !form.value.origin || !hasNative
+})
+
+// ネイティブ言語はchips UIだが常に1件のみ保持
+watch(
+  () => form.value.nativeLanguage,
+  (nv, ov) => {
+    const next = Array.isArray(nv) ? nv : (nv ? [nv] : [])
+    if (next.length > 1) {
+      const prev = Array.isArray(ov) ? ov : (ov ? [ov] : [])
+      const added = next.find(x => !prev.includes(x))
+      const candidate = added ?? next[0]
+      form.value.nativeLanguage = candidate ? [candidate] : []
+    }
+  }
+)
+
 let original = ref<FormState>(JSON.parse(JSON.stringify(form.value)))
 
 function cancel() {
@@ -667,7 +701,7 @@ async function fetchProfile() {
   form.value.department = response.major || ''
   form.value.gender = response.gender || ''
   form.value.origin = response.residence || ''
-  form.value.nativeLanguage = response.native_language || 'ja'
+  form.value.nativeLanguage = response.native_language ? [response.native_language] : ['ja']
   form.value.spokenLanguages = Array.isArray(response.spoken_languages) ? response.spoken_languages : []
   form.value.learningLanguages = Array.isArray(response.learning_languages) ? response.learning_languages : []
   form.value.hobbies = Array.isArray(response.interests) ? response.interests : []
