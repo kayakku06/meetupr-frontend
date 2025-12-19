@@ -121,34 +121,31 @@
               </div>
             </template>
           </div>
-          <div class="flex gap-2 items-center mt-1.5" v-if="editing">
-            <input v-model="newHobby"
-              class="flex-1 border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
-              placeholder="趣味を入力してEnter" @keyup.enter="addHobby()" />
-            <button type="button"
-              class="bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition"
-              @click="addHobby()">追加</button>
+          <!-- make-profileと同じ構成: 上にラベル、入力+追加ボタン、下にpanelOnlyのCategorySelect -->
+          <div v-if="editing">
+            <label class="text-xs text-amber-900 mb-1 block">既存の選択肢</label>
+            <div class="flex gap-2 items-center mt-1.5">
+              <input v-model="newHobby"
+                class="flex-1 border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+                placeholder="趣味を入力してEnter" @keyup.enter="addHobby()" />
+              <button type="button"
+                class="bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition"
+                @click="addHobby()">追加</button>
+            </div>
+            <div class="mt-3">
+              <CategorySelect
+                v-model="form.hobbies"
+                :categories="choiceCategories"
+                :multiple="true"
+                :panelOnly="true"
+                placeholder="選択してください"
+                title="趣味"
+                selectButtonLabel="選択"
+              />
+            </div>
           </div>
         </div>
 
-        <div v-if="editing">
-          <label class="text-xs text-amber-900 mb-1 block">既存の選択肢</label>
-          <div class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
-            <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3">
-              <span v-for="category in choiceCategories" :key="category.name" @click="activeTab = category.name"
-                :class="activeTab === category.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)]' : 'text-gray-600 font-medium'">
-                {{ category.name }}
-              </span>
-            </div>
-            <div v-for="category in choiceCategories" :key="category.name" v-show="activeTab === category.name"
-              class="flex flex-wrap gap-2">
-              <button v-for="tag in category.tags" :key="tag" type="button" @click="toggleHobby(tag)" :disabled="false"
-                :class="form.hobbies.includes(tag) ? 'bg-[var(--meetupr-sub)] text-gray-400 border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm line-through cursor-not-allowed' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
-                {{ tag }}
-              </button>
-            </div>
-          </div>
-        </div>
 
         <label class="flex flex-col gap-2">
           <div class="text-xs text-amber-900">一言（50文字以内）</div>
