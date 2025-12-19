@@ -74,8 +74,10 @@
             </button>
 
             <div v-if="showOrigin" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
-              <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 text-sm">
+              <!-- 横スクロール可能な地域タブ -->
+              <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 text-sm overflow-x-auto flex-nowrap -mx-3 px-3 snap-x">
                 <span v-for="region in regionCategories" :key="region.name" @click="activeRegionTab = region.name"
+                  class="shrink-0 snap-start px-1"
                   :class="activeRegionTab === region.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)] cursor-pointer' : 'text-gray-600 font-medium cursor-pointer'">
                   {{ region.name }}
                 </span>
