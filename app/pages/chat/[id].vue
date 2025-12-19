@@ -18,6 +18,9 @@ interface Message {
   chat_id?: number
   sender_id: string
   sent_at?: string
+  translatedText?: string
+  isTranslating?: boolean
+  showTranslation?: boolean
 }
 
 // チャットIDをルートパラメータまたはクエリパラメータから取得
@@ -67,7 +70,7 @@ const fetchOrCreateChatId = async () => {
   }
 }
 
-// チャット詳細を取得してパートナー名を取得
+// チャット詳細を取得してパートナー名とIDを取得
 const fetchChatDetails = async () => {
   if (!chatId.value) return
 
@@ -75,7 +78,7 @@ const fetchChatDetails = async () => {
     const token = await getAccessToken()
     if (!token) return
 
-    const response = await $fetch<{ other_user?: { username: string } }>(`${config.public.apiBaseUrl}/api/v1/chats/${chatId.value}`, {
+    const response = await $fetch<{ other_user?: { username: string, id?: string } }>(`${config.public.apiBaseUrl}/api/v1/chats/${chatId.value}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -84,8 +87,32 @@ const fetchChatDetails = async () => {
     if (response.other_user?.username) {
       partnerName.value = response.other_user.username
     }
+    
+    if (response.other_user?.id) {
+      partnerId.value = response.other_user.id
+      // パートナーのプロフィールを取得してネイティブ言語を取得
+      await fetchPartnerProfile(response.other_user.id)
+    }
   } catch (err: any) {
     console.error('チャット詳細の取得に失敗しました:', err)
+  }
+}
+
+// パートナーのプロフィールを取得してネイティブ言語を取得
+const fetchPartnerProfile = async (userId: string) => {
+  try {
+    const profileResponse = await $fetch<{ native_language?: string }>('/api/profile', {
+      query: {
+        user_id: userId
+      }
+    })
+
+    if (profileResponse.native_language) {
+      partnerNativeLanguage.value = profileResponse.native_language
+    }
+  } catch (err: any) {
+    console.error('パートナーのプロフィール取得に失敗しました:', err)
+    // エラーが発生してもデフォルト値を使用
   }
 }
 
@@ -95,6 +122,8 @@ const messagesContainer = ref<HTMLElement | null>(null)
 const connectionStatus = ref<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected')
 const errorMessage = ref('')
 const partnerName = ref<string>('ユーザー')
+const partnerNativeLanguage = ref<string>('ja') // デフォルトは日本語
+const partnerId = ref<string | null>(null)
 
 let ws: WebSocket | null = null
 let reconnectAttempts = 0
@@ -374,6 +403,58 @@ const retryConnection = () => {
   connectWebSocket()
 }
 
+// メッセージを翻訳
+const translateMessage = async (msg: Message) => {
+  // 既に翻訳が表示されている場合は非表示にする
+  if (msg.showTranslation) {
+    msg.showTranslation = false
+    return
+  }
+
+  // 既に翻訳済みの場合は表示するだけ
+  if (msg.translatedText) {
+    msg.showTranslation = true
+    return
+  }
+
+  // 翻訳中フラグを設定
+  msg.isTranslating = true
+  msg.showTranslation = true
+
+  try {
+    // 翻訳対象言語を決定
+    // 相手のメッセージの場合、相手のネイティブ言語から日本語へ
+    // 自分のメッセージの場合、日本語から相手のネイティブ言語へ
+    const isFromPartner = msg.sender_id !== currentUserId.value
+    const sourceLang = isFromPartner ? partnerNativeLanguage.value : 'ja'
+    const targetLang = isFromPartner ? 'ja' : partnerNativeLanguage.value
+
+    const response = await $fetch<{ translatedText?: string, error?: string }>('/api/translate', {
+      method: 'POST',
+      body: {
+        text: msg.content,
+        sourceLang: sourceLang,
+        targetLang: targetLang
+      }
+    })
+
+    if (response.error) {
+      throw new Error(response.error)
+    }
+
+    if (response.translatedText) {
+      msg.translatedText = response.translatedText
+    } else {
+      throw new Error('翻訳結果が取得できませんでした')
+    }
+  } catch (error: any) {
+    console.error('翻訳エラー:', error)
+    msg.translatedText = '翻訳に失敗しました'
+  } finally {
+    msg.isTranslating = false
+  }
+}
+
 onMounted(async () => {
   await connectWebSocket()
 })
@@ -461,9 +542,21 @@ onUnmounted(() => {
                             <!-- 緑のアバター -->
                             <div class="w-10 h-10 rounded-full bg-teal-600 flex-shrink-0"></div>
                             <div class="space-y-1 max-w-[75%]">
-                                <!-- 薄いオレンジの吹き出し -->
-                                <div class="bg-[var(--meetupr-sub)] rounded-2xl rounded-tl-sm px-4 py-3">
+                                <!-- 薄いオレンジの吹き出し（タップ可能） -->
+                                <div 
+                                    @click="translateMessage(msg)"
+                                    class="bg-[var(--meetupr-sub)] rounded-2xl rounded-tl-sm px-4 py-3 cursor-pointer hover:opacity-90 transition-opacity"
+                                >
                                     <p class="text-gray-800 text-sm leading-relaxed">{{ msg.content }}</p>
+                                    <!-- 翻訳表示 -->
+                                    <template v-if="msg.showTranslation">
+                                        <div v-if="msg.isTranslating" class="mt-2 pt-2 border-t border-gray-300">
+                                            <p class="text-gray-600 text-xs">翻訳中...</p>
+                                        </div>
+                                        <div v-else-if="msg.translatedText" class="mt-2 pt-2 border-t border-gray-300">
+                                            <p class="text-gray-600 text-xs leading-relaxed">{{ msg.translatedText }}</p>
+                                        </div>
+                                    </template>
                                 </div>
                                 <!-- タイムスタンプ -->
                                 <p class="text-xs text-gray-500 px-2">{{ formatTime(msg.sent_at) }}</p>
@@ -472,9 +565,21 @@ onUnmounted(() => {
                         <!-- 自分のメッセージ（右側） -->
                         <div v-else class="flex justify-end mb-4">
                             <div class="max-w-[75%]">
-                                <!-- 薄いオレンジの吹き出し -->
-                                <div class="bg-[var(--meetupr-sub)] rounded-2xl rounded-tr-sm px-4 py-3">
+                                <!-- 薄いオレンジの吹き出し（タップ可能） -->
+                                <div 
+                                    @click="translateMessage(msg)"
+                                    class="bg-[var(--meetupr-sub)] rounded-2xl rounded-tr-sm px-4 py-3 cursor-pointer hover:opacity-90 transition-opacity"
+                                >
                                     <p class="text-gray-800 text-sm leading-relaxed">{{ msg.content }}</p>
+                                    <!-- 翻訳表示 -->
+                                    <template v-if="msg.showTranslation">
+                                        <div v-if="msg.isTranslating" class="mt-2 pt-2 border-t border-gray-300">
+                                            <p class="text-gray-600 text-xs">翻訳中...</p>
+                                        </div>
+                                        <div v-else-if="msg.translatedText" class="mt-2 pt-2 border-t border-gray-300">
+                                            <p class="text-gray-600 text-xs leading-relaxed">{{ msg.translatedText }}</p>
+                                        </div>
+                                    </template>
                                 </div>
                                 <!-- タイムスタンプ -->
                                 <p class="text-xs text-gray-500 text-right px-2 mt-1">{{ formatTime(msg.sent_at) }}</p>
