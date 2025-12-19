@@ -105,7 +105,7 @@ export default defineEventHandler(async (event: H3Event) => {
     // profilesテーブルからプロフィール情報を取得
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('major, gender, native_language, spoken_languages, learning_languages, residence, comment, interests')
+      .select('major, gender, native_language, spoken_languages, learning_languages, residence, comment, interests, avatar_url')
       .eq('user_id', userId)
       .single()
 
@@ -130,38 +130,37 @@ export default defineEventHandler(async (event: H3Event) => {
       return { error: 'profile_fetch_failed', details: profileError }
     }
 
-    // 言語コードを日本語名に変換
-    const spokenLanguages = Array.isArray(profileData?.spoken_languages) 
-      ? convertLanguageCodesToLabels(profileData.spoken_languages.filter((code: any) => code != null && code !== ''))
+    // フロントはコード値を期待するため、DBのコードをそのまま返す
+    const spokenLanguageCodes = Array.isArray(profileData?.spoken_languages)
+      ? profileData.spoken_languages.filter((code: any) => code != null && code !== '')
       : []
-    const learningLanguages = Array.isArray(profileData?.learning_languages)
-      ? convertLanguageCodesToLabels(profileData.learning_languages.filter((code: any) => code != null && code !== ''))
+    const learningLanguageCodes = Array.isArray(profileData?.learning_languages)
+      ? profileData.learning_languages.filter((code: any) => code != null && code !== '')
       : []
-    const nativeLanguage = profileData?.native_language && profileData.native_language !== ''
-      ? getLanguageLabel(String(profileData.native_language))
+    const nativeLanguageCode = profileData?.native_language && profileData.native_language !== ''
+      ? String(profileData.native_language)
       : null
 
-    // 学部コードを日本語名に変換
-    const majorLabel = profileData?.major && profileData.major !== ''
-      ? getMajorLabel(String(profileData.major))
+    const majorCode = profileData?.major && profileData.major !== ''
+      ? String(profileData.major)
       : null
 
-    // 性別コードを日本語名に変換
-    const genderLabel = profileData?.gender && profileData.gender !== ''
-      ? getGenderLabel(String(profileData.gender))
+    const genderCode = profileData?.gender && profileData.gender !== ''
+      ? String(profileData.gender)
       : null
 
-    // データを結合して返す
+    // データを結合して返す（コード値準拠）
     return {
       username: userData?.username || null,
-      major: majorLabel,
-      gender: genderLabel,
-      native_language: nativeLanguage,
-      spoken_languages: spokenLanguages,
-      learning_languages: learningLanguages,
+      major: majorCode,
+      gender: genderCode,
+      native_language: nativeLanguageCode,
+      spoken_languages: spokenLanguageCodes,
+      learning_languages: learningLanguageCodes,
       residence: profileData?.residence || null,
       comment: profileData?.comment || null,
-      interests: Array.isArray(profileData?.interests) ? profileData.interests : []
+      interests: Array.isArray(profileData?.interests) ? profileData.interests : [],
+      avatar_url: profileData?.avatar_url || null
     }
   } catch (err: any) {
     console.error('Error in /api/profile GET handler:', err)
