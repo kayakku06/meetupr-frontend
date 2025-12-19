@@ -4,7 +4,7 @@ import SearchUser from '~/components/searchuser.vue'
 import Footer from '~/components/Footer.vue'
 import { Search, UserRoundPlus, ChevronUp } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
-import { getFlagCode, normalizeCountryCode } from '~/utils/countryMapping'
+import { getFlagCode, normalizeCountryCode, getFlagCodeFromCountryCode } from '~/utils/countryMapping'
 
 const { getAccessToken } = useAuth()
 const config = useRuntimeConfig()
@@ -137,9 +137,13 @@ const runSearch = async () => {
         // - フィルター条件がない場合: 全ユーザー（自分以外）を返す。プロフィール情報（comment, residence, avatar_url）も取得
         // - フィルター条件がある場合: 条件に一致するユーザーのみを返す。フィルタリングに必要なプロフィール情報のみを取得
         // 国名を国コードに変換（データベースでは英語の国コードで管理）
-        const countryCodes = selectedCountries.value
-            .map(country => normalizeCountryCode(country))
-            .filter(code => code !== null) as string[];
+        const countryCodes = [];
+        for (const country of selectedCountries.value) {
+            const code = normalizeCountryCode(country);
+            if (code) {
+                countryCodes.push(code);
+            }
+        }
         
         const requestBody = {
             languages: selectedLanguages.value.length > 0 ? selectedLanguages.value : [],
@@ -163,11 +167,16 @@ const runSearch = async () => {
         });
 
         // レスポンスを検索結果に設定
+        // バックエンドから受け取ったデータは国コード（英語）なので、そのまま使用
         searchResults.value = response || [];
         
         // デバッグ: 国旗マッピングの確認
         if (searchResults.value.length > 0) {
-            console.log('[search] User residences:', searchResults.value.map(u => ({ username: u.username, residence: u.residence })));
+            console.log('[search] User residences:', searchResults.value.map(u => ({ 
+                username: u.username, 
+                residence: u.residence,
+                flagCode: getFlagCodeFromCountryCode(u.residence)
+            })));
         }
         
     } catch (error) {
@@ -369,7 +378,7 @@ onMounted(async () => {
                         :message="user.comment || ''"
                         avatarColor="bg-[var(--meetupr-color-3)]"
                         :hobbies="formatInterests(user.interests)"
-                        :flag="getFlagCode(user.residence)"
+                        :flag="getFlagCodeFromCountryCode(user.residence)"
                     />
                 </div>
 

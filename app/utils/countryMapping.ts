@@ -204,3 +204,93 @@ export function normalizeCountryCode(country: string | null | undefined): string
   console.warn('[countryMapping] Cannot normalize country:', country)
   return null
 }
+
+// 国コードから日本語の国名を取得（逆マッピング）
+const countryCodeToJapanese: Record<string, string> = {
+  'JP': '日本',
+  'US': 'アメリカ',
+  'KR': '韓国',
+  'CN': '中国',
+  'GB': 'イギリス',
+  'FR': 'フランス',
+  'ES': 'スペイン',
+  'DE': 'ドイツ',
+  'IT': 'イタリア',
+  'CA': 'カナダ',
+  'AU': 'オーストラリア',
+  'BR': 'ブラジル',
+  'MX': 'メキシコ',
+  'IN': 'インド',
+  'TH': 'タイ',
+  'VN': 'ベトナム',
+  'ID': 'インドネシア',
+  'PH': 'フィリピン',
+  'SG': 'シンガポール',
+  'MY': 'マレーシア',
+  'TW': '台湾',
+  'HK': '香港',
+  'NL': 'オランダ',
+  'BE': 'ベルギー',
+  'CH': 'スイス',
+  'AT': 'オーストリア',
+  'SE': 'スウェーデン',
+  'NO': 'ノルウェー',
+  'DK': 'デンマーク',
+  'FI': 'フィンランド',
+  'PL': 'ポーランド',
+  'RU': 'ロシア',
+  'TR': 'トルコ',
+  'EG': 'エジプト',
+  'ZA': '南アフリカ',
+  'AR': 'アルゼンチン',
+  'CL': 'チリ',
+  'CO': 'コロンビア',
+  'PE': 'ペルー',
+  'NZ': 'ニュージーランド',
+  'MM': 'ミャンマー',
+  'KH': 'カンボジア',
+  'LA': 'ラオス',
+  'BN': 'ブルネイ',
+  'BD': 'バングラディシュ',
+  'PK': 'パキスタン',
+  'NP': 'ネパール',
+  'LK': 'スリランカ',
+  'MV': 'モルディブ',
+  'KG': 'キルギス',
+  'UZ': 'ウズベキスタン',
+  'TJ': 'タジキスタン',
+  'KZ': 'カザフスタン',
+  'AF': 'アフガニスタン',
+  'IL': 'イスラエル',
+  'OM': 'オマーン',
+  'GH': 'ガーナ',
+  'NG': 'ナイジェリア',
+  'ET': 'エチオピア',
+  'BF': 'ブルキナファソ',
+  'UG': 'ウガンダ',
+  'NA': 'ナミビア',
+  'MA': 'モロッコ',
+  'GA': 'ガボン',
+  'GT': 'グアテマラ',
+  'UA': 'ウクライナ',
+  'LT': 'リトアニア',
+  'HU': 'ハンガリー',
+}
+
+// 国コードから日本語の国名を取得
+export function getJapaneseCountryName(countryCode: string | null | undefined): string {
+  if (!countryCode) return ''
+  
+  // 国コードを大文字に正規化
+  const upperCode = countryCode.toUpperCase()
+  
+  // マッピングから日本語の国名を取得
+  const japaneseName = countryCodeToJapanese[upperCode]
+  if (japaneseName) {
+    return japaneseName
+  }
+  
+  // マッピングが見つからない場合は警告を出力して国コードをそのまま返す
+  console.warn('[countryMapping] Unknown country code:', countryCode)
+  return countryCode
+}
