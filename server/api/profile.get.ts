@@ -105,7 +105,7 @@ export default defineEventHandler(async (event: H3Event) => {
     // profilesテーブルからプロフィール情報を取得
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('major, gender, native_language, spoken_languages, learning_languages, residence, comment, interests')
+      .select('major, gender, native_language, spoken_languages, learning_languages, residence, comment, interests, avatar_url')
       .eq('user_id', userId)
       .single()
 
@@ -159,7 +159,8 @@ export default defineEventHandler(async (event: H3Event) => {
       learning_languages: learningLanguageCodes,
       residence: profileData?.residence || null,
       comment: profileData?.comment || null,
-      interests: Array.isArray(profileData?.interests) ? profileData.interests : []
+      interests: Array.isArray(profileData?.interests) ? profileData.interests : [],
+      avatar_url: profileData?.avatar_url || null
     }
   } catch (err: any) {
     console.error('Error in /api/profile GET handler:', err)

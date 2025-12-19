@@ -7,11 +7,16 @@
     <!-- コンテンツ -->
     <main class="max-w-md mx-auto p-5 ">
       <div class="flex gap-3 items-center mb-3">
-        <div class="w-20 h-20 rounded-full bg-[var(--meetup-color-3)] flex items-center justify-center border-2 border-[var(--meetupr-color-3)]">
-          <svg viewBox="0 0 64 64" class="w-11 h-11" aria-hidden>
-            <circle cx="32" cy="24" r="12" fill="none" stroke="#6aaea0" stroke-width="2" />
-            <path d="M10 54c4-10 18-14 22-14s18 4 22 14" fill="none" stroke="#6aaea0" stroke-width="2" />
-          </svg>
+        <div class="w-20 h-20 rounded-full bg-[var(--meetup-color-3)] flex items-center justify-center border-2 border-[var(--meetupr-color-3)] overflow-hidden">
+          <template v-if="avatarUrl">
+            <img :src="avatarUrl" alt="avatar" class="w-full h-full object-cover" />
+          </template>
+          <template v-else>
+            <svg viewBox="0 0 64 64" class="w-11 h-11" aria-hidden>
+              <circle cx="32" cy="24" r="12" fill="none" stroke="#6aaea0" stroke-width="2" />
+              <path d="M10 54c4-10 18-14 22-14s18 4 22 14" fill="none" stroke="#6aaea0" stroke-width="2" />
+            </svg>
+          </template>
         </div>
 
         <div class="flex-1">
@@ -219,6 +224,7 @@ const handleLogout = async () => {
 const editing = ref(false)
 const isLoading = ref(true)
 const isSaving = ref(false)
+const avatarUrl = ref<string | null>(null)
 
 // make-profile 準拠: 地域・言語分類データとヘルパ（選択UIはCategorySelectで表示）
 
@@ -597,6 +603,7 @@ async function fetchProfile() {
   form.value.learningLanguages = Array.isArray(response.learning_languages) ? response.learning_languages : []
   form.value.hobbies = Array.isArray(response.interests) ? response.interests : []
     form.value.bio = response.comment || ''
+    avatarUrl.value = response.avatar_url || null
 
     // オリジナルデータを更新
     original.value = JSON.parse(JSON.stringify(form.value))
