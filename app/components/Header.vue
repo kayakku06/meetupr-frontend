@@ -1,18 +1,10 @@
 <script setup>
-import { User, LogOut, LogIn } from 'lucide-vue-next'
+import { LogIn } from 'lucide-vue-next'
 
-const { user, isAuthenticated, isLoading, login, logout } = useAuth()
+const { isAuthenticated, isLoading, login } = useAuth()
 
 const handleLogin = async () => {
   await login()
-}
-
-const handleLogout = async () => {
-  await logout({
-    logoutParams: {
-      returnTo: window.location.origin
-    }
-  })
 }
 </script>
 
@@ -29,20 +21,7 @@ const handleLogout = async () => {
         <template v-if="isLoading">
           <div class="text-gray-500">読み込み中...</div>
         </template>
-        <template v-else-if="isAuthenticated">
-          <div class="flex items-center space-x-2">
-            <User class="w-5 h-5 text-gray-600" />
-            <span class="text-gray-700">{{ user?.name || user?.email }}</span>
-          </div>
-          <button
-            @click="handleLogout"
-            class="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-          >
-            <LogOut class="w-4 h-4" />
-            <span>ログアウト</span>
-          </button>
-        </template>
-        <template v-else>
+        <template v-else-if="!isAuthenticated">
           <button
             @click="handleLogin"
             class="flex items-center space-x-2 px-4 py-2 bg-primary text-white rounded hover:bg-blue-600 transition-colors"
