@@ -1,38 +1,28 @@
 <template>
   <header class="talk-header">
-    <div class="top">
-      <span class="title">トーク</span>
+      <!-- ヘッダー -->
+   <div class="bg-[var(--meetupr-main)]">
+      <!-- ロゴとタイトル -->
+      <div class="flex items-center justify-between">
+        <!-- ロゴ -->
+        <div class="flex items-center mt-2">
+          <img 
+            src="/meetlogo.svg" 
+            alt="MeetUp+R ロゴ" 
+            class="w-14 h-14 "
+          />
+        </div>
+        
+        <!-- タイトル"トーク" -->
+        <h1 class="text-2xl font-normal text-yellow-950 flex-1 text-center mt-10">トーク</h1>
+        
+        <!-- 右側のスペーサー（ロゴとタイトルのバランスを取る） -->
+        <div class="w-12"></div>
+      </div>
+      
+      <!-- 緑の線 -->
+      <div class="mt-3 h-0.5 bg-[var(--meetupr-color-3)]"></div>
     </div>
-
-    <div class="divider"></div>
   </header>
 </template>
 
-<style scoped>
-.talk-header {
-  padding: 10px 12px 0;
-}
-
-/* 上段：タイトル中央寄せ */
-.top {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* タイトル文字 */
-.title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #4b3b2b;
-  letter-spacing: 0.05em;
-}
-
-/* 緑の線 */
-.divider {
-  margin-top: 8px;
-  height: 2px;
-  background: #2ab79f;
-  border-radius: 2px;
-}
-</style>
