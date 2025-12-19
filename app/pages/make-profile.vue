@@ -144,8 +144,12 @@ definePageMeta({
 })
 
 import { ref, onMounted } from 'vue';
+
 import Footer from '~/components/Footer.vue'
 import CategorySelect from '~/components/CategorySelect.vue'
+
+import { normalizeCountryCode } from '~/utils/countryMapping';
+
 
 // フォームデータをrefで管理
 const form = ref({
@@ -733,7 +737,7 @@ const registerProfile = async () => {
         learning_languages: learningLanguages,
         interests: Array.isArray(form.value.hobbies) ? form.value.hobbies : [],
         avatar_url: uploadedAvatarUrl || profileImageDataUrl.value || null,
-        residence: form.value.origin || form.value.residence || null,
+        residence: normalizeCountryCode(form.value.origin || form.value.residence) || null,
         comment: form.value.bio || form.value.comment || null, // bioをcommentにマッピング
         last_updated: new Date().toISOString()
 

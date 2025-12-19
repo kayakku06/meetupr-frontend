@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import ChatIcon from '~/components/chaticon.vue'
 import Footer from '~/components/Footer.vue'
+import HomeHeader from '~/components/home-header.vue'
 import { useChat } from '~/composables/useChat'
 import { onMounted } from 'vue'
 
@@ -24,34 +25,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen pb-24 bg-[var(--meetupr-main)]">
-    <!-- ヘッダー -->
-    <div class="bg-white px-4 pt-2 pb-3">
-      <!-- 左上の"home"テキスト -->
-      <div class="text-xs text-gray-400 mb-1">home</div>
-      
-      <!-- ロゴとタイトル -->
-      <div class="flex items-center justify-between">
-        <!-- ロゴ -->
-        <div class="flex items-center">
-          <img 
-            src="/icon.png" 
-            alt="MeetUp+R ロゴ" 
-            class="w-12 h-12 rounded-full object-cover mr-3"
-          />
-        </div>
-        
-        <!-- タイトル"トーク" -->
-        <h1 class="text-2xl font-medium text-gray-800 flex-1 text-center">トーク</h1>
-        
-        <!-- 右側のスペーサー（ロゴとタイトルのバランスを取る） -->
-        <div class="w-12"></div>
-      </div>
-      
-      <!-- 緑の線 -->
-      <div class="mt-3 h-0.5 bg-[var(--meetupr-color-3)]"></div>
-    </div>
 
+  <HomeHeader class="fixed inset-x-0 top-0"/>
+  <div class="min-h-screen p-4 pb-24 bg-[var(--meetupr-main)]">
     <!-- ローディング状態 -->
     <div v-if="isLoading" class="text-center text-gray-500 py-8">
       <p>チャット一覧を読み込み中...</p>
