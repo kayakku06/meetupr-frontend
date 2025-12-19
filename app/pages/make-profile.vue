@@ -2,7 +2,12 @@
     <div class="min-h-screen bg-[var(--meetupr-main)] pb-20 font-['Noto_Sans_JP']">
 
         <main class="max-w-md mx-auto p-5">
-            <div class="flex gap-3 items-center mb-3  justify-center ">
+            <div class="flex flex-col items-center justify-center gap-3 mb-3">
+                <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
+
+                <div class="w-full">
+                    <h2 class="m-0 mb-2 text-lg text-teal-900 text-center">プロフィール登録</h2>
+                </div>
                 <div class="relative inline-block">
                     <div class="w-20 h-20 rounded-full bg-[var(--meetup-color-3)] flex items-center justify-center border-2 border-[var(--meetupr-color-3)] overflow-hidden cursor-pointer"
                         role="button" aria-label="プロフィール画像を選択" @click="onAvatarClick">
@@ -27,11 +32,7 @@
                     </div>
                 </div>
 
-                <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
-
-                <div class="flex-1">
-                    <h2 class="m-0 mb-2 text-lg text-teal-900">プロフィール登録</h2>
-                </div>
+                
             </div>
             <form @submit.prevent="registerProfile" class="flex flex-col gap-3">
 
