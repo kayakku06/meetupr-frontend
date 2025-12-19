@@ -16,10 +16,14 @@ export default defineNuxtConfig({
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }
       ],
       link: [
-        { rel: 'apple-touch-icon', href: '/icons/apple-touch-icon.png' }
+        { rel: 'apple-touch-icon', href: '/icons/apple-touch-icon.png' },
+        { rel: 'apple-touch-icon', sizes: '167x167', href: '/icons/apple-touch-icon-167.png' },
+        { rel: 'apple-touch-icon', sizes: '152x152', href: '/icons/apple-touch-icon-152.png' },
+        { rel: 'apple-touch-icon', sizes: '120x120', href: '/icons/apple-touch-icon-120.png' }
       ]
     }
   },
+  // @ts-ignore: @vite-pwa/nuxt module option not declared in Nuxt types
   pwa: {
     registerType: 'autoUpdate',
     workbox: {
@@ -27,7 +31,7 @@ export default defineNuxtConfig({
       globPatterns: ['**/*.{js,css,html,svg,png,ico,json,webp,avif}'],
       runtimeCaching: [
         {
-          urlPattern: ({ url }) => url.pathname.startsWith('/api/') || url.pathname.startsWith('/server/'),
+          urlPattern: ({ url }: { url: URL }) => url.pathname.startsWith('/api/') || url.pathname.startsWith('/server/'),
           handler: 'NetworkFirst',
           options: {
             cacheName: 'api-cache',
