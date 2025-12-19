@@ -266,7 +266,7 @@ onMounted(async () => {
             </div>
 
             <!-- フィルターパネル（展開時） -->
-            <div v-show="showDropdown" class="bg-transparent border-2 border-[#FEBC6E] rounded-lg shadow-lg mx-4 mb-4">
+            <div v-show="showDropdown" class="bg-transparent border-2 border-[#FEBC6E] rounded-lg shadow-lg">
                 <div class="p-4">
                     <div class="flex items-center justify-between mb-3">
                         <label class="text-sm font-semibold text-gray-800">検索</label>
