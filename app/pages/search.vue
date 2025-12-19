@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import SearchUser from '~/components/searchuser.vue'
 import Footer from '~/components/Footer.vue'
 import { Search, UserRoundPlus, ChevronUp } from 'lucide-vue-next'
@@ -221,6 +221,12 @@ const formatInterests = (interests) => {
     return interests.map(interest => interest.name || interest);
 };
 
+// ページマウント時に「おすすめのユーザー」として全ユーザーを取得
+onMounted(async () => {
+    // 初期表示時はフィルターなしで全ユーザーを取得
+    await runSearch();
+});
+
 </script>
 
 <template>
@@ -253,8 +259,8 @@ const formatInterests = (interests) => {
                 </div>
             </div>
 
-            <!-- おすすめメッセージ（検索していない場合のみ） -->
-            <div v-if="!isSearching" class="px-4 pb-3 flex items-center gap-2 text-[#473c3c] border-b border-[#3c938b]">
+            <!-- おすすめメッセージ（検索結果が表示されていない場合のみ） -->
+            <div v-if="!isSearching || (isSearching && searchResults.length === 0 && !isLoading)" class="px-4 pb-3 flex items-center gap-2 text-[#473c3c] border-b border-[#3c938b]">
                 <UserRoundPlus class="w-5 h-5" />
                 <span class="text-sm">おすすめの他のプロフィールをチェックしよう。</span>
             </div>
@@ -341,6 +347,15 @@ const formatInterests = (interests) => {
 
                 <!-- 検索結果表示 -->
                 <div v-else-if="isSearching && !isLoading && searchResults.length > 0">
+                    <!-- おすすめのユーザータイトル（フィルター条件がない場合） -->
+                    <div v-if="form.hobbies.length === 0" class="mb-4 px-2">
+                        <div class="flex items-center gap-2 text-[#473c3c]">
+                            <UserRoundPlus class="w-5 h-5" />
+                            <span class="text-sm font-semibold">おすすめのユーザー</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 検索結果リスト -->
                     <SearchUser 
                         v-for="user in searchResults" 
                         :key="user.user_id"
@@ -357,7 +372,6 @@ const formatInterests = (interests) => {
                     <div class="text-[#4b3b2b] text-center">
                         <UserRoundPlus class="w-8 h-8 mx-auto mb-2" />
                         <p>検索条件を選択して、ユーザーを探してみましょう！</p>
-                        <p class="text-sm mt-2 text-gray-600">フィルターなしで検索すると、全ユーザーが表示されます。</p>
                     </div>
                 </div>
             </div>
