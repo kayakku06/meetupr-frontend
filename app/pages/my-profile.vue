@@ -238,6 +238,7 @@ definePageMeta({
 import { ref, onMounted } from 'vue'
 import Footer from '~/components/Footer.vue'
 import { useAuth } from '~/composables/useAuth'
+import { normalizeCountryCode } from '~/utils/countryMapping'
 
 const { user, getAccessToken, logout } = useAuth()
 
@@ -468,7 +469,7 @@ async function save() {
       spoken_languages: spokenLanguagesCodes,
       learning_languages: learningLanguagesCodes,
       interests: Array.isArray(form.value.hobbies) ? form.value.hobbies : [],
-      residence: form.value.origin || null,
+      residence: normalizeCountryCode(form.value.origin) || null,
       comment: form.value.bio || null,
       last_updated: new Date().toISOString()
     }

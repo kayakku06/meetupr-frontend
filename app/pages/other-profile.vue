@@ -83,34 +83,15 @@
       </div>
     </main>
 
-    <nav
-      class="fixed left-0 right-0 bottom-0 h-14 flex justify-around items-center shadow-[0_-2px_6px_rgba(0,0,0,0.08)]"
-      :class="['bg-[var(--meetupr-sub)]']" aria-hidden>
-      <button class="w-14 h-14 flex items-center justify-center rounded-full text-white">
-        <svg width="22" height="22" viewBox="0 0 24 24">
-          <path
-            d="M15.5 1h-8C6.12 1 5 2.12 5 3.5v17C5 21.88 6.12 23 7.5 23h8c1.38 0 2.5-1.12 2.5-2.5v-17C18 2.12 16.88 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z"
-            fill="#fff" />
-        </svg>
-      </button>
-      <button class="w-14 h-14 flex items-center justify-center rounded-full text-white">
-        <svg width="22" height="22" viewBox="0 0 24 24">
-          <path d="M21 6.5a2.5 2.5 0 0 1-2.5 2.5H8l-5 5V4A2 2 0 0 1 5 2h14.5A2.5 2.5 0 0 1 21 6.5z" fill="#fff" />
-        </svg>
-      </button>
-      <button class="w-14 h-14 flex items-center justify-center rounded-full text-white">
-        <svg width="22" height="22" viewBox="0 0 24 24">
-          <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.4 0-8 2.2-8 4.9V22h16v-3.1c0-2.7-3.6-4.9-8-4.9z"
-            fill="#fff" />
-        </svg>
-      </button>
-    </nav>
+    <!-- footer は共通コンポーネントを利用 -->
+    <Footer class="fixed inset-x-0 bottom-0" />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import Footer from '~/components/Footer.vue'
 
 const user = ref({
   name: 'ユーザー1',
@@ -122,11 +103,11 @@ const user = ref({
   bio: 'よろしくお願いします！！'
 })
 
+const router = useRouter()
+
 const sendMessage = (chatId) => {
   router.push(`/chat/${chatId}`)
 }
-
-const router = useRouter()
 
 // 戻るボタンの処理
 const handleBack = () => {
