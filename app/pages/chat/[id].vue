@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import MeetDesireSlider from '~/components/MeetDesireSlider.vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Smile, Send } from 'lucide-vue-next'
+import { Send } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
 import { useChatVerification } from '~/composables/useChatVerification'
 
@@ -507,20 +507,6 @@ onUnmounted(() => {
                         <span class="text-xs text-gray-600">?</span>
                     </button>
                 </div>
-                <!-- 右側：禁止マークと電話アイコン -->
-                <div class="flex items-center space-x-3">
-                    <button class="text-[#ff8c69] hover:text-orange-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M8 12h8" stroke-linecap="round" />
-                        </svg>
-                    </button>
-                    <button class="text-[#ff8c69] hover:text-orange-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                    </button>
-                </div>
             </div>
             
             <!-- エラーメッセージ表示 -->
@@ -621,9 +607,13 @@ onUnmounted(() => {
                             placeholder="メッセージを入力"
                             class="w-full bg-yellow-50 border-2 border-orange-300 rounded-full px-6 pr-14 py-3 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-orange-400 transition-colors" 
                         />
-                        <!-- 絵文字アイコン（右側、円形） -->
-                        <button class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white flex items-center justify-center border border-gray-300 hover:bg-gray-50">
-                            <Smile class="w-5 h-5 text-gray-600" />
+                        <!-- 送信ボタン（右側、円形） -->
+                        <button
+                          type="button"
+                          @click="sendMessage"
+                          class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white flex items-center justify-center border border-gray-300 hover:bg-gray-50"
+                        >
+                          <Send class="w-5 h-5 text-gray-600" />
                         </button>
                     </div>
                 </div>
