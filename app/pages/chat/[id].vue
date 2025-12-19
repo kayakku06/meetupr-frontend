@@ -524,7 +524,7 @@ onUnmounted(() => {
             </div>
 
             <!-- MeetDesireSlider（playground と同様の表示） -->
-            <div class="p-4 border-b border-gray-100">
+            <div class=" border-b border-gray-100">
               <div class="max-w-md mx-auto">
                 <MeetDesireSlider v-model="desire" />
               </div>
