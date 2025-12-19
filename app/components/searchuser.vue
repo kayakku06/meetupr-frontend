@@ -30,7 +30,7 @@
 import { useRouter } from 'vue-router'
 const router = useRouter()
 
-defineProps({
+const props = defineProps({
   name: String,
   message: String,
   avatarColor: String,
@@ -38,10 +38,15 @@ defineProps({
     type: Array,
     default: () => []
   },
-  flag: String // ISOコードで国旗指定（例: 'jp', 'us'）
+  flag: String, // ISOコードで国旗指定（例: 'jp', 'us'）
+  userId: String // ユーザーID（user_id）
 })
 
 const goProfile = () => {
-  router.push('/other-profile')
+  if (props.userId) {
+    router.push(`/other-profile?user_id=${props.userId}`)
+  } else {
+    router.push('/other-profile')
+  }
 }
 </script>
