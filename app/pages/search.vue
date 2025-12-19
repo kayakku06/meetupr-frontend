@@ -236,7 +236,7 @@ onMounted(async () => {
             <!-- 検索バー -->
             <div class="p-4">
                 <div 
-                    class="p-3 bg-white border-2 border-[#FEBC6E] rounded-lg flex items-center gap-2 cursor-pointer"
+                    class="p-3 bg-white border-2 border-[#FEBC6E] rounded-full flex items-center gap-2 cursor-pointer"
                     @click="toggleDropdown">
                     <!-- 検索アイコン -->
                     <Search class="w-5 h-5 text-[#FEBC6E] flex-shrink-0" />
@@ -274,7 +274,7 @@ onMounted(async () => {
                     </div>
                     
                     <!-- 選択されたフィルター表示エリア -->
-                    <div class="mb-3 p-2 bg-white border-2 border-[#FEBC6E] rounded-lg min-h-[46px] flex items-center gap-2">
+                    <div class="mb-3 p-2 bg-white border-2 border-[#FEBC6E] rounded-full min-h-[46px] flex items-center gap-2">
                         <div class="flex flex-wrap gap-2 flex-1">
                             <button
                                 v-for="hobby in form.hobbies" 
@@ -291,7 +291,7 @@ onMounted(async () => {
                     </div>
 
                     <!-- 言語・国のタブ -->
-                    <div class="bg-white p-3 border-2 border-[#FEBC6E] rounded-lg">
+                    <div class="bg-white p-3 border-2 border-[#FEBC6E] rounded-full">
                         <div class="flex gap-4 pb-3 border-b border-[#FEBC6E] mb-3">
                             <span 
                                 v-for="category in choiceCategories" 
