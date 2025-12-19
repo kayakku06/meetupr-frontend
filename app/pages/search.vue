@@ -159,6 +159,17 @@ const runSearch = async () => {
             requestBody.countries = selectedCountries.value;
         }
 
+        // リクエストボディが空の場合は、少なくとも空の配列を送信
+        if (Object.keys(requestBody).length === 0) {
+            requestBody.languages = [];
+            requestBody.countries = [];
+        }
+
+        console.log('[search] Request body:', requestBody);
+        console.log('[search] Selected languages:', selectedLanguages.value);
+        console.log('[search] Selected countries:', selectedCountries.value);
+        console.log('[search] API URL:', `${config.public.apiBaseUrl}/api/v1/search/users`);
+
         // APIを呼び出し
         const response = await $fetch(`${config.public.apiBaseUrl}/api/v1/search/users`, {
             method: 'POST',
@@ -174,6 +185,13 @@ const runSearch = async () => {
         
     } catch (error) {
         console.error('検索エラー:', error);
+        console.error('検索エラー詳細:', {
+            message: error?.message,
+            statusCode: error?.statusCode || error?.status,
+            data: error?.data,
+            response: error?.response
+        });
+        
         const errorMessage = (error && error.message) || (error && error.data && error.data.message) || '検索に失敗しました';
         const statusCode = (error && error.statusCode) || (error && error.status);
         searchError.value = errorMessage;
@@ -184,6 +202,9 @@ const runSearch = async () => {
             alert('認証に失敗しました。再度ログインしてください。');
         } else if (statusCode === 400) {
             alert('検索条件が無効です。');
+        } else if (statusCode === 500) {
+            const errorDetail = error?.data?.message || error?.message || 'サーバーエラーが発生しました';
+            alert(`サーバーエラーが発生しました。\n詳細: ${errorDetail}\n\nバックエンドサーバーのログを確認してください。`);
         } else {
             alert(`検索エラー: ${errorMessage}`);
         }
