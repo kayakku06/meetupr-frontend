@@ -7,13 +7,33 @@ interface Chat {
   user2_id: string
   ai_suggested_theme?: string
   created_at: string
+  // バックエンドから返ってくるフィールド
+  other_user?: {
+    id: string
+    username: string
+    // その他のフィールド...
+  }
+  last_message?: {
+    id: number
+    content: string
+    sent_at: string
+    // その他のフィールド...
+  }
 }
 
 interface ChatWithPartner extends Chat {
   partner_id: string
-  partner_name?: string
-  last_message?: string
-  last_message_time?: string
+  partner_name?: string  // other_user.username から取得
+  last_message?: string  // last_message.content から取得
+  last_message_time?: string  // last_message.sent_at から取得
+}
+
+// 日付をフォーマットする関数（月/日の形式）
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString)
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  return `${month}/${day}`
 }
 
 export const useChat = () => {
@@ -55,9 +75,14 @@ export const useChat = () => {
         return {
           ...chat,
           partner_id: partnerId,
-          partner_name: undefined, // 後でユーザー情報を取得して設定
-          last_message: undefined, // 後でメッセージ履歴から取得
-          last_message_time: undefined
+          // バックエンドから返ってくる other_user.username を使用
+          partner_name: chat.other_user?.username,
+          // バックエンドから返ってくる last_message.content を使用
+          last_message: chat.last_message?.content,
+          // バックエンドから返ってくる last_message.sent_at を使用（created_at の代わり）
+          last_message_time: chat.last_message?.sent_at
+            ? formatDate(chat.last_message.sent_at)
+            : formatDate(chat.created_at)
         }
       })
 
