@@ -17,7 +17,7 @@
 
     <div v-else class="slider-card">
       <div class="title" @click="toggleExpand">
-        会いたい度 <span class="caret">^</span>
+        会いたい度 <ChevronUp class="caret" />
       </div>
 
       <div class="inner">
@@ -67,6 +67,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { ChevronUp } from 'lucide-vue-next'
 
 const props = defineProps({
   modelValue: { type: Number, default: 3 },
@@ -136,10 +137,6 @@ function onInput(e) {
   emit('update:modelValue', internalValue.value)
 }
 
-function onChange(e) {
-  internalValue.value = Number(e.target.value)
-  emit('update:modelValue', internalValue.value)
-}
 </script>
 
 <style scoped>
@@ -196,11 +193,21 @@ function onChange(e) {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  position: relative; /* caret を絶対配置できるように */
+  height: auto;       /* 高さ固定せず */
+  overflow: visible; /* caret がはみ出しても切れないように */
+  padding-bottom: 6px; /* 下側に余白を作り caret が切れないよう調整 */
+  line-height: 1.2;
 }
+/* ここが^のサイズとかのCSS */
 .caret {
+  position: relative;
   font-family: monospace;
   font-weight: bold;
-  transform: scaleY(0.8);
+  font-size: 30px;
+  /* transform: scaleY(0.8); */
+  /* 下方向へ少し移動（値を調整することで微調整可能） */
+  display: inline-block; /* transform/位置調整を安定させる */
 }
 
 .inner {
