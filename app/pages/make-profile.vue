@@ -65,13 +65,13 @@
 
                 <!-- 出身（CategorySelectへ統一） -->
                 <div class="flex flex-col gap-4">
-                    <div class="text-xs text-amber-900">出身 <span class="text-red-500">*</span></div>
+                    <div class="text-sm text-amber-900">出身 <span class="text-red-500">*</span></div>
                     <CategorySelect v-model="form.origin" :categories="regionCategories" :multiple="false"
                         placeholder="選択してください" aria-required="true" />
                 </div>
 
                 <div class="flex flex-col gap-4">
-                    <div class="text-xs text-amber-900">言語</div>
+                    <div class="text-sm text-amber-900">言語</div>
                     <!-- ネイティブ: CategorySelect（話せる言語と同形式、1件のみ保持） -->
                     <CategorySelect
                         v-model="form.langNative"
@@ -94,7 +94,7 @@
 
                 <!-- 趣味（従来のchips＋入力＋既存選択肢UIを維持） -->
                 <div class="flex flex-col gap-2">
-                    <div class="text-xs text-amber-900">趣味</div>
+                    <div class="text-sm text-amber-900">趣味</div>
                     <div class="flex flex-wrap gap-2">
                         <span v-if="!(Array.isArray(form.hobbies) && form.hobbies.length > 0)"
                             class="text-gray-400 text-sm">下の選択肢から趣味を選んでください</span>
@@ -127,7 +127,7 @@
                 </div>
 
                 <label class="flex flex-col gap-2">
-                    <div class="text-xs text-amber-900">一言（50文字以内）</div>
+                    <div class="text-sm text-amber-900">一言（50文字以内）</div>
                     <textarea v-model="form.bio"
                         class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 min-h-16 resize-none"
                         maxlength="50" placeholder="一言を入力してください"></textarea>
