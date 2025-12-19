@@ -115,17 +115,115 @@ const selectedCountries = computed(() => {
     return form.value.hobbies.filter(h => getCategoryByTag(h) === '国');
 });
 
-// 国旗コードのマッピング（簡易版）
+// 国旗コードのマッピング
 const getFlagCode = (country) => {
+    if (!country) return '';
+    
     const flagMap = {
         '日本': 'jp',
         'アメリカ': 'us',
+        'アメリカ合衆国': 'us',
+        'United States': 'us',
+        'USA': 'us',
         '韓国': 'kr',
+        '大韓民国': 'kr',
+        'South Korea': 'kr',
+        'Korea': 'kr',
         '中国': 'cn',
+        '中華人民共和国': 'cn',
+        'China': 'cn',
         'イギリス': 'gb',
-        'フランス': 'fr'
+        '英国': 'gb',
+        'United Kingdom': 'gb',
+        'UK': 'gb',
+        'フランス': 'fr',
+        'France': 'fr',
+        'スペイン': 'es',
+        'Spain': 'es',
+        'ドイツ': 'de',
+        'Germany': 'de',
+        'イタリア': 'it',
+        'Italy': 'it',
+        'カナダ': 'ca',
+        'Canada': 'ca',
+        'オーストラリア': 'au',
+        'Australia': 'au',
+        'ブラジル': 'br',
+        'Brazil': 'br',
+        'メキシコ': 'mx',
+        'Mexico': 'mx',
+        'インド': 'in',
+        'India': 'in',
+        'タイ': 'th',
+        'Thailand': 'th',
+        'ベトナム': 'vn',
+        'Vietnam': 'vn',
+        'インドネシア': 'id',
+        'Indonesia': 'id',
+        'フィリピン': 'ph',
+        'Philippines': 'ph',
+        'シンガポール': 'sg',
+        'Singapore': 'sg',
+        'マレーシア': 'my',
+        'Malaysia': 'my',
+        '台湾': 'tw',
+        'Taiwan': 'tw',
+        '香港': 'hk',
+        'Hong Kong': 'hk',
+        'オランダ': 'nl',
+        'Netherlands': 'nl',
+        'ベルギー': 'be',
+        'Belgium': 'be',
+        'スイス': 'ch',
+        'Switzerland': 'ch',
+        'オーストリア': 'at',
+        'Austria': 'at',
+        'スウェーデン': 'se',
+        'Sweden': 'se',
+        'ノルウェー': 'no',
+        'Norway': 'no',
+        'デンマーク': 'dk',
+        'Denmark': 'dk',
+        'フィンランド': 'fi',
+        'Finland': 'fi',
+        'ポーランド': 'pl',
+        'Poland': 'pl',
+        'ロシア': 'ru',
+        'Russia': 'ru',
+        'トルコ': 'tr',
+        'Turkey': 'tr',
+        'エジプト': 'eg',
+        'Egypt': 'eg',
+        '南アフリカ': 'za',
+        'South Africa': 'za',
+        'アルゼンチン': 'ar',
+        'Argentina': 'ar',
+        'チリ': 'cl',
+        'Chile': 'cl',
+        'コロンビア': 'co',
+        'Colombia': 'co',
+        'ペルー': 'pe',
+        'Peru': 'pe',
+        'ニュージーランド': 'nz',
+        'New Zealand': 'nz'
     };
-    return flagMap[country] || '';
+    
+    // 完全一致を試す
+    if (flagMap[country]) {
+        return flagMap[country];
+    }
+    
+    // 部分一致を試す（大文字小文字を区別しない）
+    const countryLower = country.toLowerCase();
+    for (const [key, value] of Object.entries(flagMap)) {
+        if (key.toLowerCase() === countryLower || countryLower.includes(key.toLowerCase()) || key.toLowerCase().includes(countryLower)) {
+            return value;
+        }
+    }
+    
+    // マッピングが見つからない場合はログに出力
+    console.warn('[search] Unknown country:', country);
+    return '';
 };
 
 // 検索APIを呼び出す
@@ -169,6 +267,11 @@ const runSearch = async () => {
 
         // レスポンスを検索結果に設定
         searchResults.value = response || [];
+        
+        // デバッグ: 国旗マッピングの確認
+        if (searchResults.value.length > 0) {
+            console.log('[search] User residences:', searchResults.value.map(u => ({ username: u.username, residence: u.residence })));
+        }
         
     } catch (error) {
         console.error('検索エラー:', error);
