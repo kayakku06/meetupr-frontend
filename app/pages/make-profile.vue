@@ -72,7 +72,7 @@
                         <button type="button" @click="showOrigin = !showOrigin"
                             class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none text-left hover:bg-gray-50 transition">
                             <div class="flex justify-between items-center mb-2">
-                                <span class="font-medium">出身</span>
+                                <span class="font-medium">出身を選択</span>
                                 <span :class="showOrigin ? 'rotate-180' : ''">▼</span>
                             </div>
                             <div v-if="form.origin">
