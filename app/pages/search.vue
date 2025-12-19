@@ -284,7 +284,7 @@ onMounted(async () => {
             </div>
 
             <!-- おすすめメッセージ（検索結果が表示されていない場合のみ） -->
-            <div v-if="(!isSearching || (isSearching && searchResults.length === 0 && !isLoading)) && !showDropdown" class="px-4 pb-3 flex items-center gap-2 text-[#473c3c] border-b border-[#3c938b] bg-[#FFF5C9]">
+            <div v-if="(!isSearching || (isSearching && searchResults.length === 0 && !isLoading)) && !showDropdown" class="px-4 pb-1 flex items-center gap-2 text-[#473c3c] border-b border-[#3c938b] bg-[#FFF5C9]">
                 <UserRoundPlus class="w-5 h-5" />
                 <span class="text-sm">おすすめの他のプロフィールをチェックしよう。</span>
             </div>
@@ -357,7 +357,7 @@ onMounted(async () => {
 
         <!-- メインコンテンツ -->
         <main :class="isSearching ? 'pt-[120px]' : 'pt-[140px]'">
-            <div class="p-4">
+            <div class="p-4 pb-24">
                 <!-- ローディング状態 -->
                 <div v-if="isLoading" class="flex items-center justify-center py-8">
                     <div class="text-[#4b3b2b]">検索中...</div>
@@ -378,7 +378,7 @@ onMounted(async () => {
                 <!-- 検索結果表示 -->
                 <div v-else-if="isSearching && !isLoading && searchResults.length > 0">
                     <!-- おすすめのユーザータイトル（フィルター条件がない場合） -->
-                    <div v-if="form.hobbies.length === 0" class="mb-4 px-2">
+                    <div v-if="form.hobbies.length === 0" class="mb-2 px-2">
                         <div class="flex items-center gap-2 text-[#473c3c]">
                             <UserRoundPlus class="w-5 h-5" />
                             <span class="text-sm font-semibold">おすすめのユーザー</span>

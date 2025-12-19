@@ -26,8 +26,8 @@ onMounted(async () => {
 
 <template>
 
-  <HomeHeader class="fixed inset-x-0 top-0"/>
-  <div class="min-h-screen p-4 pb-24 bg-[var(--meetupr-main)]">
+  <HomeHeader class="fixed inset-x-0 top-0 z-50"/>
+  <div class="min-h-screen px-4 pt-28 pb-24 bg-[var(--meetupr-main)]">
     <!-- ローディング状態 -->
     <div v-if="isLoading" class="text-center text-gray-500 py-8">
       <p>チャット一覧を読み込み中...</p>
@@ -60,9 +60,10 @@ onMounted(async () => {
         v-for="chat in chats"
         :key="chat.id"
         :name="chat.partner_name || `ユーザー ${chat.partner_id.slice(0, 8)}`"
-        :message="chat.last_message || 'メッセージ'"
-        :date="chat.last_message_time || formatDate(chat.created_at)"
+        :message="chat.last_message || ''"
+        :date="chat.last_message_time || ''"
         avatarColor="bg-teal-600"
+        :avatarUrl="chat.partner_avatar_url || null"
         :chatId="chat.id"
         :partnerId="chat.partner_id"
       />

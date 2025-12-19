@@ -1,20 +1,27 @@
 <template>
-  <div class="flex items-center justify-between p-3 bg-[var(--meetupr-main)] hover:bg-gray-50 transition zen-maru cursor-pointer"
+  <div class="flex items-center justify-between p-5 bg-[var(--meetupr-main)] hover:bg-gray-50 transition zen-maru cursor-pointer"
   @click="goProfile">
     <!-- 左側（アバター＋名前＋メッセージ） -->
-    <div class="flex items-center space-x-3 flex-1 min-w-0">
+    <div class="flex items-center space-x-4 flex-1 min-w-0">
       <!-- アバター -->
-      <div :class="['w-12 h-12 rounded-full flex-shrink-0', avatarColor]"></div>
+      <div class="w-16 h-16 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center"
+        :class="avatarUrl ? '' : avatarColor">
+        <img v-if="avatarUrl" :src="avatarUrl" :alt="name || 'ユーザー'" class="w-full h-full object-cover" />
+        <svg v-else viewBox="0 0 64 64" class="w-10 h-10" aria-hidden>
+          <circle cx="32" cy="24" r="12" fill="none" stroke="#6aaea0" stroke-width="2" />
+          <path d="M10 54c4-10 18-14 22-14s18 4 22 14" fill="none" stroke="#6aaea0" stroke-width="2" />
+        </svg>
+      </div>
 
       <!-- 名前とメッセージ -->
       <div class="flex flex-col min-w-0 flex-1">
-        <span class="text-gray-800 font-medium text-base truncate">{{ name }}</span>
-        <span class="text-gray-500 text-sm truncate">{{ message }}</span>
+        <span class="text-gray-800 font-medium text-lg truncate">{{ name }}</span>
+        <span class="text-gray-500 text-base truncate">{{ message }}</span>
       </div>
     </div>
 
     <!-- 右側（日付） -->
-    <span class="text-gray-400 text-sm ml-3 flex-shrink-0">{{ date }}</span>
+    <span class="text-gray-400 text-base ml-3 flex-shrink-0">{{ date }}</span>
   </div>
 </template>
 
@@ -32,6 +39,7 @@ const props = defineProps<{
   message: string
   date: string
   avatarColor: string
+  avatarUrl?: string | null
   chatId?: number
   partnerId?: string
 }>()
