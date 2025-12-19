@@ -37,8 +37,8 @@
             <form @submit.prevent="registerProfile" class="flex flex-col gap-3">
 
                 <label class="flex flex-col gap-1">
-                    <div class="text-sm text-yellow-900">学部</div>
-                    <select v-model="form.faculty"
+                    <div class="text-sm text-yellow-900">学部 <span class="text-red-500">*</span></div>
+                    <select v-model="form.faculty" required
                         class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 appearance-none">
                         <option value="" disabled>学部を選択</option>
                         <option value="business">経営学部</option>
@@ -65,16 +65,16 @@
 
                 <!-- 出身（CategorySelectへ統一） -->
                 <div class="flex flex-col gap-4">
-                    <div class="text-xs text-amber-900">出身</div>
+                    <div class="text-xs text-amber-900">出身 <span class="text-red-500">*</span></div>
                     <CategorySelect v-model="form.origin" :categories="regionCategories" :multiple="false"
-                        placeholder="選択してください" />
+                        placeholder="選択してください" aria-required="true" />
                 </div>
 
                 <div class="flex flex-col gap-4">
                     <div class="text-xs text-amber-900">言語</div>
                     <!-- ネイティブ: CategorySelect -->
                     <CategorySelect v-model="form.langNative" :categories="languageCategories" :multiple="false"
-                        placeholder="選択してください" headerPrefix="ネイティブ:" />
+                        placeholder="選択してください）" headerPrefix="ネイティブ(必須):" aria-required="true" />
 
                     <!-- 話せる言語: CategorySelect -->
                     <CategorySelect v-model="form.langSpoken" :categories="languageCategories" :multiple="true"
@@ -129,7 +129,8 @@
 
                 <div class="flex gap-2 mt-1.5">
                     <button type="submit"
-                        class="bg-[var(--meetupr-color-3)] text-white px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-teal-600 transition flex-1">登録</button>
+                        :disabled="isSubmitDisabled"
+                        class="bg-[var(--meetupr-color-3)] text-white px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-teal-600 transition flex-1 disabled:opacity-50 disabled:cursor-not-allowed">登録</button>
                 </div>
 
             </form>
@@ -143,7 +144,7 @@ definePageMeta({
     middleware: 'auth'
 })
 
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 
 import Footer from '~/components/Footer.vue'
 import CategorySelect from '~/components/CategorySelect.vue'
@@ -493,6 +494,11 @@ function toggleHobby(hobbyName: string) {
 // useAuthコンポーザブルを使用
 const { user, isAuthenticated, isLoading, getAccessToken } = useAuth()
 
+// 必須入力の簡易バリデーション（ボタン制御用）
+const isSubmitDisabled = computed(() => {
+    return !form.value.faculty || !form.value.origin || !form.value.langNative || isLoading.value
+})
+
 onMounted(async () => {
     // Auth0のロードが完了するまで待機
     const waitForAuth = (): Promise<void> => {
@@ -608,6 +614,20 @@ onMounted(async () => {
 const registerProfile = async () => {
     console.log('[registerProfile] Called')
     console.log('[registerProfile] Auth state:', { isAuthenticated: isAuthenticated.value, isLoading: isLoading.value, user: user.value })
+
+    // 必須項目チェック（母国語・出身・学部）
+    if (!form.value.langNative) {
+        alert('母国語は必須です。選択してください。')
+        return
+    }
+    if (!form.value.origin) {
+        alert('出身は必須です。選択してください。')
+        return
+    }
+    if (!form.value.faculty) {
+        alert('学部は必須です。選択してください。')
+        return
+    }
 
     // 必要ならAuth0のロード待ち
     if (isLoading.value) {
