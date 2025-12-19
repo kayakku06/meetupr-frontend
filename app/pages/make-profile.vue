@@ -435,7 +435,8 @@ const regionCategories = ref([
             { code: 'CN', label: '中国' },
             { code: 'KR', label: '韓国' },
             { code: 'TW', label: '台湾' },
-            { code: 'MN', label: 'モンゴル' }
+            { code: 'HK', label: '香港' }
+           
         ]
     },
     {
@@ -471,7 +472,8 @@ const regionCategories = ref([
             { code: 'UZ', label: 'ウズベキスタン' },
             { code: 'TJ', label: 'タジキスタン' },
             { code: 'KZ', label: 'カザフスタン' },
-            { code: 'AF', label: 'アフガニスタン' }
+            { code: 'AF', label: 'アフガニスタン' },
+            { code: 'MN', label: 'モンゴル' }
         ]
     },
     {
@@ -482,12 +484,7 @@ const regionCategories = ref([
             { code: 'OM', label: 'オマーン' }
         ]
     },
-    {
-        name: '東アジア(香港)',
-        tags: [
-            { code: 'HK', label: '香港' }
-        ]
-    },
+        
     {
         name: 'オセアニア',
         tags: [

@@ -32,119 +32,151 @@
       <form class="flex flex-col gap-3" @submit.prevent>
         <label class="flex flex-col gap-1">
           <div class="text-sm text-yellow-900">学部</div>
+          <!-- 値はコードに統一（make-profile準拠） -->
           <select :disabled="!editing || isLoading" v-model="form.department"
             class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 appearance-none ">
             <option value="" disabled>学部を選択</option>
-            <option value="経営学部">経営学部</option>
-            <option value="政策科学部">政策科学部</option>
-            <option value="情報理工学部">情報理工学部</option>
-            <option value="映像学部">映像学部</option>
-            <option value="総合心理学部">総合心理学部</option>
-            <option value="グローバル教養学部">グローバル教養学部</option>
+            <option value="business">経営学部</option>
+            <option value="production_science">政策科学部</option>
+            <option value="information_science">情報理工学部</option>
+            <option value="film_studies">映像学部</option>
+            <option value="psychology">総合心理学部</option>
+            <option value="global_liberal_arts">グローバル教養学部</option>
           </select>
         </label>
 
         <fieldset class="flex flex-col gap-2">
           <legend class="text-xs text-amber-900">性別</legend>
           <label class="inline-flex items-center gap-1.5 text-sm text-amber-900"><input type="radio"
-              :disabled="!editing || isLoading" value="男性" v-model="form.gender"
+              :disabled="!editing || isLoading" value="male" v-model="form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed" /> 男性</label>
           <label class="inline-flex items-center gap-1.5 text-sm text-amber-900"><input type="radio"
-              :disabled="!editing || isLoading" value="女性" v-model="form.gender"
+              :disabled="!editing || isLoading" value="female" v-model="form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed" /> 女性</label>
           <label class="inline-flex items-center gap-1.5 text-sm text-amber-900"><input type="radio"
-              :disabled="!editing || isLoading" value="その他" v-model="form.gender"
+              :disabled="!editing || isLoading" value="other" v-model="form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed" /> その他</label>
         </fieldset>
 
-        <label class="flex flex-col gap-2">
+        <!-- 出身：make-profile 準拠（地域タブ＋国タグ） -->
+        <div class="flex flex-col gap-4">
           <div class="text-xs text-amber-900">出身</div>
-          <input :disabled="!editing || isLoading" v-model="form.origin"
-            class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
-            placeholder="例：日本" />
-        </label>
+          <div class="flex flex-col gap-2">
+            <button type="button" @click="showOrigin = !showOrigin"
+              :disabled="!editing || isLoading"
+              class="flex justify-between items-center bg-white border-[3px] border-[var(--meetupr-sub)] rounded-md px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+              <span class="text-amber-900">
+                {{ form.origin ? getCountryLabel(form.origin) : '選択してください' }}
+              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-800" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+              </svg>
+            </button>
+
+            <div v-if="showOrigin" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+              <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 text-sm">
+                <span v-for="region in regionCategories" :key="region.name" @click="activeRegionTab = region.name"
+                  :class="activeRegionTab === region.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)] cursor-pointer' : 'text-gray-600 font-medium cursor-pointer'">
+                  {{ region.name }}
+                </span>
+              </div>
+              <div v-for="region in regionCategories" :key="region.name" v-show="activeRegionTab === region.name" class="flex flex-wrap gap-2">
+                <button v-for="c in region.tags" :key="c.code" type="button" :disabled="!editing || isLoading"
+                  @click="form.origin = c.code"
+                  :class="form.origin === c.code ? 'bg-[var(--meetupr-sub)] text-white border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm cursor-pointer' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
+                  {{ c.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div class="flex flex-col gap-4">
           <div class="text-xs text-amber-900">言語</div>
-          <!-- ネイティブ -->
-          <div class="flex flex-col gap-1">
-            <div class="text-[10px] text-amber-700">ネイティブ</div>
-            <select :disabled="!editing || isLoading" v-model="form.nativeLanguage"
-              class="border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
-              <option value="" disabled>選択してください</option>
-              <option value="日本語">日本語</option>
-              <option value="英語">英語</option>
-              <option value="中国語">中国語</option>
-              <option value="韓国語">韓国語</option>
-              <option value="スペイン語">スペイン語</option>
-              <option value="フランス語">フランス語</option>
-              <option value="ドイツ語">ドイツ語</option>
-            </select>
+          <!-- ネイティブ（make-profile準拠：カテゴリタブ＋タグ選択） -->
+          <div class="flex flex-col gap-2">
+            <button type="button" @click="showNativeLanguage = !showNativeLanguage"
+              :disabled="!editing || isLoading"
+              class="flex justify-between items-center bg-white border-[3px] border-[var(--meetupr-sub)] rounded-md px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+              <span class="text-amber-900">ネイティブ: {{ form.nativeLanguage ? getLanguageLabel(form.nativeLanguage) : '選択してください' }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-800" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            <div v-if="showNativeLanguage" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+              <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 text-sm">
+                <span v-for="cat in languageCategories" :key="cat.name" @click="activeLanguageTab = cat.name"
+                  :class="activeLanguageTab === cat.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)] cursor-pointer' : 'text-gray-600 font-medium cursor-pointer'">
+                  {{ cat.name }}
+                </span>
+              </div>
+              <div v-for="cat in languageCategories" :key="cat.name" v-show="activeLanguageTab === cat.name" class="flex flex-wrap gap-2">
+                <button v-for="t in cat.tags" :key="t.code" type="button" :disabled="!editing || isLoading"
+                  @click="form.nativeLanguage = t.code"
+                  :class="form.nativeLanguage === t.code ? 'bg-[var(--meetupr-sub)] text-white border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm cursor-pointer' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
+                  {{ t.label }}
+                </button>
+              </div>
+            </div>
           </div>
-          <!-- 話せる言語 -->
-          <div class="flex flex-col gap-1">
+
+          <!-- 話せる言語（chips表示＋カテゴリ選択） -->
+          <div class="flex flex-col gap-2">
             <div class="text-[10px] text-amber-700">話せる言語</div>
             <div class="flex gap-2 flex-wrap mb-1.5">
               <template v-for="(lang, i) in form.spokenLanguages" :key="lang + '-' + i">
-                <div
-                  :class="[
-                    'flex items-center bg-white border-2 border-[var(--meetupr-sub)] px-2.5 py-1.5 rounded-full text-xs text-amber-900',
-                    !editing ? 'opacity-50 cursor-not-allowed' : ''
-                  ]">
-                  <span class="select-none">{{ lang }}</span>
-                  <button v-if="editing" type="button" @click="removeSpokenLanguage(lang)"
-                    class="ml-2 text-[11px] text-gray-500 hover:text-gray-800">×</button>
+                <div :class="['flex items-center bg-white border-2 border-[var(--meetupr-sub)] px-2.5 py-1.5 rounded-full text-xs text-amber-900', !editing ? 'opacity-50 cursor-not-allowed' : '']">
+                  <span class="select-none">{{ getLanguageLabel(lang) }}</span>
+                  <button v-if="editing" type="button" @click="removeSpokenLanguage(lang)" class="ml-2 text-[11px] text-gray-500 hover:text-gray-800">×</button>
                 </div>
               </template>
             </div>
-            <div class="flex gap-2 items-center" v-if="editing">
-              <select v-model="newSpokenLanguage"
-                class="flex-1 border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
-                <option value="" disabled>言語を選択</option>
-                <option value="日本語">日本語</option>
-                <option value="英語">英語</option>
-                <option value="中国語">中国語</option>
-                <option value="韓国語">韓国語</option>
-                <option value="スペイン語">スペイン語</option>
-                <option value="フランス語">フランス語</option>
-                <option value="ドイツ語">ドイツ語</option>
-              </select>
-              <button type="button"
-                class="bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition"
-                @click="addSpokenLanguage()">追加</button>
+            <button type="button" v-if="editing" @click="showSpokenLanguages = !showSpokenLanguages"
+              class="self-start bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition">選択</button>
+            <div v-if="showSpokenLanguages" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+              <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 text-sm">
+                <span v-for="cat in languageCategories" :key="cat.name" @click="activeLanguageTab = cat.name"
+                  :class="activeLanguageTab === cat.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)] cursor-pointer' : 'text-gray-600 font-medium cursor-pointer'">
+                  {{ cat.name }}
+                </span>
+              </div>
+              <div v-for="cat in languageCategories" :key="cat.name" v-show="activeLanguageTab === cat.name" class="flex flex-wrap gap-2">
+                <button v-for="t in cat.tags" :key="t.code" type="button" :disabled="!editing || isLoading"
+                  @click="toggleSpokenLanguage(t.code)"
+                  :class="form.spokenLanguages.includes(t.code) ? 'bg-[var(--meetupr-sub)] text-white border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm cursor-pointer' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
+                  {{ t.label }}
+                </button>
+              </div>
             </div>
           </div>
-          <!-- 学びたい言語 -->
-          <div class="flex flex-col gap-1">
+
+          <!-- 学びたい言語（chips表示＋カテゴリ選択） -->
+          <div class="flex flex-col gap-2">
             <div class="text-[10px] text-amber-700">学びたい言語</div>
             <div class="flex gap-2 flex-wrap mb-1.5">
               <template v-for="(lang, i) in form.learningLanguages" :key="lang + '-' + i">
-                <div
-                  :class="[
-                    'flex items-center bg-white border-2 border-[var(--meetupr-sub)] px-2.5 py-1.5 rounded-full text-xs text-amber-900',
-                    !editing ? 'opacity-50 cursor-not-allowed' : ''
-                  ]">
-                  <span class="select-none">{{ lang }}</span>
-                  <button v-if="editing" type="button" @click="removeLearningLanguage(lang)"
-                    class="ml-2 text-[11px] text-gray-500 hover:text-gray-800">×</button>
+                <div :class="['flex items-center bg-white border-2 border-[var(--meetupr-sub)] px-2.5 py-1.5 rounded-full text-xs text-amber-900', !editing ? 'opacity-50 cursor-not-allowed' : '']">
+                  <span class="select-none">{{ getLanguageLabel(lang) }}</span>
+                  <button v-if="editing" type="button" @click="removeLearningLanguage(lang)" class="ml-2 text-[11px] text-gray-500 hover:text-gray-800">×</button>
                 </div>
               </template>
             </div>
-            <div class="flex gap-2 items-center" v-if="editing">
-              <select v-model="newLearningLanguage"
-                class="flex-1 border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
-                <option value="" disabled>言語を選択</option>
-                <option value="日本語">日本語</option>
-                <option value="英語">英語</option>
-                <option value="中国語">中国語</option>
-                <option value="韓国語">韓国語</option>
-                <option value="スペイン語">スペイン語</option>
-                <option value="フランス語">フランス語</option>
-                <option value="ドイツ語">ドイツ語</option>
-              </select>
-              <button type="button"
-                class="bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition"
-                @click="addLearningLanguage()">追加</button>
+            <button type="button" v-if="editing" @click="showLearningLanguages = !showLearningLanguages"
+              class="self-start bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition">選択</button>
+            <div v-if="showLearningLanguages" class="bg-white p-3 border-[3px] border-[var(--meetupr-sub)] rounded-md">
+              <div class="flex gap-4 pb-3 border-b border-[var(--meetupr-sub)] mb-3 text-sm">
+                <span v-for="cat in languageCategories" :key="cat.name" @click="activeLanguageTab = cat.name"
+                  :class="activeLanguageTab === cat.name ? 'text-[var(--meetupr-sub)] font-bold border-b-2 border-[var(--meetupr-sub)] cursor-pointer' : 'text-gray-600 font-medium cursor-pointer'">
+                  {{ cat.name }}
+                </span>
+              </div>
+              <div v-for="cat in languageCategories" :key="cat.name" v-show="activeLanguageTab === cat.name" class="flex flex-wrap gap-2">
+                <button v-for="t in cat.tags" :key="t.code" type="button" :disabled="!editing || isLoading"
+                  @click="toggleLearningLanguage(t.code)"
+                  :class="form.learningLanguages.includes(t.code) ? 'bg-[var(--meetupr-sub)] text-white border border-[var(--meetupr-sub)] rounded-md px-3 py-1 text-sm cursor-pointer' : 'bg-white border border-[var(--meetupr-sub)] rounded-sm px-3 py-1 text-sm cursor-pointer hover:bg-gray-100'">
+                  {{ t.label }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -253,61 +285,168 @@ const editing = ref(false)
 const isLoading = ref(true)
 const isSaving = ref(false)
 
-// 言語名から言語コードへの逆マッピング
-const languageLabelToCode = {
-  '日本語': 'ja',
-  '中国語': 'zh',
-  '韓国語': 'ko',
-  'ベトナム語': 'vi',
-  'インドネシア語': 'id',
-  'タイ語': 'th',
-  'ヒンディー語': 'hi',
-  'ベンガル語': 'bn',
-  'パンジャブ語': 'pa',
-  '英語': 'en',
-  'フランス語': 'fr',
-  'ドイツ語': 'de',
-  'スペイン語': 'es',
-  'ポルトガル語': 'pt',
-  'ロシア語': 'ru',
-  'アラビア語': 'ar'
+// make-profile 準拠: 地域・言語分類データとヘルパ
+const showOrigin = ref(false)
+const showNativeLanguage = ref(false)
+const showSpokenLanguages = ref(false)
+const showLearningLanguages = ref(false)
+
+const regionCategories = ref([
+  {
+    name: '東アジア',
+    tags: [
+      { code: 'JP', label: '日本' },
+      { code: 'CN', label: '中国' },
+      { code: 'KR', label: '韓国' },
+      { code: 'TW', label: '台湾' },
+      { code: 'HK', label: '香港' }
+    ]
+  },
+  {
+    name: '東南アジア',
+    tags: [
+      { code: 'ID', label: 'インドネシア' },
+      { code: 'VN', label: 'ベトナム' },
+      { code: 'MY', label: 'マレーシア' },
+      { code: 'MM', label: 'ミャンマー' },
+      { code: 'KH', label: 'カンボジア' },
+      { code: 'SG', label: 'シンガポール' },
+      { code: 'LA', label: 'ラオス' },
+      { code: 'TH', label: 'タイ' },
+      { code: 'PH', label: 'フィリピン' },
+      { code: 'BN', label: 'ブルネイ' }
+    ]
+  },
+  {
+    name: '南アジア',
+    tags: [
+      { code: 'IN', label: 'インド' },
+      { code: 'BD', label: 'バングラディシュ' },
+      { code: 'PK', label: 'パキスタン' },
+      { code: 'NP', label: 'ネパール' },
+      { code: 'LK', label: 'スリランカ' },
+      { code: 'MV', label: 'モルディブ' }
+    ]
+  },
+  {
+    name: '中央アジア',
+    tags: [
+      { code: 'KG', label: 'キルギス' },
+      { code: 'UZ', label: 'ウズベキスタン' },
+      { code: 'TJ', label: 'タジキスタン' },
+      { code: 'KZ', label: 'カザフスタン' },
+      { code: 'AF', label: 'アフガニスタン' },
+      { code: 'MN', label: 'モンゴル' }
+    ]
+  },
+  {
+    name: '西アジア・中東',
+    tags: [
+      { code: 'TR', label: 'トルコ' },
+      { code: 'IL', label: 'イスラエル' },
+      { code: 'OM', label: 'オマーン' }
+    ]
+  },
+  {
+    name: 'オセアニア',
+    tags: [
+      { code: 'AU', label: 'オーストラリア' }
+    ]
+  },
+  {
+    name: '北米',
+    tags: [
+      { code: 'US', label: 'アメリカ' },
+      { code: 'CA', label: 'カナダ' }
+    ]
+  },
+  {
+    name: '中米・南米',
+    tags: [
+      { code: 'MX', label: 'メキシコ' },
+      { code: 'GT', label: 'グアテマラ' },
+      { code: 'PE', label: 'ペルー' }
+    ]
+  },
+  {
+    name: 'ヨーロッパ',
+    tags: [
+      { code: 'GB', label: 'イギリス' },
+      { code: 'FR', label: 'フランス' },
+      { code: 'DE', label: 'ドイツ' },
+      { code: 'IT', label: 'イタリア' },
+      { code: 'ES', label: 'スペイン' },
+      { code: 'CH', label: 'スイス' },
+      { code: 'UA', label: 'ウクライナ' },
+      { code: 'RU', label: 'ロシア' },
+      { code: 'LT', label: 'リトアニア' },
+      { code: 'SE', label: 'スウェーデン' },
+      { code: 'NO', label: 'ノルウェー' },
+      { code: 'HU', label: 'ハンガリー' },
+      { code: 'AT', label: 'オーストリア' }
+    ]
+  },
+  {
+    name: 'アフリカ',
+    tags: [
+      { code: 'EG', label: 'エジプト' },
+      { code: 'GH', label: 'ガーナ' },
+      { code: 'NG', label: 'ナイジェリア' },
+      { code: 'ET', label: 'エチオピア' },
+      { code: 'BF', label: 'ブルキナファソ' },
+      { code: 'UG', label: 'ウガンダ' },
+      { code: 'NA', label: 'ナミビア' },
+      { code: 'MA', label: 'モロッコ' },
+      { code: 'GA', label: 'ガボン' }
+    ]
+  }
+])
+
+const languageCategories = ref([
+  {
+    name: 'アジア',
+    tags: [
+      { code: 'ja', label: '日本語' },
+      { code: 'zh', label: '中国語' },
+      { code: 'ko', label: '韓国語' },
+      { code: 'vi', label: 'ベトナム語' },
+      { code: 'id', label: 'インドネシア語' },
+      { code: 'th', label: 'タイ語' },
+      { code: 'hi', label: 'ヒンディー語' },
+      { code: 'bn', label: 'ベンガル語' },
+      { code: 'pa', label: 'パンジャブ語' }
+    ]
+  },
+  {
+    name: 'ヨーロッパ',
+    tags: [
+      { code: 'en', label: '英語' },
+      { code: 'fr', label: 'フランス語' },
+      { code: 'de', label: 'ドイツ語' },
+      { code: 'es', label: 'スペイン語' },
+      { code: 'pt', label: 'ポルトガル語' },
+      { code: 'ru', label: 'ロシア語' }
+    ]
+  },
+  {
+    name: 'その他',
+    tags: [
+      { code: 'ar', label: 'アラビア語' }
+    ]
+  }
+])
+
+const activeRegionTab = ref(regionCategories.value[0]?.name || '東アジア')
+const activeLanguageTab = ref(languageCategories.value[0]?.name || 'アジア')
+
+function getCountryLabel(countryCode: string): string {
+  const all = regionCategories.value.flatMap(r => r.tags)
+  return all.find(c => c.code === countryCode)?.label || countryCode
 }
 
-// 学部名から学部コードへの逆マッピング
-const majorLabelToCode = {
-  '経営学部': 'business',
-  '政策科学部': 'production_science',
-  '情報理工学部': 'information_science',
-  '映像学部': 'film_studies',
-  '総合心理学部': 'psychology',
-  'グローバル教養学部': 'global_liberal_arts'
-}
-
-// 学部名を学部コードに変換する関数
-function getMajorCode(label: string): string {
-  return majorLabelToCode[label] || label
-}
-
-// 性別名から性別コードへの逆マッピング
-const genderLabelToCode = {
-  '男性': 'male',
-  '女性': 'female',
-  'その他': 'other'
-}
-
-// 性別名を性別コードに変換する関数
-function getGenderCode(label: string): string {
-  return genderLabelToCode[label] || label
-}
-
-// 言語名を言語コードに変換する関数
-function getLanguageCode(label: string): string {
-  return languageLabelToCode[label] || label
-}
-
-// 言語名の配列を言語コードの配列に変換
-function convertLanguageLabelsToCodes(labels: string[]): string[] {
-  return labels.map(label => getLanguageCode(label))
+function getLanguageLabel(langCode: string): string {
+  const all = languageCategories.value.flatMap(c => c.tags)
+  return all.find(t => t.code === langCode)?.label || langCode
 }
 
 // ★ 既存の選択肢のデータ（サンプル）
@@ -331,14 +470,26 @@ const choiceCategories = ref([
 ])
 
 // ★ 現在選択されているタブ（初期は最初のカテゴリ）
-const activeTab = ref(choiceCategories.value[0].name)
+const activeTab = ref(choiceCategories.value[0]?.name || 'スポーツ')
 
-const form = ref({
+type FormState = {
+  name: string
+  department: string // major code
+  gender: string // male/female/other
+  origin: string // country code
+  nativeLanguage: string // lang code
+  spokenLanguages: string[]
+  learningLanguages: string[]
+  hobbies: string[]
+  bio: string
+}
+
+const form = ref<FormState>({
   name: '',
   department: '',
   gender: '',
   origin: '',
-  nativeLanguage: '',
+  nativeLanguage: 'ja',
   spokenLanguages: [],
   learningLanguages: [],
   hobbies: [],
@@ -362,8 +513,16 @@ function addSpokenLanguage() {
   }
 }
 
-function removeSpokenLanguage(lang) {
+function removeSpokenLanguage(lang: string) {
   form.value.spokenLanguages = form.value.spokenLanguages.filter(l => l !== lang)
+}
+
+function toggleSpokenLanguage(langCode: string) {
+  if (form.value.spokenLanguages.includes(langCode)) {
+    removeSpokenLanguage(langCode)
+  } else {
+    form.value.spokenLanguages.push(langCode)
+  }
 }
 
 // 学びたい言語の追加・削除
@@ -375,12 +534,20 @@ function addLearningLanguage() {
   }
 }
 
-function removeLearningLanguage(lang) {
+function removeLearningLanguage(lang: string) {
   form.value.learningLanguages = form.value.learningLanguages.filter(l => l !== lang)
 }
 
+function toggleLearningLanguage(langCode: string) {
+  if (form.value.learningLanguages.includes(langCode)) {
+    removeLearningLanguage(langCode)
+  } else {
+    form.value.learningLanguages.push(langCode)
+  }
+}
+
 // addHobby: 入力からの追加（既存のボタン挙動）か、引数で名前を渡しての追加の両方に対応
-function addHobby(hobby) {
+function addHobby(hobby?: string) {
   const v = hobby !== undefined ? String(hobby).trim() : newHobby.value.trim()
   if (v && !form.value.hobbies.includes(v)) {
     form.value.hobbies.push(v)
@@ -390,7 +557,7 @@ function addHobby(hobby) {
 }
 
 // removeHobby: インデックス指定（既存の編集UI）か、名前指定の両方に対応
-function removeHobby(target) {
+function removeHobby(target: number | string) {
   if (typeof target === 'number') {
     form.value.hobbies.splice(target, 1)
   } else {
@@ -399,7 +566,7 @@ function removeHobby(target) {
 }
 
 // toggleHobby: 指定した名前があれば削除、なければ追加
-function toggleHobby(hobbyName) {
+function toggleHobby(hobbyName: string) {
   if (form.value.hobbies.includes(hobbyName)) {
     removeHobby(hobbyName)
   } else {
@@ -436,26 +603,12 @@ async function save() {
       console.info('アクセストークン取得失敗（続行）:', e)
     }
 
-    // 言語名を言語コードに変換
-    const nativeLanguageCode = form.value.nativeLanguage 
-      ? getLanguageCode(form.value.nativeLanguage)
-      : 'ja' // デフォルト値
-    const spokenLanguagesCodes = Array.isArray(form.value.spokenLanguages)
-      ? convertLanguageLabelsToCodes(form.value.spokenLanguages)
-      : []
-    const learningLanguagesCodes = Array.isArray(form.value.learningLanguages)
-      ? convertLanguageLabelsToCodes(form.value.learningLanguages)
-      : []
-
-    // 学部名を学部コードに変換
-    const majorCode = form.value.department 
-      ? getMajorCode(form.value.department)
-      : null
-
-    // 性別名を性別コードに変換
-    const genderCode = form.value.gender 
-      ? getGenderCode(form.value.gender)
-      : null
+    // すでにコードで保持する（make-profile準拠）
+    const nativeLanguageCode = form.value.nativeLanguage || 'ja'
+    const spokenLanguagesCodes = Array.isArray(form.value.spokenLanguages) ? form.value.spokenLanguages : []
+    const learningLanguagesCodes = Array.isArray(form.value.learningLanguages) ? form.value.learningLanguages : []
+    const majorCode = form.value.department || null
+    const genderCode = form.value.gender || null
 
     // ペイロード作成
     const payload = {
@@ -476,7 +629,7 @@ async function save() {
     console.log('[my-profile] Sending profile data to /api/profile:', payload)
 
     // APIを呼び出して保存
-    const result = await $fetch<{ status?: string; inserted?: any; error?: string; details?: any }>('/api/profile', {
+    const result = await $fetch<any>('/api/profile', {
       method: 'POST',
       headers,
       body: payload
@@ -514,7 +667,7 @@ async function save() {
   }
 }
 
-let original = ref(JSON.parse(JSON.stringify(form.value)))
+let original = ref<FormState>(JSON.parse(JSON.stringify(form.value)))
 
 function cancel() {
   Object.assign(form.value, JSON.parse(JSON.stringify(original.value)))
@@ -531,13 +684,13 @@ async function fetchProfile() {
 
   try {
     isLoading.value = true
-    const response = await $fetch('/api/profile', {
+    const response: any = await $fetch('/api/profile', {
       query: {
         user_id: user.value.sub
       }
     })
 
-    if (response.error) {
+    if (response && response.error) {
       console.error('Error fetching profile:', response.error)
       // エラーが発生してもフォームは表示する（デフォルト値で）
       isLoading.value = false
@@ -546,13 +699,13 @@ async function fetchProfile() {
 
     // データをフォームに反映
     form.value.name = response.username || ''
-    form.value.department = response.major || ''
-    form.value.gender = response.gender || ''
-    form.value.origin = response.residence || ''
-    form.value.nativeLanguage = response.native_language || ''
-    form.value.spokenLanguages = Array.isArray(response.spoken_languages) ? response.spoken_languages : []
-    form.value.learningLanguages = Array.isArray(response.learning_languages) ? response.learning_languages : []
-    form.value.hobbies = Array.isArray(response.interests) ? response.interests : []
+  form.value.department = response.major || ''
+  form.value.gender = response.gender || ''
+  form.value.origin = response.residence || ''
+  form.value.nativeLanguage = response.native_language || 'ja'
+  form.value.spokenLanguages = Array.isArray(response.spoken_languages) ? response.spoken_languages : []
+  form.value.learningLanguages = Array.isArray(response.learning_languages) ? response.learning_languages : []
+  form.value.hobbies = Array.isArray(response.interests) ? response.interests : []
     form.value.bio = response.comment || ''
 
     // オリジナルデータを更新
