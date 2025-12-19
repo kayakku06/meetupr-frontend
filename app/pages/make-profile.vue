@@ -32,7 +32,7 @@
                         class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none">
                         <option value="" disabled selected></option>
                         <option value="business">経営</option>
-                        <option value="production_science">制作科学</option>
+                        <option value="production_science">政策科学</option>
                         <option value="information_science">情報理工</option>
                          <option value="film_studies">映像</option>
                           <option value="psychology">総合心理</option>
@@ -313,24 +313,71 @@ const onAvatarClick = () => {
     }
 }
 
-// ファイル選択時の処理: DataURL に変換して localStorage に保存
-const onFileChange = (e: Event) => {
+// ファイル選択時の処理: サーバに multipart で送信して public URL を受け取る（FileReader を使わない）
+const onFileChange = async (e: Event) => {
     const input = e.target as HTMLInputElement
     const file = input?.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-        try {
-            const result = reader.result as string
-            profileImageDataUrl.value = result
-            if (typeof window !== 'undefined') {
-                try { localStorage.setItem('make_profile_image', result) } catch (err) { /* ignore */ }
+
+    // 即時プレビュー用: object URL を一時的に表示
+    let objectUrl: string | null = null
+    try {
+        objectUrl = URL.createObjectURL(file)
+        profileImageDataUrl.value = objectUrl
+        if (typeof window !== 'undefined') {
+            try { localStorage.setItem('make_profile_image', objectUrl) } catch (err) { /* ignore */ }
+        }
+    } catch (err) {
+        /* ignore preview failures */
+    }
+
+    // フォームデータ作成
+    const formData = new FormData()
+    formData.append('file', file, file.name)
+
+    // 可能なら user_id を付与
+    try {
+        const u = user?.value
+        if (u && u.sub) formData.append('user_id', u.sub)
+    } catch (e) {
+        // ignore
+    }
+
+    // Authorization トークンがあれば付与（ヘッダのみ）
+    const fetchOptions: any = { method: 'POST', body: formData }
+    try {
+        const token = await getAccessToken()
+        if (token) fetchOptions.headers = { 'Authorization': `Bearer ${token}` }
+    } catch (e) {
+        // token 取得失敗は続行
+        console.info('[make-profile] getAccessToken failed (continuing):', e)
+    }
+
+    try {
+        const res = await fetch('/api/profile/upload', fetchOptions)
+        if (res.ok) {
+            const json = await res.json()
+            const url = json?.url || null
+            if (url) {
+                profileImageDataUrl.value = url
+                if (typeof window !== 'undefined') {
+                    try { localStorage.setItem('make_profile_image', url) } catch (err) { /* ignore */ }
+                }
+            } else {
+                console.warn('[make-profile] upload returned no url')
             }
-        } catch (err) {
-            console.warn('[make-profile] failed to read selected image:', err)
+        } else {
+            const txt = await res.text()
+            console.warn('[make-profile] upload failed:', res.status, txt)
+        }
+    } catch (err) {
+        console.warn('[make-profile] avatar upload error (non-fatal):', err)
+    } finally {
+        // 一時 object URL を作成していれば後で revoke してメモリ解放
+        if (objectUrl) {
+            try { URL.revokeObjectURL(objectUrl) } catch (e) { /* ignore */ }
         }
     }
-    reader.readAsDataURL(file)
 }
 
 // localStorage から復元

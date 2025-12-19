@@ -19,35 +19,66 @@ export default defineEventHandler(async (event) => {
       console.log('[API] SUPABASE_SERVICE_ROLE_KEY:', masked)
     } catch (_) {}
 
-    const body = await readBody(event)
-    if (!body) {
-      event.res.statusCode = 400
-      return { error: 'empty_body' }
+    // リクエストは2種類をサポートする:
+    // 1) JSON body に dataUrl を含む旧方式 (互換性維持)
+    // 2) multipart/form-data に file を含む方法（推奨）
+    let userId: string | undefined
+    let filename = `avatar-${Date.now()}`
+    let contentType: string | undefined
+    let buffer: Buffer | null = null
+
+    // まずヘッダで multipart かを確認
+    const contentTypeHeader = String((event.node.req.headers && event.node.req.headers['content-type']) || '')
+    if (contentTypeHeader.includes('multipart/form-data')) {
+      // multipart の場合、ファイルと user_id を読み取る
+      try {
+        // readMultipartFormData は Nitro のユーティリティ
+  const parts: any[] = (await readMultipartFormData(event as any)) || []
+        // file パートを探す
+        const filePart = parts.find(p => p.type === 'file' || p.filename)
+        if (filePart) {
+          const data = filePart.data || filePart._data || filePart['_data']
+          // data が Uint8Array の場合が多い
+          buffer = Buffer.from(data)
+          filename = filePart.filename || filename
+          contentType = filePart.type || filePart.mimetype || contentType
+        }
+        const userPart = parts.find(p => p.name === 'user_id' || p.fieldname === 'user_id')
+        if (userPart) userId = userPart.value || userPart.data || userPart.value
+      } catch (e) {
+        console.warn('[API] Failed to parse multipart/form-data (continuing):', e)
+      }
     }
 
-    // 期待: { user_id: string, filename?: string, dataUrl: string }
-    const payload = typeof body === 'object' ? body as any : null
-    const userId = payload?.user_id
-    const dataUrl = payload?.dataUrl
-    const filename = payload?.filename || `avatar-${Date.now()}`
+    // multipart で取れなかった場合、従来の JSON dataUrl をサポート
+    if (!buffer) {
+      const body = await readBody(event)
+      if (!body) {
+        event.res.statusCode = 400
+        return { error: 'empty_body' }
+      }
+      const payload = typeof body === 'object' ? body as any : null
+      userId = userId || payload?.user_id
+      const dataUrl = payload?.dataUrl
+      filename = payload?.filename || filename
 
-    if (!userId || !dataUrl) {
-      event.res.statusCode = 400
-      return { error: 'missing_fields', required: ['user_id','dataUrl'] }
+      if (!userId || !dataUrl) {
+        event.res.statusCode = 400
+        return { error: 'missing_fields', required: ['user_id','dataUrl or multipart file'] }
+      }
+
+      const m = String(dataUrl).match(/^data:(.+);base64,(.+)$/)
+      if (!m) {
+        event.res.statusCode = 400
+        return { error: 'invalid_dataurl' }
+      }
+
+      contentType = m[1]
+      const base64 = m[2]
+      buffer = Buffer.from(base64, 'base64')
     }
 
-    // dataUrl: data:<mime>;base64,xxxxx
-    const m = String(dataUrl).match(/^data:(.+);base64,(.+)$/)
-    if (!m) {
-      event.res.statusCode = 400
-      return { error: 'invalid_dataurl' }
-    }
-
-    const contentType = m[1]
-    const base64 = m[2]
-    const buffer = Buffer.from(base64, 'base64')
-
-  const extMatch = filename.match(/\.[0-9a-zA-Z]+$/)
+  const extMatch = String(filename).match(/\.[0-9a-zA-Z]+$/)
   const ext = extMatch ? extMatch[0] : ''
 
   // user_id や filename に含まれる特殊文字（例：'|'）が原因で
@@ -97,7 +128,7 @@ export default defineEventHandler(async (event) => {
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(destPath, buffer, { contentType, upsert: true })
+      .upload(destPath, buffer as Buffer, { contentType, upsert: true })
 
     if (uploadError) {
       console.error('[API] Supabase storage upload error:', uploadError)
