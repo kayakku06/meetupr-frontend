@@ -124,7 +124,8 @@ export default defineEventHandler(async (event: H3Event) => {
           learning_languages: [],
           residence: null,
           comment: null,
-          interests: []
+          interests: [],
+          avatar_url: null
         }
       }
       console.error('[API] Error fetching profile:', profileError)
