@@ -1,82 +1,59 @@
 import { H3Event } from 'h3'
 
-// 言語コードからMyMemory Translation API用の言語コードに変換
-const languageCodeToMyMemory: Record<string, string> = {
-  'ja': 'ja',
-  'zh': 'zh',
-  'ko': 'ko',
-  'vi': 'vi',
-  'id': 'id',
-  'th': 'th',
-  'hi': 'hi',
-  'bn': 'bn',
-  'pa': 'pa',
-  'en': 'en',
-  'fr': 'fr',
-  'de': 'de',
-  'es': 'es',
-  'pt': 'pt',
-  'ru': 'ru',
-  'ar': 'ar',
-  '日本語': 'ja',
-  '中国語': 'zh',
-  '韓国語': 'ko',
-  'ベトナム語': 'vi',
-  'インドネシア語': 'id',
-  'タイ語': 'th',
-  'ヒンディー語': 'hi',
-  'ベンガル語': 'bn',
-  'パンジャブ語': 'pa',
-  '英語': 'en',
-  'フランス語': 'fr',
-  'ドイツ語': 'de',
-  'スペイン語': 'es',
-  'ポルトガル語': 'pt',
-  'ロシア語': 'ru',
-  'アラビア語': 'ar'
-}
-
-// 言語名またはコードをMyMemory用のコードに変換
-function normalizeLanguageCode(lang: string): string {
-  const normalized = languageCodeToMyMemory[lang] || lang.toLowerCase().slice(0, 2)
-  return normalized
+// テキストが日本語か英語かを簡易判定
+function detectLanguage(text: string): 'ja' | 'en' {
+  // 日本語文字（ひらがな、カタカナ、漢字）が含まれているかチェック
+  const japaneseRegex = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/
+  return japaneseRegex.test(text) ? 'ja' : 'en'
 }
 
 export default defineEventHandler(async (event: H3Event) => {
   try {
     const body = await readBody(event)
     
-    if (!body || !body.text || !body.targetLang) {
+    if (!body || !body.text) {
       event.res.statusCode = 400
-      return { error: 'text and targetLang are required' }
+      return { error: 'text is required' }
     }
 
-    const { text, sourceLang, targetLang } = body
+    const { text } = body
     
-    // 言語コードを正規化
-    const sourceCode = sourceLang ? normalizeLanguageCode(sourceLang) : 'auto'
-    const targetCode = normalizeLanguageCode(targetLang)
+    // 言語を自動検出
+    const detectedLang = detectLanguage(text)
+    
+    // 日本語なら英語に、英語なら日本語に翻訳
+    const sourceLang = detectedLang
+    const targetLang = detectedLang === 'ja' ? 'en' : 'ja'
     
     // MyMemory Translation APIを使用（無料、制限あり）
-    // より高品質な翻訳が必要な場合は、Google Translate APIやDeepL APIに変更可能
-    const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceCode}|${targetCode}`
+    const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`
+    
+    console.log('[Translate API] Request:', { text: text.substring(0, 50), sourceLang, targetLang, apiUrl })
     
     const response = await fetch(apiUrl)
     
     if (!response.ok) {
+      console.error('[Translate API] HTTP Error:', response.status, response.statusText)
       throw new Error(`Translation API error: ${response.statusText}`)
     }
     
     const data = await response.json()
     
+    console.log('[Translate API] Response:', { 
+      responseStatus: data.responseStatus, 
+      hasTranslatedText: !!data.responseData?.translatedText,
+      translatedText: data.responseData?.translatedText?.substring(0, 50)
+    })
+    
     if (data.responseStatus === 200 && data.responseData && data.responseData.translatedText) {
       return {
         translatedText: data.responseData.translatedText,
-        sourceLang: data.responseData.detectedSourceLanguage || sourceCode,
-        targetLang: targetCode
+        sourceLang: sourceLang,
+        targetLang: targetLang
       }
     } else {
-      throw new Error('Translation failed')
+      console.error('[Translate API] Invalid response:', data)
+      throw new Error(`Translation failed: ${data.responseStatus || 'Unknown error'}`)
     }
   } catch (error: any) {
     console.error('[Translate API] Error:', error)

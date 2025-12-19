@@ -422,7 +422,7 @@ const retryConnection = () => {
   connectWebSocket()
 }
 
-// メッセージを翻訳
+// メッセージを翻訳（日本語⇔英語のみ）
 const translateMessage = async (msg: Message) => {
   // 既に翻訳が表示されている場合は非表示にする
   if (msg.showTranslation) {
@@ -441,24 +441,17 @@ const translateMessage = async (msg: Message) => {
   msg.showTranslation = true
 
   try {
-    // 翻訳対象言語を決定
-    // 相手のメッセージの場合、相手のネイティブ言語から日本語へ
-    // 自分のメッセージの場合、日本語から相手のネイティブ言語へ
-    const isFromPartner = msg.sender_id !== currentUserId.value
-    const sourceLang = isFromPartner ? partnerNativeLanguage.value : 'ja'
-    const targetLang = isFromPartner ? 'ja' : partnerNativeLanguage.value
-
-    const response = await $fetch<{ translatedText?: string, error?: string }>('/api/translate', {
+    // 翻訳APIを呼び出し（言語は自動検出、日本語⇔英語のみ）
+    const response = await $fetch<{ translatedText?: string, error?: string, message?: string }>('/api/translate', {
       method: 'POST',
       body: {
-        text: msg.content,
-        sourceLang: sourceLang,
-        targetLang: targetLang
+        text: msg.content
       }
     })
 
     if (response.error) {
-      throw new Error(response.error)
+      console.error('[Translate] API Error:', response.error, response.message)
+      throw new Error(response.message || response.error || '翻訳に失敗しました')
     }
 
     if (response.translatedText) {
@@ -467,8 +460,8 @@ const translateMessage = async (msg: Message) => {
       throw new Error('翻訳結果が取得できませんでした')
     }
   } catch (error: any) {
-    console.error('翻訳エラー:', error)
-    msg.translatedText = '翻訳に失敗しました'
+    console.error('[Translate] Error:', error)
+    msg.translatedText = error.message || '翻訳に失敗しました'
   } finally {
     msg.isTranslating = false
   }
