@@ -7,8 +7,9 @@
     <div
       v-if="!isExpanded"
       class="minimized-box"
-      :style="{ backgroundColor: currentColor }"
-      @click="toggleExpand"
+      :style="[minimizedStyle, { backgroundColor: currentColor }]"
+      @pointerdown.prevent="startDrag"
+      @click="onMinimizedClick"
       role="button"
       aria-label="開く"
     >
@@ -70,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { ChevronUp } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -84,6 +85,101 @@ const emit = defineEmits(['update:modelValue'])
 // --- 状態管理 ---
 const internalValue = ref(props.modelValue)
 const isExpanded = ref(true) // 開閉状態
+
+// --- ドラッグ移動用の状態 ---
+const dragX = ref(0)
+const dragY = ref(80)
+const isDragging = ref(false)
+const justDragged = ref(false)
+const pointerDown = ref(false)
+let startX = 0
+let startY = 0
+let boxStartX = 0
+let boxStartY = 0
+const STORAGE_KEY = 'meetdesire_minimized_pos'
+
+onMounted(() => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      const p = JSON.parse(saved)
+      if (typeof p.x === 'number') dragX.value = p.x
+      if (typeof p.y === 'number') dragY.value = p.y
+    } else {
+      dragY.value = 80
+      dragX.value = Math.max(16, window.innerWidth - 86)
+    }
+  } catch (e) {}
+  window.addEventListener('pointermove', onPointerMove)
+  window.addEventListener('pointerup', endDrag)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('pointermove', onPointerMove)
+  window.removeEventListener('pointerup', endDrag)
+})
+
+function startDrag(e) {
+  // register pointer down; do not consider dragging until movement threshold
+  if (e.button && e.button !== 0) return
+  pointerDown.value = true
+  startX = e.clientX
+  startY = e.clientY
+}
+
+function onPointerMove(e) {
+  // if pointer is down but dragging not started, check threshold
+  if (pointerDown.value && !isDragging.value) {
+    const dx0 = Math.abs(e.clientX - startX)
+    const dy0 = Math.abs(e.clientY - startY)
+    const threshold = 6
+    if (dx0 >= threshold || dy0 >= threshold) {
+      isDragging.value = true
+      boxStartX = dragX.value
+      boxStartY = dragY.value
+      // try capture pointer on the element under the pointer
+      try { (e.target).setPointerCapture?.(e.pointerId) } catch {}
+    }
+  }
+
+  if (!isDragging.value) return
+  const dx = e.clientX - startX
+  const dy = e.clientY - startY
+  const nx = boxStartX + dx
+  const ny = boxStartY + dy
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const boxW = 70
+  const boxH = 70
+  dragX.value = Math.min(Math.max(0, nx), vw - boxW)
+  dragY.value = Math.min(Math.max(0, ny), vh - boxH)
+}
+
+function endDrag(e) {
+  // pointer released
+  if (isDragging.value) {
+    isDragging.value = false
+    justDragged.value = true
+    setTimeout(() => { justDragged.value = false }, 150)
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ x: dragX.value, y: dragY.value })) } catch {}
+    try { (e.target).releasePointerCapture?.(e.pointerId) } catch {}
+  }
+  pointerDown.value = false
+}
+
+function onMinimizedClick(e) {
+  if (justDragged.value) return
+  toggleExpand()
+}
+
+const minimizedStyle = computed(() => ({
+  position: 'fixed',
+  left: `${dragX.value}px`,
+  top: `${dragY.value}px`,
+  zIndex: 9999,
+  touchAction: 'none',
+  cursor: isDragging.value ? 'grabbing' : 'grab'
+}))
 
 // 親コンポーネントからの変更を監視
 watch(() => props.modelValue, (v) => {
