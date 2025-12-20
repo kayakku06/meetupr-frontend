@@ -42,17 +42,17 @@
 
         <div class="flex-1">
           <template v-if="!editing">
-            <h2 class="m-0 mb-2 text-lg text-teal-900">{{ form.name || 'なまえ' }}</h2>
+            <h2 class="m-0 mb-2 text-lg text-teal-900">{{ form.name || t.profile.name }}</h2>
           </template>
           <template v-else>
-            <label class="sr-only" for="username-input">ユーザー名</label>
+            <label class="sr-only" for="username-input">{{ t.profile.name }}</label>
             <textarea
               id="username-input"
               v-model="form.name"
               :disabled="isLoading"
               rows="1"
               class="w-full border-2 border-[var(--meetupr-sub)] p-1.5 rounded bg-white text-lg outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 h-10 leading-tight disabled:opacity-50 disabled:cursor-not-allowed mb-1"
-              placeholder="ユーザー名を入力"
+              :placeholder="t.profile.usernamePlaceholder"
             ></textarea>
           </template>
           <button v-if="!editing && !isLoading"
@@ -63,29 +63,29 @@
                 d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
                 fill="#fff" />
             </svg>
-            プロフィール編集
+            {{ t.profile.profileEdit }}
           </button>
         </div>
       </div>
 
       <form class="flex flex-col gap-3" @submit.prevent>
         <label class="flex flex-col gap-1">
-          <div class="text-sm text-yellow-900">学部 <span class="text-red-500">*</span></div>
+          <div class="text-sm text-yellow-900">{{ t.profile.faculty }} <span class="text-red-500">{{ t.profile.required }}</span></div>
           <!-- 値はコードに統一（make-profile準拠） -->
           <select :disabled="!editing || isLoading" v-model="form.department"
             class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 appearance-none ">
-            <option value="" disabled>学部を選択</option>
-            <option value="business">経営学部</option>
-            <option value="production_science">政策科学部</option>
-            <option value="information_science">情報理工学部</option>
-            <option value="film_studies">映像学部</option>
-            <option value="psychology">総合心理学部</option>
-            <option value="global_liberal_arts">グローバル教養学部</option>
+            <option value="" disabled>{{ t.profile.selectFaculty }}</option>
+            <option value="business">{{ t.profile.faculties.business }}</option>
+            <option value="production_science">{{ t.profile.faculties.productionScience }}</option>
+            <option value="information_science">{{ t.profile.faculties.informationScience }}</option>
+            <option value="film_studies">{{ t.profile.faculties.filmStudies }}</option>
+            <option value="psychology">{{ t.profile.faculties.psychology }}</option>
+            <option value="global_liberal_arts">{{ t.profile.faculties.globalLiberalArts }}</option>
           </select>
         </label>
 
         <fieldset v-if="editing" class="flex flex-col gap-2">
-          <legend class="text-xs text-amber-900">性別</legend>
+          <legend class="text-xs text-amber-900">{{ t.profile.gender }}</legend>
           <label class="inline-flex items-center gap-1.5 text-sm text-amber-900">
             <input
               type="radio"
@@ -94,7 +94,7 @@
               v-model="form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            男性
+            {{ t.profile.male }}
           </label>
           <label class="inline-flex items-center gap-1.5 text-sm text-amber-900">
             <input
@@ -104,7 +104,7 @@
               v-model="form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            女性
+            {{ t.profile.female }}
           </label>
           <label class="inline-flex items-center gap-1.5 text-sm text-amber-900">
             <input
@@ -114,11 +114,11 @@
               v-model="form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            その他
+            {{ t.profile.other }}
           </label>
         </fieldset>
         <div v-else class="flex flex-col gap-1">
-          <div class="text-xs text-amber-900">性別</div>
+          <div class="text-xs text-amber-900">{{ t.profile.gender }}</div>
           <div class="inline-flex items-center gap-1.5 text-sm text-amber-900">
             <input
               type="radio"
@@ -126,60 +126,60 @@
               :checked="!!form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            {{ getGenderLabel(form.gender) || '未設定' }}
+            {{ getGenderLabel(form.gender) || t.profile.notSet }}
           </div>
         </div>
 
         <!-- 出身（選択UIのみコンポーネント化） -->
         <div class="flex flex-col gap-4">
-          <div class="text-sm text-amber-900">出身 <span class="text-red-500">*</span></div>
+          <div class="text-sm text-amber-900">{{ t.profile.origin }} <span class="text-red-500">{{ t.profile.required }}</span></div>
           <CategorySelect
             :categories="regionCategories"
             v-model="form.origin"
             :multiple="false"
             :readonly="!editing"
             :disabled="!editing || isLoading"
-            placeholder="選択してください"
+            :placeholder="t.profile.selectPlaceholder"
           />
         </div>
 
         <div class="flex flex-col gap-4">
-          <div class="text-sm text-amber-900">言語</div>
+          <div class="text-sm text-amber-900">{{ t.profile.language }}</div>
           <!-- ネイティブ・話せる・学びたい をCategorySelectへ統一（選択UIのみコンポーネント化） -->
           <CategorySelect
-            title="ネイティブ"
+            :title="t.profile.nativeLanguage"
             :required="true"
             :categories="languageCategories"
             v-model="form.nativeLanguage"
             :multiple="true"
             :readonly="!editing"
             :disabled="!editing || isLoading"
-            placeholder="選択してください（必須）"
+            :placeholder="t.profile.selectRequiredPlaceholder"
           />
 
           <CategorySelect
-            title="話せる言語"
+            :title="t.profile.spokenLanguages"
             :categories="languageCategories"
             v-model="form.spokenLanguages"
             :multiple="true"
             :readonly="!editing"
             :disabled="!editing || isLoading"
-            placeholder="選択してください"
+            :placeholder="t.profile.selectPlaceholder"
           />
 
           <CategorySelect
-            title="学びたい言語"
+            :title="t.profile.learningLanguages"
             :categories="languageCategories"
             v-model="form.learningLanguages"
             :multiple="true"
             :readonly="!editing"
             :disabled="!editing || isLoading"
-            placeholder="選択してください"
+            :placeholder="t.profile.selectPlaceholder"
           />
         </div>
 
         <div class="flex flex-col gap-2">
-          <div class="text-xs text-amber-900">趣味</div>
+          <div class="text-xs text-amber-900">{{ t.profile.hobbies }}</div>
           <div class="flex gap-2 flex-wrap">
             <!-- 統合したタグ表示: 選択・入力どちらでもここに追加され、×で削除可能にする -->
             <template v-for="(h, i) in form.hobbies" :key="h + '-' + i">
@@ -196,14 +196,14 @@
           </div>
           <!-- make-profileと同じ構成: 上にラベル、入力+追加ボタン、下にpanelOnlyのCategorySelect -->
           <div v-if="editing">
-            <label class="text-xs text-amber-900 mb-1 block">既存の選択肢</label>
+            <label class="text-xs text-amber-900 mb-1 block">{{ t.profile.existingOptions }}</label>
             <div class="flex gap-2 items-center mt-1.5">
               <input v-model="newHobby"
                 class="flex-1 border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
-                placeholder="趣味を入力してEnter" @keyup.enter="addHobby()" />
+                :placeholder="t.profile.hobbiesPlaceholder" @keyup.enter="addHobby()" />
               <button type="button"
                 class="bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition"
-                @click="addHobby()">追加</button>
+                @click="addHobby()">{{ t.profile.add }}</button>
             </div>
             <div class="mt-3">
               <CategorySelect
@@ -211,9 +211,9 @@
                 :categories="choiceCategories"
                 :multiple="true"
                 :panelOnly="true"
-                placeholder="選択してください"
-                title="趣味"
-                selectButtonLabel="選択"
+                :placeholder="t.profile.selectPlaceholder"
+                :title="t.profile.hobbies"
+                :selectButtonLabel="t.profile.select"
               />
             </div>
           </div>
@@ -221,10 +221,10 @@
 
 
         <label class="flex flex-col gap-2">
-          <div class="text-xs text-amber-900">一言（50文字以内）</div>
+          <div class="text-xs text-amber-900">{{ t.profile.bio }}</div>
           <textarea :disabled="!editing || isLoading" v-model="form.bio"
             class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 min-h-16 resize-none"
-            maxlength="50" placeholder="よろしくお願いします！！"></textarea>
+            maxlength="50" :placeholder="t.profile.bioPlaceholderEdit"></textarea>
           <div class="text-xs text-amber-700 text-right mt-1">{{ (form.bio || '').length }}/50</div>
         </label>
 
@@ -232,11 +232,11 @@
           <button type="button"
             :disabled="isSaveDisabled"
             class="bg-[var(--meetupr-color-3)]  text-white px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-teal-600 transition flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-            @click="save">{{ isSaving ? '保存中...' : '保存' }}</button>
+            @click="save">{{ isSaving ? t.profile.saving : t.profile.save }}</button>
           <button type="button"
             :disabled="isSaving"
             class="bg-gray-300 text-gray-800 px-3.5  py-2 rounded text-sm cursor-pointer hover:bg-gray-400 transition flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-            @click="cancel">キャンセル</button>
+            @click="cancel">{{ t.profile.cancel }}</button>
         </div>
       </form>
 
@@ -246,7 +246,7 @@
           @click="handleLogout"
           class="w-full px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
         >
-          ログアウト
+          {{ t.profile.logout }}
         </button>
       </div>
     </main>
@@ -265,9 +265,13 @@ import { ref, onMounted, computed, watch } from 'vue'
 import CategorySelect from '~/components/CategorySelect.vue'
 import Footer from '~/components/Footer.vue'
 import { useAuth } from '~/composables/useAuth'
-import { normalizeCountryCode } from '~/utils/countryMapping'
+import { normalizeCountryCode, getCountryNameByLocale } from '~/utils/countryMapping'
+import { getGenderLabelByLocale } from '~/utils/genderMapping'
+import { getLanguageLabelByLocale } from '~/utils/languageMapping'
 import profileHeader from '~/components/profile-header.vue'
+import { useLocale } from '~/composables/useLocale'
 
+const { t, locale } = useLocale()
 const { user, getAccessToken, logout } = useAuth()
 
 // ログアウト処理
@@ -286,150 +290,60 @@ const fileInput = ref<HTMLInputElement | null>(null)
 
 // make-profile 準拠: 地域・言語分類データとヘルパ（選択UIはCategorySelectで表示）
 
-const regionCategories = ref([
-  {
-    name: '東アジア',
-    tags: [
-      { code: 'JP', label: '日本' },
-      { code: 'CN', label: '中国' },
-      { code: 'KR', label: '韓国' },
-      { code: 'TW', label: '台湾' },
-      { code: 'HK', label: '香港' }
-    ]
-  },
-  {
-    name: '東南アジア',
-    tags: [
-      { code: 'ID', label: 'インドネシア' },
-      { code: 'VN', label: 'ベトナム' },
-      { code: 'MY', label: 'マレーシア' },
-      { code: 'MM', label: 'ミャンマー' },
-      { code: 'KH', label: 'カンボジア' },
-      { code: 'SG', label: 'シンガポール' },
-      { code: 'LA', label: 'ラオス' },
-      { code: 'TH', label: 'タイ' },
-      { code: 'PH', label: 'フィリピン' },
-      { code: 'BN', label: 'ブルネイ' }
-    ]
-  },
-  {
-    name: '南アジア',
-    tags: [
-      { code: 'IN', label: 'インド' },
-      { code: 'BD', label: 'バングラディシュ' },
-      { code: 'PK', label: 'パキスタン' },
-      { code: 'NP', label: 'ネパール' },
-      { code: 'LK', label: 'スリランカ' },
-      { code: 'MV', label: 'モルディブ' }
-    ]
-  },
-  {
-    name: '中央アジア',
-    tags: [
-      { code: 'KG', label: 'キルギス' },
-      { code: 'UZ', label: 'ウズベキスタン' },
-      { code: 'TJ', label: 'タジキスタン' },
-      { code: 'KZ', label: 'カザフスタン' },
-      { code: 'AF', label: 'アフガニスタン' },
-      { code: 'MN', label: 'モンゴル' }
-    ]
-  },
-  {
-    name: '西アジア・中東',
-    tags: [
-      { code: 'TR', label: 'トルコ' },
-      { code: 'IL', label: 'イスラエル' },
-      { code: 'OM', label: 'オマーン' }
-    ]
-  },
-  {
-    name: 'オセアニア',
-    tags: [
-      { code: 'AU', label: 'オーストラリア' }
-    ]
-  },
-  {
-    name: '北米',
-    tags: [
-      { code: 'US', label: 'アメリカ' },
-      { code: 'CA', label: 'カナダ' }
-    ]
-  },
-  {
-    name: '中米・南米',
-    tags: [
-      { code: 'MX', label: 'メキシコ' },
-      { code: 'GT', label: 'グアテマラ' },
-      { code: 'PE', label: 'ペルー' }
-    ]
-  },
-  {
-    name: 'ヨーロッパ',
-    tags: [
-      { code: 'GB', label: 'イギリス' },
-      { code: 'FR', label: 'フランス' },
-      { code: 'DE', label: 'ドイツ' },
-      { code: 'IT', label: 'イタリア' },
-      { code: 'ES', label: 'スペイン' },
-      { code: 'CH', label: 'スイス' },
-      { code: 'UA', label: 'ウクライナ' },
-      { code: 'RU', label: 'ロシア' },
-      { code: 'LT', label: 'リトアニア' },
-      { code: 'SE', label: 'スウェーデン' },
-      { code: 'NO', label: 'ノルウェー' },
-      { code: 'HU', label: 'ハンガリー' },
-      { code: 'AT', label: 'オーストリア' }
-    ]
-  },
-  {
-    name: 'アフリカ',
-    tags: [
-      { code: 'EG', label: 'エジプト' },
-      { code: 'GH', label: 'ガーナ' },
-      { code: 'NG', label: 'ナイジェリア' },
-      { code: 'ET', label: 'エチオピア' },
-      { code: 'BF', label: 'ブルキナファソ' },
-      { code: 'UG', label: 'ウガンダ' },
-      { code: 'NA', label: 'ナミビア' },
-      { code: 'MA', label: 'モロッコ' },
-      { code: 'GA', label: 'ガボン' }
-    ]
-  }
-])
+// 地域カテゴリの基本データ（コードのみ）
+const regionCategoriesData = [
+  { nameJa: '東アジア', nameEn: 'East Asia', codes: ['JP', 'CN', 'KR', 'TW', 'HK'] },
+  { nameJa: '東南アジア', nameEn: 'Southeast Asia', codes: ['ID', 'VN', 'MY', 'MM', 'KH', 'SG', 'LA', 'TH', 'PH', 'BN'] },
+  { nameJa: '南アジア', nameEn: 'South Asia', codes: ['IN', 'BD', 'PK', 'NP', 'LK', 'MV'] },
+  { nameJa: '中央アジア', nameEn: 'Central Asia', codes: ['KG', 'UZ', 'TJ', 'KZ', 'AF', 'MN'] },
+  { nameJa: '西アジア・中東', nameEn: 'West Asia / Middle East', codes: ['TR', 'IL', 'OM'] },
+  { nameJa: 'オセアニア', nameEn: 'Oceania', codes: ['AU'] },
+  { nameJa: '北米', nameEn: 'North America', codes: ['US', 'CA'] },
+  { nameJa: '中米・南米', nameEn: 'Central / South America', codes: ['MX', 'GT', 'PE'] },
+  { nameJa: 'ヨーロッパ', nameEn: 'Europe', codes: ['GB', 'FR', 'DE', 'IT', 'ES', 'CH', 'UA', 'RU', 'LT', 'SE', 'NO', 'HU', 'AT'] },
+  { nameJa: 'アフリカ', nameEn: 'Africa', codes: ['EG', 'GH', 'NG', 'ET', 'BF', 'UG', 'NA', 'MA', 'GA'] }
+]
 
-const languageCategories = ref([
-  {
-    name: 'アジア',
-    tags: [
-      { code: 'ja', label: '日本語' },
-      { code: 'zh', label: '中国語' },
-      { code: 'ko', label: '韓国語' },
-      { code: 'vi', label: 'ベトナム語' },
-      { code: 'id', label: 'インドネシア語' },
-      { code: 'th', label: 'タイ語' },
-      { code: 'hi', label: 'ヒンディー語' },
-      { code: 'bn', label: 'ベンガル語' },
-      { code: 'pa', label: 'パンジャブ語' }
-    ]
+// ロケールに応じた地域カテゴリを生成
+const regionCategories = computed(() => {
+  return regionCategoriesData.map(region => ({
+    name: locale.value === 'en' ? region.nameEn : region.nameJa,
+    tags: region.codes.map(code => ({
+      code,
+      label: getCountryNameByLocale(code, locale.value)
+    }))
+  }))
+})
+
+// 言語カテゴリの基本データ（コードのみ）
+const languageCategoriesData = [
+  { 
+    nameJa: 'アジア', 
+    nameEn: 'Asia', 
+    codes: ['ja', 'zh', 'ko', 'vi', 'id', 'th', 'hi', 'bn', 'pa']
   },
-  {
-    name: 'ヨーロッパ',
-    tags: [
-      { code: 'en', label: '英語' },
-      { code: 'fr', label: 'フランス語' },
-      { code: 'de', label: 'ドイツ語' },
-      { code: 'es', label: 'スペイン語' },
-      { code: 'pt', label: 'ポルトガル語' },
-      { code: 'ru', label: 'ロシア語' }
-    ]
+  { 
+    nameJa: 'ヨーロッパ', 
+    nameEn: 'Europe', 
+    codes: ['en', 'fr', 'de', 'es', 'pt', 'ru']
   },
-  {
-    name: 'その他',
-    tags: [
-      { code: 'ar', label: 'アラビア語' }
-    ]
+  { 
+    nameJa: 'その他', 
+    nameEn: 'Other', 
+    codes: ['ar']
   }
-])
+]
+
+// ロケールに応じた言語カテゴリを生成
+const languageCategories = computed(() => {
+  return languageCategoriesData.map(category => ({
+    name: locale.value === 'en' ? category.nameEn : category.nameJa,
+    tags: category.codes.map(code => ({
+      code,
+      label: getLanguageLabelByLocale(code, locale.value)
+    }))
+  }))
+})
 
 // タブや開閉状態はCategorySelect内部で管理するため不要
 
@@ -439,46 +353,72 @@ function getCountryLabel(countryCode: string): string {
 }
 
 function getLanguageLabel(langCode: string): string {
-  const all = languageCategories.value.flatMap(c => c.tags)
-  return all.find(t => t.code === langCode)?.label || langCode
+  return getLanguageLabelByLocale(langCode, locale.value)
 }
 
 function getGenderLabel(g: string): string {
-  switch (g) {
-    case 'male':
-      return '男性'
-    case 'female':
-      return '女性'
-    case 'other':
-      return 'その他'
-    default:
-      return ''
-  }
+  return getGenderLabelByLocale(g, locale.value)
 }
 
-// ★ 既存の選択肢のデータ（サンプル）
-const choiceCategories = ref([
+// ★ 既存の選択肢のデータ（コードベース）
+const choiceCategoriesData = [
   {
-    name: 'スポーツ',
-    tags: ['野球', 'サッカー', 'バスケ', 'テニス', 'ゴルフ']
+    nameJa: 'スポーツ',
+    nameEn: 'Sports',
+    tags: [
+      { code: 'baseball', labelJa: '野球', labelEn: 'Baseball' },
+      { code: 'soccer', labelJa: 'サッカー', labelEn: 'Soccer' },
+      { code: 'basketball', labelJa: 'バスケ', labelEn: 'Basketball' },
+      { code: 'tennis', labelJa: 'テニス', labelEn: 'Tennis' },
+      { code: 'golf', labelJa: 'ゴルフ', labelEn: 'Golf' }
+    ]
   },
   {
-    name: '音楽',
-    tags: ['J-POP', 'ロック', 'クラシック', 'ジャズ', 'K-POP']
+    nameJa: '音楽',
+    nameEn: 'Music',
+    tags: [
+      { code: 'jpop', labelJa: 'J-POP', labelEn: 'J-POP' },
+      { code: 'rock', labelJa: 'ロック', labelEn: 'Rock' },
+      { code: 'classical', labelJa: 'クラシック', labelEn: 'Classical' },
+      { code: 'jazz', labelJa: 'ジャズ', labelEn: 'Jazz' },
+      { code: 'kpop', labelJa: 'K-POP', labelEn: 'K-POP' }
+    ]
   },
   {
-    name: '食べ物',
-    tags: ['寿司', 'ラーメン', '焼肉', 'イタリアン', '中華']
+    nameJa: '食べ物',
+    nameEn: 'Food',
+    tags: [
+      { code: 'sushi', labelJa: '寿司', labelEn: 'Sushi' },
+      { code: 'ramen', labelJa: 'ラーメン', labelEn: 'Ramen' },
+      { code: 'yakiniku', labelJa: '焼肉', labelEn: 'Yakiniku' },
+      { code: 'italian', labelJa: 'イタリアン', labelEn: 'Italian' },
+      { code: 'chinese', labelJa: '中華', labelEn: 'Chinese' }
+    ]
   },
   {
-    name: '国',
-    tags: ['日本', '中国', '韓国', 'アメリカ', 'イギリス']
+    nameJa: '国',
+    nameEn: 'Countries',
+    tags: [
+      { code: 'japan', labelJa: '日本', labelEn: 'Japan' },
+      { code: 'china', labelJa: '中国', labelEn: 'China' },
+      { code: 'korea', labelJa: '韓国', labelEn: 'Korea' },
+      { code: 'usa', labelJa: 'アメリカ', labelEn: 'USA' },
+      { code: 'uk', labelJa: 'イギリス', labelEn: 'UK' }
+    ]
   },
-])
+]
+
+// ロケールに応じた趣味カテゴリを生成
+const choiceCategories = computed(() => {
+  return choiceCategoriesData.map(category => ({
+    name: locale.value === 'en' ? category.nameEn : category.nameJa,
+    tags: category.tags.map(tag => locale.value === 'en' ? tag.labelEn : tag.labelJa)
+  }))
+})
 
 // ★ 現在選択されているタブ（初期は最初のカテゴリ）
 
-const activeTab = ref(choiceCategories.value[0]?.name || 'スポーツ')
+const activeTab = computed(() => choiceCategories.value[0]?.name || '')
 
 type FormState = {
   name: string

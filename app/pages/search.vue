@@ -2,13 +2,17 @@
 import { ref, computed, onMounted } from 'vue'
 import SearchUser from '~/components/searchuser.vue'
 import Footer from '~/components/Footer.vue'
+import CategorySelect from '~/components/CategorySelect.vue'
 import { Search, UserRoundPlus, ChevronUp } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
+import { useLocale } from '~/composables/useLocale'
 import { normalizeCountryCode, getFlagCodeFromCountryCode } from '~/utils/countryMapping'
 import { normalizeLanguageCode } from '~/utils/languageMapping'
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 const { getAccessToken } = useAuth()
 const config = useRuntimeConfig()
+const { t, locale } = useLocale()
 
 const showDropdown = ref(false);
 
@@ -16,90 +20,96 @@ const toggleDropdown = () => {
     showDropdown.value = !showDropdown.value;
 };
 
-const form = ref({
-    hobbies: []
-});
+// 選択されたフィルター（コードで管理）- 言語と国を統合
+const selectedFilters = ref([]);
 
-const choiceCategories = ref([
+// 言語と国を統合したカテゴリ
+const searchCategories = computed(() => [
     {
-        name: '言語',
-        tags: ['日本語', '英語', '韓国語', '中国語', 'フランス語', 'スペイン語']
+        name: t.value.search.language,
+        tags: [
+            { code: 'lang:ja', label: t.value.search.languages.japanese },
+            { code: 'lang:en', label: t.value.search.languages.english },
+            { code: 'lang:ko', label: t.value.search.languages.korean },
+            { code: 'lang:zh', label: t.value.search.languages.chinese },
+            { code: 'lang:fr', label: t.value.search.languages.french },
+            { code: 'lang:es', label: t.value.search.languages.spanish }
+        ]
     },
     {
-        name: '国',
-        tags: ['日本', 'アメリカ', '韓国', '中国', 'イギリス', 'フランス']
+        name: t.value.search.country,
+        tags: [
+            { code: 'country:JP', label: t.value.search.countries.japan },
+            { code: 'country:US', label: t.value.search.countries.usa },
+            { code: 'country:KR', label: t.value.search.countries.korea },
+            { code: 'country:CN', label: t.value.search.countries.china },
+            { code: 'country:GB', label: t.value.search.countries.uk },
+            { code: 'country:FR', label: t.value.search.countries.france }
+        ]
     }
 ]);
 
-// ★ 初期タブ
-const activeTab = ref(choiceCategories.value[0].name);
+// 選択されたタグのラベルを取得（表示用）
+const selectedLabels = computed(() => {
+    return selectedFilters.value.map(code => {
+        const allTags = searchCategories.value.flatMap(c => c.tags);
+        const tag = allTags.find(t => t.code === code);
+        return tag?.label || code;
+    });
+});
 
-const addHobby = (hobby) => {
-    if (!form.value.hobbies.includes(hobby)) {
-        form.value.hobbies.push(hobby);
-    }
+// コードからラベルを取得（テンプレート用ヘルパー）
+const getFilterLabel = (code) => {
+    const allTags = searchCategories.value.flatMap(c => c.tags);
+    const tag = allTags.find(t => t.code === code);
+    return tag?.label || code;
 };
 
-const removeHobby = (hobby) => {
-    form.value.hobbies = form.value.hobbies.filter(h => h !== hobby);
-    // フィルターを削除した場合、全ユーザーを取得するために検索を実行
-    // ただし、検索中でない場合は自動実行しない（ユーザーが検索ボタンをクリックするまで待つ）
-    if (isSearching.value && form.value.hobbies.length === 0) {
-        // 既に検索中の場合は、フィルターなしで再検索（全ユーザー取得）
-        runSearch();
-    }
-};
+// API用に言語と国を分離
+const selectedLanguages = computed(() => {
+    return selectedFilters.value
+        .filter(code => code.startsWith('lang:'))
+        .map(code => code.replace('lang:', ''));
+});
 
-const toggleHobby = (tag) => {
-    const category = getCategoryByTag(tag);
+const selectedCountries = computed(() => {
+    return selectedFilters.value
+        .filter(code => code.startsWith('country:'))
+        .map(code => code.replace('country:', ''));
+});
 
-    const selected = form.value.hobbies;
-
-    // すでに選択されていれば削除
-    if (selected.includes(tag)) {
-        removeHobby(tag);
-        return;
-    }
-
-    // ▼ 合計 4 個まで
-    if (selected.length >= LIMIT_TOTAL) {
-        alert("選択できるのは合計4つまでです！");
-        return;
-    }
-
-    // ▼ 言語の上限チェック
-    if (category === '言語') {
-        const countLang = selected.filter(h => getCategoryByTag(h) === '言語').length;
-        if (countLang >= LIMIT_LANGUAGE) {
-            alert("言語は2つまで選択できます！");
-            return;
-        }
-    }
-
-    // ▼ 国の上限チェック
-    if (category === '国') {
-        const countCountry = selected.filter(h => getCategoryByTag(h) === '国').length;
-        if (countCountry >= LIMIT_COUNTRY) {
-            alert("国は2つまで選択できます！");
-            return;
-        }
-    }
-
-    // 条件クリア → 追加
-    addHobby(tag);
-};
-
+// 上限チェック
 const LIMIT_LANGUAGE = 2;
 const LIMIT_COUNTRY = 2;
 const LIMIT_TOTAL = 4;
 
-const getCategoryByTag = (tag) => {
-    const langCategory = choiceCategories.value.find(c => c.name === '言語');
-    const countryCategory = choiceCategories.value.find(c => c.name === '国');
+// フィルター選択時の処理
+const onFilterChange = (newValue) => {
+    const newLanguages = newValue.filter(code => code.startsWith('lang:'));
+    const newCountries = newValue.filter(code => code.startsWith('country:'));
+    
+    if (newLanguages.length > LIMIT_LANGUAGE) {
+        alert(t.value.search.limitLanguage);
+        return;
+    }
+    if (newCountries.length > LIMIT_COUNTRY) {
+        alert(t.value.search.limitCountry);
+        return;
+    }
+    if (newValue.length > LIMIT_TOTAL) {
+        alert(t.value.search.limitTotal);
+        return;
+    }
+    selectedFilters.value = newValue;
+};
 
-    if (langCategory.tags.includes(tag)) return '言語';
-    if (countryCategory.tags.includes(tag)) return '国';
-    return null;
+// フィルターをクリア
+const clearFilter = (code) => {
+    selectedFilters.value = selectedFilters.value.filter(c => c !== code);
+    // フィルターを削除した場合、検索中なら再検索
+    if (isSearching.value && selectedFilters.value.length === 0) {
+        runSearch();
+    }
 };
 
 // 検索結果とローディング状態
@@ -107,15 +117,6 @@ const searchResults = ref([]);
 const isLoading = ref(false);
 const searchError = ref(null);
 const isSearching = ref(false);
-
-// 言語と国を分離
-const selectedLanguages = computed(() => {
-    return form.value.hobbies.filter(h => getCategoryByTag(h) === '言語');
-});
-
-const selectedCountries = computed(() => {
-    return form.value.hobbies.filter(h => getCategoryByTag(h) === '国');
-});
 
 // 国旗コードの取得は共通ユーティリティを使用
 
@@ -130,40 +131,14 @@ const runSearch = async () => {
     try {
         const token = await getAccessToken();
         if (!token) {
-            throw new Error('認証トークンを取得できませんでした');
+            throw new Error(t.value.search.authError);
         }
 
         // リクエストボディを構築
-        // 要件: フィルター条件がない場合（空配列）でもAPIを呼び出して全ユーザー（自分以外）を取得
-        // - フィルター条件がない場合: 全ユーザー（自分以外）を返す。プロフィール情報（comment, residence, avatar_url）も取得
-        // - フィルター条件がある場合: 条件に一致するユーザーのみを返す。フィルタリングに必要なプロフィール情報のみを取得
-        // 国名を国コードに変換（データベースでは英語の国コードで管理）
-        const countryCodes = [];
-        for (const country of selectedCountries.value) {
-            console.log('[search] Processing country:', country);
-            const code = normalizeCountryCode(country);
-            console.log('[search] Country conversion result:', { original: country, code: code, type: typeof code });
-            if (code && code !== country) {
-                countryCodes.push(code);
-                console.log('[search] Added country code:', code);
-            } else {
-                console.warn('[search] Failed to convert country to code:', country, 'result:', code);
-            }
-        }
-        
-        // 言語名を言語コードに変換（データベースでは言語コード（例: "ja"）で管理）
-        const languageCodes = [];
-        for (const language of selectedLanguages.value) {
-            console.log('[search] Processing language:', language);
-            const code = normalizeLanguageCode(language);
-            console.log('[search] Language conversion result:', { original: language, code: code, type: typeof code });
-            if (code && code !== language) {
-                languageCodes.push(code);
-                console.log('[search] Added language code:', code);
-            } else {
-                console.warn('[search] Failed to convert language to code:', language, 'result:', code);
-            }
-        }
+        // selectedLanguages と selectedCountries はすでにコードで管理されているが、
+        // 念のため正しい形式であることを確認
+        const languageCodes = selectedLanguages.value.filter(code => code && code.length === 2);
+        const countryCodes = selectedCountries.value.filter(code => code && code.length === 2);
         
         const requestBody = {
             languages: languageCodes.length > 0 ? languageCodes : [],
@@ -171,12 +146,7 @@ const runSearch = async () => {
         };
 
         console.log('[search] Request body:', JSON.stringify(requestBody, null, 2));
-        console.log('[search] Selected languages (original):', selectedLanguages.value);
-        console.log('[search] Language codes (converted):', languageCodes);
-        console.log('[search] Selected countries (original):', selectedCountries.value);
-        console.log('[search] Country codes (converted):', countryCodes);
         console.log('[search] API URL:', `${config.public.apiBaseUrl}/api/v1/search/users`);
-        console.log('[search] Token length:', token ? token.length : 0);
 
         // APIを呼び出し
         const response = await $fetch(`${config.public.apiBaseUrl}/api/v1/search/users`, {
@@ -191,27 +161,10 @@ const runSearch = async () => {
         // レスポンスを検索結果に設定
         let results = response || [];
         
-        // デバッグ: レスポンスの全フィールドを確認
-        if (results.length > 0) {
-            console.log('[search] Response sample user (all fields):', results[0]);
-            console.log('[search] Response sample user keys:', Object.keys(results[0]));
-        }
-        
         // 言語検索の場合、ネイティブ言語でフィルタリング
         if (languageCodes.length > 0) {
             console.log('[search] Filtering by native language. Language codes:', languageCodes);
             console.log('[search] Total users before filtering:', results.length);
-            
-            if (results.length > 0) {
-                console.log('[search] Sample user data:', {
-                    username: results[0].username,
-                    native_language: results[0].native_language,
-                    native_language_type: typeof results[0].native_language,
-                    spoken_languages: results[0].spoken_languages,
-                    learning_languages: results[0].learning_languages,
-                    all_fields: Object.keys(results[0])
-                });
-            }
             
             results = results.filter(user => {
                 // native_languageが含まれている場合は、ネイティブ言語でフィルタリング
@@ -219,18 +172,12 @@ const runSearch = async () => {
                     const userNativeLang = String(user.native_language).toLowerCase().trim();
                     const matches = languageCodes.some(langCode => {
                         const normalizedLangCode = langCode.toLowerCase().trim();
-                        const match = userNativeLang === normalizedLangCode;
-                        if (!match) {
-                            console.log(`[search] User ${user.username}: native_language="${user.native_language}" (normalized: "${userNativeLang}") !== langCode="${langCode}" (normalized: "${normalizedLangCode}")`);
-                        }
-                        return match;
+                        return userNativeLang === normalizedLangCode;
                     });
-                    console.log(`[search] User ${user.username}: native_language="${user.native_language}", matches=${matches}`);
                     return matches;
                 }
-                // native_languageが含まれていない場合は警告を出して除外
-                console.warn(`[search] User ${user.username} has no native_language field - excluding from results`);
-                return false; // native_languageがない場合は除外
+                // native_languageが含まれていない場合は除外
+                return false;
             });
             
             console.log(`[search] Filtered results: ${results.length} users (from ${response?.length || 0} total)`);
@@ -257,8 +204,8 @@ const runSearch = async () => {
         }
         
     } catch (error) {
-        console.error('検索エラー:', error);
-        console.error('検索エラー詳細:', {
+        console.error('Search error:', error);
+        console.error('Search error details:', {
             message: error?.message,
             statusCode: error?.statusCode || error?.status,
             data: error?.data,
@@ -267,7 +214,7 @@ const runSearch = async () => {
         });
         
         // エラーメッセージを取得
-        let errorMessage = '検索に失敗しました';
+        let errorMessage = t.value.search.searchError;
         if (error?.data?.message) {
             errorMessage = error.data.message;
         } else if (error?.message) {
@@ -280,19 +227,19 @@ const runSearch = async () => {
         
         // エラーメッセージを表示
         if (statusCode === 401) {
-            alert('認証に失敗しました。再度ログインしてください。');
+            alert(t.value.search.authFailed);
         } else if (statusCode === 400) {
-            alert(`検索条件が無効です。\n詳細: ${errorMessage}`);
+            alert(`${t.value.search.invalidCondition}\n${errorMessage}`);
         } else if (statusCode === 500) {
-            const errorDetail = error?.data?.message || error?.message || 'サーバーエラーが発生しました';
-            console.error('[search] サーバーエラー詳細:', {
+            const errorDetail = error?.data?.message || error?.message || t.value.search.serverError;
+            console.error('[search] Server error details:', {
                 errorDetail,
                 fullError: error,
                 responseData: error?.response?._data
             });
-            alert(`サーバーエラーが発生しました。\n詳細: ${errorDetail}\n\nバックエンドサーバー（${config.public.apiBaseUrl}）のログを確認してください。`);
+            alert(`${t.value.search.serverError}\n${errorDetail}`);
         } else {
-            alert(`検索エラー: ${errorMessage}`);
+            alert(`${t.value.search.searchError}: ${errorMessage}`);
         }
     } finally {
         isLoading.value = false;
@@ -319,36 +266,39 @@ onMounted(async () => {
     <div class="bg-[#FFF5C9] min-h-screen">
         <!-- 固定ヘッダー -->
         <div class="fixed top-0 left-0 w-full bg-transparent z-50 border-b border-[#3c938b]">
-            <!-- 検索バー -->
+            <!-- 検索バーと言語切り替え -->
             <div class="p-4 bg-[#FFF5C9]">
-                <div 
-                    class="p-3 bg-white border-2 border-[#FEBC6E] rounded-lg flex items-center gap-2 cursor-pointer"
-                    @click="toggleDropdown">
-                    <!-- 検索アイコン -->
-                    <Search class="w-5 h-5 text-[#FEBC6E] flex-shrink-0" />
-                    
-                    <!-- 選択されたタグまたはプレースホルダー -->
-                    <div class="flex items-center gap-2 flex-1 overflow-x-auto">
-                        <span v-if="form.hobbies.length === 0" class="text-gray-400 text-sm">
-                            検索
-                        </span>
-                        <div v-else class="flex items-center gap-2 flex-wrap">
-                            <button
-                                v-for="hobby in form.hobbies" 
-                                :key="hobby"
-                                @click.stop="removeHobby(hobby)"
-                                class="bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-xs whitespace-nowrap text-[#4b3b2b] hover:bg-gray-50">
-                                {{ hobby }}
-                            </button>
+                <div class="flex items-center gap-2">
+                    <div 
+                        class="p-3 bg-white border-2 border-[#FEBC6E] rounded-lg flex items-center gap-2 cursor-pointer flex-1"
+                        @click="toggleDropdown">
+                        <!-- 検索アイコン -->
+                        <Search class="w-5 h-5 text-[#FEBC6E] flex-shrink-0" />
+                        
+                        <!-- 選択されたタグまたはプレースホルダー -->
+                        <div class="flex items-center gap-2 flex-1 overflow-x-auto">
+                            <span v-if="selectedLabels.length === 0" class="text-gray-400 text-sm">
+                                {{ t.search.searchPlaceholder }}
+                            </span>
+                            <div v-else class="flex items-center gap-2 flex-wrap">
+                                <span
+                                    v-for="label in selectedLabels" 
+                                    :key="label"
+                                    class="bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-xs whitespace-nowrap text-[#4b3b2b]">
+                                    {{ label }}
+                                </span>
+                            </div>
                         </div>
                     </div>
+                    <!-- 言語切り替え -->
+                    <LanguageSwitcher />
                 </div>
             </div>
 
             <!-- おすすめメッセージ（検索結果が表示されていない場合のみ） -->
             <div v-if="(!isSearching || (isSearching && searchResults.length === 0 && !isLoading)) && !showDropdown" class="px-4 pb-1 flex items-center gap-2 text-[#473c3c] border-b border-[#3c938b] bg-[#FFF5C9]">
                 <UserRoundPlus class="w-5 h-5" />
-                <span class="text-sm">おすすめの他のプロフィールをチェックしよう。</span>
+                <span class="text-sm">{{ t.search.recommendedMessage }}</span>
             </div>
         </div>
 
@@ -361,7 +311,7 @@ onMounted(async () => {
             <div class="absolute top-20 left-4 right-4 bg-white border-2 border-[#FEBC6E] rounded-lg shadow-lg pointer-events-auto max-h-[80vh] overflow-y-auto">
                 <div class="p-4">
                     <div class="flex items-center justify-between mb-3">
-                        <label class="text-sm font-semibold text-gray-800">検索</label>
+                        <label class="text-sm font-semibold text-gray-800">{{ t.search.searchPlaceholder }}</label>
                         <ChevronUp class="w-5 h-5 cursor-pointer text-[#FEBC6E]" @click="toggleDropdown" />
                     </div>
                     
@@ -369,50 +319,28 @@ onMounted(async () => {
                     <div class="mb-3 p-2 bg-white border-2 border-[#FEBC6E] rounded-lg min-h-[46px] flex items-center gap-2">
                         <div class="flex flex-wrap gap-2 flex-1">
                             <button
-                                v-for="hobby in form.hobbies" 
-                                :key="hobby"
-                                @click.stop="removeHobby(hobby)"
+                                v-for="code in selectedFilters" 
+                                :key="code"
+                                @click.stop="clearFilter(code)"
                                 class="bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-xs whitespace-nowrap text-[#4b3b2b] hover:bg-gray-50">
-                                {{ hobby }} ×
+                                {{ getFilterLabel(code) }} ×
                             </button>
-                            <span v-if="form.hobbies.length === 0" class="text-gray-400 text-xs">
-                                フィルターを選択してください
+                            <span v-if="selectedFilters.length === 0" class="text-gray-400 text-xs">
+                                {{ t.search.selectFilters }}
                             </span>
                         </div>
                         <Search class="w-5 h-5 cursor-pointer text-[#FEBC6E] flex-shrink-0" @click="runSearch" />
                     </div>
 
-                    <!-- 言語・国のタブ -->
-                    <div class="bg-white p-3 border-2 border-[#FEBC6E] rounded-lg">
-                        <div class="flex gap-4 pb-3 border-b border-[#FEBC6E] mb-3">
-                            <span 
-                                v-for="category in choiceCategories" 
-                                :key="category.name"
-                                @click="activeTab = category.name" 
-                                :class="activeTab === category.name
-                                    ? 'text-[#4a90e2] font-bold border-b-2 border-[#4a90e2] pb-1'
-                                    : 'text-gray-600 font-medium cursor-pointer'">
-                                {{ category.name }}
-                            </span>
-                        </div>
-
-                        <!-- タグ選択エリア -->
-                        <div 
-                            v-for="category in choiceCategories" 
-                            :key="category.name" 
-                            v-show="activeTab === category.name"
-                            class="flex flex-wrap gap-2">
-                            <button 
-                                v-for="tag in category.tags" 
-                                :key="tag" 
-                                @click="toggleHobby(tag)" 
-                                :class="form.hobbies.includes(tag)
-                                    ? 'bg-[#fceb96] text-gray-800 border border-[#FEBC6E] rounded-full px-3 py-1 text-sm'
-                                    : 'bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-sm hover:bg-gray-50'">
-                                {{ tag }}
-                            </button>
-                        </div>
-                    </div>
+                    <!-- 統一されたCategorySelect（言語と国をタブで切り替え） -->
+                    <CategorySelect
+                        :categories="searchCategories"
+                        :modelValue="selectedFilters"
+                        @update:modelValue="onFilterChange"
+                        :multiple="true"
+                        :panelOnly="true"
+                        :placeholder="t.search.selectFilters"
+                    />
                 </div>
             </div>
         </div>
@@ -422,7 +350,7 @@ onMounted(async () => {
             <div class="p-4 pb-24">
                 <!-- ローディング状態 -->
                 <div v-if="isLoading" class="flex items-center justify-center py-8">
-                    <div class="text-[#4b3b2b]">検索中...</div>
+                    <div class="text-[#4b3b2b]">{{ t.search.searching }}</div>
                 </div>
 
                 <!-- エラー表示 -->
@@ -433,17 +361,17 @@ onMounted(async () => {
                 <!-- 検索結果がない場合 -->
                 <div v-else-if="isSearching && !isLoading && searchResults.length === 0" class="flex items-center justify-center py-8">
                     <div class="text-[#4b3b2b]">
-                        {{ form.hobbies.length === 0 ? 'ユーザーが見つかりませんでした' : '検索結果が見つかりませんでした' }}
+                        {{ selectedLabels.length === 0 ? t.search.noUsers : t.search.noResults }}
                     </div>
                 </div>
 
                 <!-- 検索結果表示 -->
                 <div v-else-if="isSearching && !isLoading && searchResults.length > 0">
                     <!-- おすすめのユーザータイトル（フィルター条件がない場合） -->
-                    <div v-if="form.hobbies.length === 0" class="mb-2 px-2">
+                    <div v-if="selectedLabels.length === 0" class="mb-2 px-2">
                         <div class="flex items-center gap-2 text-[#473c3c]">
                             <UserRoundPlus class="w-5 h-5" />
-                            <span class="text-sm font-semibold">おすすめのユーザー</span>
+                            <span class="text-sm font-semibold">{{ t.search.recommendedUsers }}</span>
                         </div>
                     </div>
                     
@@ -465,7 +393,7 @@ onMounted(async () => {
                 <div v-else-if="!isSearching" class="flex items-center justify-center py-8">
                     <div class="text-[#4b3b2b] text-center">
                         <UserRoundPlus class="w-8 h-8 mx-auto mb-2" />
-                        <p>検索条件を選択して、ユーザーを探してみましょう！</p>
+                        <p>{{ t.search.searchPrompt }}</p>
                     </div>
                 </div>
             </div>
