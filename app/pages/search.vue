@@ -19,46 +19,62 @@ const toggleDropdown = () => {
     showDropdown.value = !showDropdown.value;
 };
 
-// 選択された言語と国（コードで管理）
-const selectedLanguages = ref([]);
-const selectedCountries = ref([]);
+// 選択されたフィルター（コードで管理）- 言語と国を統合
+const selectedFilters = ref([]);
 
-// 動的なカテゴリ（言語に応じて切り替え）- コードとラベルを持つ形式
-const languageCategory = computed(() => ({
-    name: t.value.search.language,
-    tags: [
-        { code: 'ja', label: t.value.search.languages.japanese },
-        { code: 'en', label: t.value.search.languages.english },
-        { code: 'ko', label: t.value.search.languages.korean },
-        { code: 'zh', label: t.value.search.languages.chinese },
-        { code: 'fr', label: t.value.search.languages.french },
-        { code: 'es', label: t.value.search.languages.spanish }
-    ]
-}));
-
-const countryCategory = computed(() => ({
-    name: t.value.search.country,
-    tags: [
-        { code: 'JP', label: t.value.search.countries.japan },
-        { code: 'US', label: t.value.search.countries.usa },
-        { code: 'KR', label: t.value.search.countries.korea },
-        { code: 'CN', label: t.value.search.countries.china },
-        { code: 'GB', label: t.value.search.countries.uk },
-        { code: 'FR', label: t.value.search.countries.france }
-    ]
-}));
+// 言語と国を統合したカテゴリ
+const searchCategories = computed(() => [
+    {
+        name: t.value.search.language,
+        tags: [
+            { code: 'lang:ja', label: t.value.search.languages.japanese },
+            { code: 'lang:en', label: t.value.search.languages.english },
+            { code: 'lang:ko', label: t.value.search.languages.korean },
+            { code: 'lang:zh', label: t.value.search.languages.chinese },
+            { code: 'lang:fr', label: t.value.search.languages.french },
+            { code: 'lang:es', label: t.value.search.languages.spanish }
+        ]
+    },
+    {
+        name: t.value.search.country,
+        tags: [
+            { code: 'country:JP', label: t.value.search.countries.japan },
+            { code: 'country:US', label: t.value.search.countries.usa },
+            { code: 'country:KR', label: t.value.search.countries.korea },
+            { code: 'country:CN', label: t.value.search.countries.china },
+            { code: 'country:GB', label: t.value.search.countries.uk },
+            { code: 'country:FR', label: t.value.search.countries.france }
+        ]
+    }
+]);
 
 // 選択されたタグのラベルを取得（表示用）
 const selectedLabels = computed(() => {
-    const langLabels = selectedLanguages.value.map(code => {
-        const tag = languageCategory.value.tags.find(t => t.code === code);
+    return selectedFilters.value.map(code => {
+        const allTags = searchCategories.value.flatMap(c => c.tags);
+        const tag = allTags.find(t => t.code === code);
         return tag?.label || code;
     });
-    const countryLabels = selectedCountries.value.map(code => {
-        const tag = countryCategory.value.tags.find(t => t.code === code);
-        return tag?.label || code;
-    });
-    return [...langLabels, ...countryLabels];
+});
+
+// コードからラベルを取得（テンプレート用ヘルパー）
+const getFilterLabel = (code) => {
+    const allTags = searchCategories.value.flatMap(c => c.tags);
+    const tag = allTags.find(t => t.code === code);
+    return tag?.label || code;
+};
+
+// API用に言語と国を分離
+const selectedLanguages = computed(() => {
+    return selectedFilters.value
+        .filter(code => code.startsWith('lang:'))
+        .map(code => code.replace('lang:', ''));
+});
+
+const selectedCountries = computed(() => {
+    return selectedFilters.value
+        .filter(code => code.startsWith('country:'))
+        .map(code => code.replace('country:', ''));
 });
 
 // 上限チェック
@@ -66,43 +82,31 @@ const LIMIT_LANGUAGE = 2;
 const LIMIT_COUNTRY = 2;
 const LIMIT_TOTAL = 4;
 
-// 言語選択時の処理
-const onLanguageChange = (newValue) => {
-    const totalCount = newValue.length + selectedCountries.value.length;
-    if (newValue.length > LIMIT_LANGUAGE) {
+// フィルター選択時の処理
+const onFilterChange = (newValue) => {
+    const newLanguages = newValue.filter(code => code.startsWith('lang:'));
+    const newCountries = newValue.filter(code => code.startsWith('country:'));
+    
+    if (newLanguages.length > LIMIT_LANGUAGE) {
         alert(t.value.search.limitLanguage);
         return;
     }
-    if (totalCount > LIMIT_TOTAL) {
-        alert(t.value.search.limitTotal);
-        return;
-    }
-    selectedLanguages.value = newValue;
-};
-
-// 国選択時の処理
-const onCountryChange = (newValue) => {
-    const totalCount = selectedLanguages.value.length + newValue.length;
-    if (newValue.length > LIMIT_COUNTRY) {
+    if (newCountries.length > LIMIT_COUNTRY) {
         alert(t.value.search.limitCountry);
         return;
     }
-    if (totalCount > LIMIT_TOTAL) {
+    if (newValue.length > LIMIT_TOTAL) {
         alert(t.value.search.limitTotal);
         return;
     }
-    selectedCountries.value = newValue;
+    selectedFilters.value = newValue;
 };
 
 // フィルターをクリア
-const clearFilter = (type, code) => {
-    if (type === 'language') {
-        selectedLanguages.value = selectedLanguages.value.filter(c => c !== code);
-    } else {
-        selectedCountries.value = selectedCountries.value.filter(c => c !== code);
-    }
+const clearFilter = (code) => {
+    selectedFilters.value = selectedFilters.value.filter(c => c !== code);
     // フィルターを削除した場合、検索中なら再検索
-    if (isSearching.value && selectedLanguages.value.length === 0 && selectedCountries.value.length === 0) {
+    if (isSearching.value && selectedFilters.value.length === 0) {
         runSearch();
     }
 };
@@ -285,57 +289,29 @@ onMounted(async () => {
                     <!-- 選択されたフィルター表示エリア -->
                     <div class="mb-3 p-2 bg-white border-2 border-[#FEBC6E] rounded-lg min-h-[46px] flex items-center gap-2">
                         <div class="flex flex-wrap gap-2 flex-1">
-                            <!-- 言語のタグ -->
                             <button
-                                v-for="code in selectedLanguages" 
-                                :key="'lang-' + code"
-                                @click.stop="clearFilter('language', code)"
+                                v-for="code in selectedFilters" 
+                                :key="code"
+                                @click.stop="clearFilter(code)"
                                 class="bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-xs whitespace-nowrap text-[#4b3b2b] hover:bg-gray-50">
-                                {{ languageCategory.tags.find(t => t.code === code)?.label || code }} ×
+                                {{ getFilterLabel(code) }} ×
                             </button>
-                            <!-- 国のタグ -->
-                            <button
-                                v-for="code in selectedCountries" 
-                                :key="'country-' + code"
-                                @click.stop="clearFilter('country', code)"
-                                class="bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-xs whitespace-nowrap text-[#4b3b2b] hover:bg-gray-50">
-                                {{ countryCategory.tags.find(t => t.code === code)?.label || code }} ×
-                            </button>
-                            <span v-if="selectedLabels.length === 0" class="text-gray-400 text-xs">
+                            <span v-if="selectedFilters.length === 0" class="text-gray-400 text-xs">
                                 {{ t.search.selectFilters }}
                             </span>
                         </div>
                         <Search class="w-5 h-5 cursor-pointer text-[#FEBC6E] flex-shrink-0" @click="runSearch" />
                     </div>
 
-                    <!-- 言語と国を横並びで表示 -->
-                    <div class="flex gap-3">
-                        <!-- CategorySelectを使用した言語選択 -->
-                        <div class="flex-1">
-                            <CategorySelect
-                                :title="t.search.language"
-                                :categories="[languageCategory]"
-                                :modelValue="selectedLanguages"
-                                @update:modelValue="onLanguageChange"
-                                :multiple="true"
-                                :panelOnly="true"
-                                :placeholder="t.search.selectFilters"
-                            />
-                        </div>
-
-                        <!-- CategorySelectを使用した国選択 -->
-                        <div class="flex-1">
-                            <CategorySelect
-                                :title="t.search.country"
-                                :categories="[countryCategory]"
-                                :modelValue="selectedCountries"
-                                @update:modelValue="onCountryChange"
-                                :multiple="true"
-                                :panelOnly="true"
-                                :placeholder="t.search.selectFilters"
-                            />
-                        </div>
-                    </div>
+                    <!-- 統一されたCategorySelect（言語と国をタブで切り替え） -->
+                    <CategorySelect
+                        :categories="searchCategories"
+                        :modelValue="selectedFilters"
+                        @update:modelValue="onFilterChange"
+                        :multiple="true"
+                        :panelOnly="true"
+                        :placeholder="t.search.selectFilters"
+                    />
                 </div>
             </div>
         </div>
