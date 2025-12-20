@@ -46,6 +46,7 @@
             :max="max"
             :step="step"
             :value="internalValue"
+            :disabled="disabled"
             @input="onInput"
             @change="onChange"
             :style="trackStyle"
@@ -78,6 +79,7 @@ const props = defineProps({
   min: { type: Number, default: 1 },
   max: { type: Number, default: 5 },
   step: { type: Number, default: 1 },
+  disabled: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:modelValue'])
 
