@@ -266,6 +266,7 @@ import CategorySelect from '~/components/CategorySelect.vue'
 import Footer from '~/components/Footer.vue'
 import { useAuth } from '~/composables/useAuth'
 import { normalizeCountryCode, getCountryNameByLocale } from '~/utils/countryMapping'
+import { getGenderLabelByLocale } from '~/utils/genderMapping'
 import profileHeader from '~/components/profile-header.vue'
 import { useLocale } from '~/composables/useLocale'
 
@@ -360,16 +361,7 @@ function getLanguageLabel(langCode: string): string {
 }
 
 function getGenderLabel(g: string): string {
-  switch (g) {
-    case 'male':
-      return '男性'
-    case 'female':
-      return '女性'
-    case 'other':
-      return 'その他'
-    default:
-      return ''
-  }
+  return getGenderLabelByLocale(g, locale.value)
 }
 
 // ★ 既存の選択肢のデータ（サンプル）
