@@ -26,9 +26,10 @@ interface ChatWithPartner extends Chat {
   partner_id: string
   partner_name?: string  // other_user.username から取得
   partner_avatar_url?: string | null  // other_user.avatar_url から取得
-  last_message?: string  // last_message.content から取得
-  last_message_time?: string  // last_message.sent_at から取得（日付）
-  last_message_hour?: string  // last_message.sent_at から取得（時刻）
+  last_message_content?: string  // last_message.content から取得
+  last_message_time?: string | null  // last_message.sent_at から取得（日付）
+  last_message_hour?: string | null  // last_message.sent_at から取得（時刻）
+  _last_message_at?: string | null  // ソート用
 }
 
 // 日付をフォーマットする関数（月/日の形式）
@@ -95,7 +96,7 @@ export const useChat = () => {
             // バックエンドから返ってくる other_user.avatar_url を使用
             partner_avatar_url: chat.other_user?.avatar_url || null,
             // バックエンドから返ってくる last_message.content を使用
-            last_message: chat.last_message?.content,
+            last_message_content: chat.last_message?.content,
             // バックエンドから返ってくる last_message.sent_at を使用（ソート用に元のISO文字列も保持）
             last_message_time: chat.last_message?.sent_at
               ? formatDate(chat.last_message.sent_at)
