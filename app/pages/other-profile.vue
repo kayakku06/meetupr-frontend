@@ -39,7 +39,7 @@
         <label class="flex flex-col gap-2">
           <div class="text-sm text-[#6a5a3b]">{{ t.otherProfile.faculty }}</div>
           <div class="px-2 py-2 bg-white border-2 rounded-md text-sm text-[#4b3b2b]"
-            :class="['border-[var(--meetupr-sub)]']">{{ user.department }}</div>
+            :class="['border-[var(--meetupr-sub)]']">{{ localizedDepartment }}</div>
         </label>
 
         <div class="flex flex-col gap-2">
@@ -133,7 +133,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useRuntimeConfig } from '#app'
 import { useAuth } from '~/composables/useAuth'
 import { getFlagCodeFromCountryCode, getCountryNameByLocale } from '~/utils/countryMapping'
-import { getMajorLabel } from '~/utils/majorMapping'
+import { getMajorLabelByLocale } from '~/utils/majorMapping'
 import { getGenderLabel } from '~/utils/genderMapping'
 import { getLanguageLabel } from '~/utils/languageMapping'
 import { MessageCircle } from 'lucide-vue-next'
@@ -149,6 +149,8 @@ const { getAccessToken } = useAuth()
 
 // residenceコード（生データ）を保持
 const residenceCode = ref('')
+// majorコード（生データ）を保持
+const majorCode = ref('')
 
 const user = ref({
   name: '',
@@ -169,6 +171,11 @@ const user = ref({
 // ロケールに応じて出身国名を取得
 const localizedOrigin = computed(() => {
   return getCountryNameByLocale(residenceCode.value, locale.value) || residenceCode.value || ''
+})
+
+// ロケールに応じて学部名を取得
+const localizedDepartment = computed(() => {
+  return getMajorLabelByLocale(majorCode.value, locale.value) || majorCode.value || ''
 })
 
 const isLoading = ref(true)
@@ -215,11 +222,13 @@ async function fetchProfile() {
 
     // residenceCodeを保存（ロケール切り替え時に使用）
     residenceCode.value = response.residence || ''
+    // majorCodeを保存（ロケール切り替え時に使用）
+    majorCode.value = response.major || ''
 
     // データを反映
     user.value = {
       name: response.username || '',
-      department: getMajorLabel(response.major) || '',
+      department: '', // localizedDepartmentを使用
       gender: getGenderLabel(response.gender) || '',
       origin: '', // localizedOriginを使用
       flag: getFlagCodeFromCountryCode(response.residence) || '',
