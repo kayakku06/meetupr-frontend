@@ -189,8 +189,37 @@ const runSearch = async () => {
         });
 
         // レスポンスを検索結果に設定
-        // バックエンドから受け取ったデータは国コード（英語）なので、そのまま使用
-        searchResults.value = response || [];
+        let results = response || [];
+        
+        // 言語検索の場合、ネイティブ言語でフィルタリング
+        if (languageCodes.length > 0) {
+            console.log('[search] Filtering by native language. Language codes:', languageCodes);
+            console.log('[search] Sample user data:', results.length > 0 ? {
+                username: results[0].username,
+                native_language: results[0].native_language,
+                spoken_languages: results[0].spoken_languages,
+                learning_languages: results[0].learning_languages
+            } : 'No results');
+            
+            results = results.filter(user => {
+                // native_languageが含まれている場合は、ネイティブ言語でフィルタリング
+                if (user.native_language) {
+                    const userNativeLang = String(user.native_language).toLowerCase();
+                    const matches = languageCodes.some(langCode => 
+                        userNativeLang === langCode.toLowerCase()
+                    );
+                    console.log(`[search] User ${user.username}: native_language="${user.native_language}", matches=${matches}`);
+                    return matches;
+                }
+                // native_languageが含まれていない場合は警告を出してそのまま表示
+                console.warn(`[search] User ${user.username} has no native_language field - cannot filter by native language`);
+                return true;
+            });
+            
+            console.log(`[search] Filtered results: ${results.length} users (from ${response?.length || 0} total)`);
+        }
+        
+        searchResults.value = results;
         
         // デバッグ: 国旗マッピングの確認
         if (searchResults.value.length > 0) {
