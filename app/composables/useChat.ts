@@ -73,6 +73,7 @@ export const useChat = () => {
 
       // チャット情報を整形（パートナー情報を含める）
       // メッセージがあるチャットのみを表示（last_messageが存在するもののみ）
+      // 最新メッセージ順（新しい順）にソート
       chats.value = response
         .filter((chat) => chat.last_message != null && chat.last_message.content != null)
         .map((chat) => {
@@ -86,11 +87,19 @@ export const useChat = () => {
             partner_avatar_url: chat.other_user?.avatar_url || null,
             // バックエンドから返ってくる last_message.content を使用
             last_message: chat.last_message?.content,
-            // バックエンドから返ってくる last_message.sent_at を使用
+            // バックエンドから返ってくる last_message.sent_at を使用（ソート用に元のISO文字列も保持）
             last_message_time: chat.last_message?.sent_at
               ? formatDate(chat.last_message.sent_at)
-              : null
+              : null,
+            // ソート用に元のISO日時を保持
+            _last_message_at: chat.last_message?.sent_at || null
           }
+        })
+        .sort((a, b) => {
+          // 最新メッセージが上に来るように降順ソート
+          const timeA = a._last_message_at ? new Date(a._last_message_at).getTime() : 0
+          const timeB = b._last_message_at ? new Date(b._last_message_at).getTime() : 0
+          return timeB - timeA
         })
 
       return chats.value
