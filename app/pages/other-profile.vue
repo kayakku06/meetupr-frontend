@@ -1,16 +1,12 @@
 <template>
+  <ProfileHeader 
+    class="fixed inset-x-0 top-0 z-50" 
+    :title="user.name || t.profile.user" 
+    :showBackButton="true" 
+    @back="handleBack" 
+  />
   <div class="min-h-screen pb-20 font-sans bg-[var(--meetupr-main)]">
-    <header class="h-9 fixed top-0 left-0 right-0 z-50 bg-[var(--meetupr-main)]">
-      <button @click="handleBack" class="text-gray-700 hover:text-gray-900 p-2">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
-          </path>
-        </svg>
-      </button>
-
-    </header>
-
-    <main class="max-w-[420px] mx-2 sm:mx-auto p-5 pt-16 bg-transparent">
+    <main class="max-w-[420px] mx-2 sm:mx-auto p-5 pt-28 bg-transparent">
       <div v-if="isLoading" class="flex items-center justify-center py-8">
         <div class="text-[#4b3b2b]">{{ t.profile.loading }}</div>
       </div>
@@ -142,6 +138,7 @@ import { getGenderLabel } from '~/utils/genderMapping'
 import { getLanguageLabel } from '~/utils/languageMapping'
 import { MessageCircle } from 'lucide-vue-next'
 import Footer from '~/components/Footer.vue'
+import ProfileHeader from '~/components/profile-header.vue'
 import { useLocale } from '~/composables/useLocale'
 
 const { t, locale } = useLocale()
