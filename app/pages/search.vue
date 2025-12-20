@@ -5,6 +5,7 @@ import Footer from '~/components/Footer.vue'
 import { Search, UserRoundPlus, ChevronUp } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
 import { normalizeCountryCode, getFlagCodeFromCountryCode } from '~/utils/countryMapping'
+import { normalizeLanguageCode } from '~/utils/languageMapping'
 
 const { getAccessToken } = useAuth()
 const config = useRuntimeConfig()
@@ -150,13 +151,28 @@ const runSearch = async () => {
             }
         }
         
+        // 言語名を言語コードに変換（データベースでは言語コード（例: "ja"）で管理）
+        const languageCodes = [];
+        for (const language of selectedLanguages.value) {
+            console.log('[search] Processing language:', language);
+            const code = normalizeLanguageCode(language);
+            console.log('[search] Language conversion result:', { original: language, code: code, type: typeof code });
+            if (code && code !== language) {
+                languageCodes.push(code);
+                console.log('[search] Added language code:', code);
+            } else {
+                console.warn('[search] Failed to convert language to code:', language, 'result:', code);
+            }
+        }
+        
         const requestBody = {
-            languages: selectedLanguages.value.length > 0 ? selectedLanguages.value : [],
+            languages: languageCodes.length > 0 ? languageCodes : [],
             countries: countryCodes.length > 0 ? countryCodes : []
         };
 
         console.log('[search] Request body:', JSON.stringify(requestBody, null, 2));
-        console.log('[search] Selected languages:', selectedLanguages.value);
+        console.log('[search] Selected languages (original):', selectedLanguages.value);
+        console.log('[search] Language codes (converted):', languageCodes);
         console.log('[search] Selected countries (original):', selectedCountries.value);
         console.log('[search] Country codes (converted):', countryCodes);
         console.log('[search] API URL:', `${config.public.apiBaseUrl}/api/v1/search/users`);
@@ -173,8 +189,54 @@ const runSearch = async () => {
         });
 
         // レスポンスを検索結果に設定
-        // バックエンドから受け取ったデータは国コード（英語）なので、そのまま使用
-        searchResults.value = response || [];
+        let results = response || [];
+        
+        // デバッグ: レスポンスの全フィールドを確認
+        if (results.length > 0) {
+            console.log('[search] Response sample user (all fields):', results[0]);
+            console.log('[search] Response sample user keys:', Object.keys(results[0]));
+        }
+        
+        // 言語検索の場合、ネイティブ言語でフィルタリング
+        if (languageCodes.length > 0) {
+            console.log('[search] Filtering by native language. Language codes:', languageCodes);
+            console.log('[search] Total users before filtering:', results.length);
+            
+            if (results.length > 0) {
+                console.log('[search] Sample user data:', {
+                    username: results[0].username,
+                    native_language: results[0].native_language,
+                    native_language_type: typeof results[0].native_language,
+                    spoken_languages: results[0].spoken_languages,
+                    learning_languages: results[0].learning_languages,
+                    all_fields: Object.keys(results[0])
+                });
+            }
+            
+            results = results.filter(user => {
+                // native_languageが含まれている場合は、ネイティブ言語でフィルタリング
+                if (user.native_language) {
+                    const userNativeLang = String(user.native_language).toLowerCase().trim();
+                    const matches = languageCodes.some(langCode => {
+                        const normalizedLangCode = langCode.toLowerCase().trim();
+                        const match = userNativeLang === normalizedLangCode;
+                        if (!match) {
+                            console.log(`[search] User ${user.username}: native_language="${user.native_language}" (normalized: "${userNativeLang}") !== langCode="${langCode}" (normalized: "${normalizedLangCode}")`);
+                        }
+                        return match;
+                    });
+                    console.log(`[search] User ${user.username}: native_language="${user.native_language}", matches=${matches}`);
+                    return matches;
+                }
+                // native_languageが含まれていない場合は警告を出して除外
+                console.warn(`[search] User ${user.username} has no native_language field - excluding from results`);
+                return false; // native_languageがない場合は除外
+            });
+            
+            console.log(`[search] Filtered results: ${results.length} users (from ${response?.length || 0} total)`);
+        }
+        
+        searchResults.value = results;
         
         // デバッグ: 国旗マッピングの確認
         if (searchResults.value.length > 0) {
