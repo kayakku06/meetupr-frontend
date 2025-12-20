@@ -102,7 +102,7 @@ const fetchChatDetails = async () => {
 // パートナーのプロフィールを取得してネイティブ言語を取得
 const fetchPartnerProfile = async (userId: string) => {
   try {
-    const profileResponse = await $fetch<{ native_language?: string }>('/api/profile', {
+    const profileResponse = await $fetch<{ native_language?: string, avatar_url?: string | null }>('/api/profile', {
       query: {
         user_id: userId
       }
@@ -110,6 +110,12 @@ const fetchPartnerProfile = async (userId: string) => {
 
     if (profileResponse.native_language) {
       partnerNativeLanguage.value = profileResponse.native_language
+    }
+
+    if (profileResponse.avatar_url) {
+      partnerAvatarUrl.value = profileResponse.avatar_url
+    } else {
+      partnerAvatarUrl.value = null
     }
   } catch (err: any) {
     console.error('パートナーのプロフィール取得に失敗しました:', err)
@@ -126,6 +132,7 @@ const errorMessage = ref('')
 const partnerName = ref<string>('ユーザー')
 const partnerNativeLanguage = ref<string>('ja') // デフォルトは日本語
 const partnerId = ref<string | null>(null)
+const partnerAvatarUrl = ref<string | null>(null)
 
 let ws: WebSocket | null = null
 let reconnectAttempts = 0
@@ -424,6 +431,16 @@ const retryConnection = () => {
   connectWebSocket()
 }
 
+const goToPartnerProfile = () => {
+  if (!partnerId.value) return
+  router.push({
+    path: '/other-profile',
+    query: {
+      user_id: partnerId.value
+    }
+  })
+}
+
 // メッセージを翻訳（日本語⇔英語のみ）
 const translateMessage = async (msg: Message) => {
   // 既に翻訳が表示されている場合は非表示にする
@@ -546,7 +563,23 @@ onUnmounted(() => {
                         <!-- 相手のメッセージ（左側） -->
                         <div v-if="msg.sender_id !== currentUserId" class="flex items-start space-x-3 mb-4">
                             <!-- 緑のアバター -->
-                            <div class="w-10 h-10 rounded-full bg-teal-600 flex-shrink-0"></div>
+                          <button
+                            type="button"
+                            class="w-10 h-10 flex-shrink-0 cursor-pointer"
+                            :class="{ 'cursor-default': !partnerId }"
+                            :disabled="!partnerId"
+                            @click="goToPartnerProfile"
+                            aria-label="相手のプロフィールへ"
+                          >
+                          <img
+                            v-if="partnerAvatarUrl"
+                            :src="partnerAvatarUrl"
+                            :alt="partnerName"
+                            class="w-10 h-10 rounded-full object-cover"
+                            @error="partnerAvatarUrl = null"
+                          />
+                          <div v-else class="w-10 h-10 rounded-full bg-teal-600"></div>
+                          </button>
                             <div class="space-y-1 max-w-[75%]">
                                 <!-- 薄いオレンジの吹き出し（タップ可能） -->
                                 <div 

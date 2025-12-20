@@ -26,8 +26,10 @@ interface ChatWithPartner extends Chat {
   partner_id: string
   partner_name?: string  // other_user.username から取得
   partner_avatar_url?: string | null  // other_user.avatar_url から取得
-  last_message?: string  // last_message.content から取得
-  last_message_time?: string  // last_message.sent_at から取得
+  last_message_content?: string  // last_message.content から取得
+  last_message_time?: string | null  // last_message.sent_at から取得（日付）
+  last_message_hour?: string | null  // last_message.sent_at から取得（時刻）
+  _last_message_at?: string | null  // ソート用
 }
 
 // 日付をフォーマットする関数（月/日の形式）
@@ -36,6 +38,14 @@ const formatDate = (dateString: string): string => {
   const month = date.getMonth() + 1
   const day = date.getDate()
   return `${month}/${day}`
+}
+
+// 時刻をフォーマットする関数（HH:MMの形式）
+const formatTime = (dateString: string): string => {
+  const date = new Date(dateString)
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${hours}:${minutes}`
 }
 
 export const useChat = () => {
@@ -73,6 +83,7 @@ export const useChat = () => {
 
       // チャット情報を整形（パートナー情報を含める）
       // メッセージがあるチャットのみを表示（last_messageが存在するもののみ）
+      // 最新メッセージ順（新しい順）にソート
       chats.value = response
         .filter((chat) => chat.last_message != null && chat.last_message.content != null)
         .map((chat) => {
@@ -85,12 +96,24 @@ export const useChat = () => {
             // バックエンドから返ってくる other_user.avatar_url を使用
             partner_avatar_url: chat.other_user?.avatar_url || null,
             // バックエンドから返ってくる last_message.content を使用
-            last_message: chat.last_message?.content,
-            // バックエンドから返ってくる last_message.sent_at を使用
+            last_message_content: chat.last_message?.content,
+            // バックエンドから返ってくる last_message.sent_at を使用（ソート用に元のISO文字列も保持）
             last_message_time: chat.last_message?.sent_at
               ? formatDate(chat.last_message.sent_at)
-              : null
+              : null,
+            // 時刻を追加
+            last_message_hour: chat.last_message?.sent_at
+              ? formatTime(chat.last_message.sent_at)
+              : null,
+            // ソート用に元のISO日時を保持
+            _last_message_at: chat.last_message?.sent_at || null
           }
+        })
+        .sort((a, b) => {
+          // 最新メッセージが上に来るように降順ソート
+          const timeA = a._last_message_at ? new Date(a._last_message_at).getTime() : 0
+          const timeB = b._last_message_at ? new Date(b._last_message_at).getTime() : 0
+          return timeB - timeA
         })
 
       return chats.value
