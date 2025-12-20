@@ -274,36 +274,35 @@ onMounted(async () => {
 
 <template>
     <div class="bg-[#FFF5C9] min-h-screen">
-        <!-- 言語切り替え -->
-        <div class="fixed top-2 right-2 z-[70]">
-            <LanguageSwitcher />
-        </div>
-        
         <!-- 固定ヘッダー -->
         <div class="fixed top-0 left-0 w-full bg-transparent z-50 border-b border-[#3c938b]">
-            <!-- 検索バー -->
+            <!-- 検索バーと言語切り替え -->
             <div class="p-4 bg-[#FFF5C9]">
-                <div 
-                    class="p-3 bg-white border-2 border-[#FEBC6E] rounded-lg flex items-center gap-2 cursor-pointer"
-                    @click="toggleDropdown">
-                    <!-- 検索アイコン -->
-                    <Search class="w-5 h-5 text-[#FEBC6E] flex-shrink-0" />
-                    
-                    <!-- 選択されたタグまたはプレースホルダー -->
-                    <div class="flex items-center gap-2 flex-1 overflow-x-auto">
-                        <span v-if="form.hobbies.length === 0" class="text-gray-400 text-sm">
-                            {{ t.search.searchPlaceholder }}
-                        </span>
-                        <div v-else class="flex items-center gap-2 flex-wrap">
-                            <button
-                                v-for="hobby in form.hobbies" 
-                                :key="hobby"
-                                @click.stop="removeHobby(hobby)"
-                                class="bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-xs whitespace-nowrap text-[#4b3b2b] hover:bg-gray-50">
-                                {{ hobby }}
-                            </button>
+                <div class="flex items-center gap-2">
+                    <div 
+                        class="p-3 bg-white border-2 border-[#FEBC6E] rounded-lg flex items-center gap-2 cursor-pointer flex-1"
+                        @click="toggleDropdown">
+                        <!-- 検索アイコン -->
+                        <Search class="w-5 h-5 text-[#FEBC6E] flex-shrink-0" />
+                        
+                        <!-- 選択されたタグまたはプレースホルダー -->
+                        <div class="flex items-center gap-2 flex-1 overflow-x-auto">
+                            <span v-if="form.hobbies.length === 0" class="text-gray-400 text-sm">
+                                {{ t.search.searchPlaceholder }}
+                            </span>
+                            <div v-else class="flex items-center gap-2 flex-wrap">
+                                <button
+                                    v-for="hobby in form.hobbies" 
+                                    :key="hobby"
+                                    @click.stop="removeHobby(hobby)"
+                                    class="bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-xs whitespace-nowrap text-[#4b3b2b] hover:bg-gray-50">
+                                    {{ hobby }}
+                                </button>
+                            </div>
                         </div>
                     </div>
+                    <!-- 言語切り替え -->
+                    <LanguageSwitcher />
                 </div>
             </div>
 
