@@ -188,17 +188,17 @@ const saveChatInterest = async (newInterest: number) => {
   }
 }
 
-// 会いたい度の変更を監視
-watch(desire, (newValue) => {
-  console.log('[Chat] Interest changed:', newValue)
-  saveChatInterest(newValue)
-}, { immediate: false })
-
 const message = ref('')
 const messages = ref<Message[]>([])
 const desire = ref(3)
 const messagesContainer = ref<HTMLElement | null>(null)
 const isSavingInterest = ref(false)
+
+// 会いたい度の変更を監視（desireの定義の後に配置）
+watch(desire, (newValue) => {
+  console.log('[Chat] Interest changed:', newValue)
+  saveChatInterest(newValue)
+}, { immediate: false })
 const connectionStatus = ref<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected')
 const errorMessage = ref('')
 const partnerName = ref<string>('ユーザー')
