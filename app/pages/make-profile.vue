@@ -157,7 +157,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import Footer from '~/components/Footer.vue'
 import CategorySelect from '~/components/CategorySelect.vue'
 
-import { normalizeCountryCode } from '~/utils/countryMapping';
+import { normalizeCountryCode, getCountryNameByLocale } from '~/utils/countryMapping';
 import { useLocale } from '~/composables/useLocale'
 
 const { t, locale } = useLocale()
@@ -289,118 +289,30 @@ onMounted(() => {
 // CategorySelect が内部でタブ管理するため不要
 
 // 地域ごとの国分類（言語と同じ形式）
-const regionCategories = ref([
-    {
-        name: '東アジア',
-        tags: [
-            { code: 'JP', label: '日本' },
-            { code: 'CN', label: '中国' },
-            { code: 'KR', label: '韓国' },
-            { code: 'TW', label: '台湾' },
-            { code: 'HK', label: '香港' }
+// 地域カテゴリの基本データ（コードのみ）
+const regionCategoriesData = [
+    { nameJa: '東アジア', nameEn: 'East Asia', codes: ['JP', 'CN', 'KR', 'TW', 'HK'] },
+    { nameJa: '東南アジア', nameEn: 'Southeast Asia', codes: ['ID', 'VN', 'MY', 'MM', 'KH', 'SG', 'LA', 'TH', 'PH', 'BN'] },
+    { nameJa: '南アジア', nameEn: 'South Asia', codes: ['IN', 'BD', 'PK', 'NP', 'LK', 'MV'] },
+    { nameJa: '中央アジア', nameEn: 'Central Asia', codes: ['KG', 'UZ', 'TJ', 'KZ', 'AF', 'MN'] },
+    { nameJa: '西アジア・中東', nameEn: 'West Asia / Middle East', codes: ['TR', 'IL', 'OM'] },
+    { nameJa: 'オセアニア', nameEn: 'Oceania', codes: ['AU'] },
+    { nameJa: '北米', nameEn: 'North America', codes: ['US', 'CA'] },
+    { nameJa: '中米・南米', nameEn: 'Central / South America', codes: ['MX', 'GT', 'PE'] },
+    { nameJa: 'ヨーロッパ', nameEn: 'Europe', codes: ['GB', 'FR', 'DE', 'IT', 'ES', 'CH', 'UA', 'RU', 'LT', 'SE', 'NO', 'HU', 'AT'] },
+    { nameJa: 'アフリカ', nameEn: 'Africa', codes: ['EG', 'GH', 'NG', 'ET', 'BF', 'UG', 'NA', 'MA', 'GA'] }
+]
 
-        ]
-    },
-    {
-        name: '東南アジア',
-        tags: [
-            { code: 'ID', label: 'インドネシア' },
-            { code: 'VN', label: 'ベトナム' },
-            { code: 'MY', label: 'マレーシア' },
-            { code: 'MM', label: 'ミャンマー' },
-            { code: 'KH', label: 'カンボジア' },
-            { code: 'SG', label: 'シンガポール' },
-            { code: 'LA', label: 'ラオス' },
-            { code: 'TH', label: 'タイ' },
-            { code: 'PH', label: 'フィリピン' },
-            { code: 'BN', label: 'ブルネイ' }
-        ]
-    },
-    {
-        name: '南アジア',
-        tags: [
-            { code: 'IN', label: 'インド' },
-            { code: 'BD', label: 'バングラディシュ' },
-            { code: 'PK', label: 'パキスタン' },
-            { code: 'NP', label: 'ネパール' },
-            { code: 'LK', label: 'スリランカ' },
-            { code: 'MV', label: 'モルディブ' }
-        ]
-    },
-    {
-        name: '中央アジア',
-        tags: [
-            { code: 'KG', label: 'キルギス' },
-            { code: 'UZ', label: 'ウズベキスタン' },
-            { code: 'TJ', label: 'タジキスタン' },
-            { code: 'KZ', label: 'カザフスタン' },
-            { code: 'AF', label: 'アフガニスタン' },
-            { code: 'MN', label: 'モンゴル' }
-        ]
-    },
-    {
-        name: '西アジア・中東',
-        tags: [
-            { code: 'TR', label: 'トルコ' },
-            { code: 'IL', label: 'イスラエル' },
-            { code: 'OM', label: 'オマーン' }
-        ]
-    },
-
-    {
-        name: 'オセアニア',
-        tags: [
-            { code: 'AU', label: 'オーストラリア' }
-        ]
-    },
-    {
-        name: '北米',
-        tags: [
-            { code: 'US', label: 'アメリカ' },
-            { code: 'CA', label: 'カナダ' }
-        ]
-    },
-    {
-        name: '中米・南米',
-        tags: [
-            { code: 'MX', label: 'メキシコ' },
-            { code: 'GT', label: 'グアテマラ' },
-            { code: 'PE', label: 'ペルー' }
-        ]
-    },
-    {
-        name: 'ヨーロッパ',
-        tags: [
-            { code: 'GB', label: 'イギリス' },
-            { code: 'FR', label: 'フランス' },
-            { code: 'DE', label: 'ドイツ' },
-            { code: 'IT', label: 'イタリア' },
-            { code: 'ES', label: 'スペイン' },
-            { code: 'CH', label: 'スイス' },
-            { code: 'UA', label: 'ウクライナ' },
-            { code: 'RU', label: 'ロシア' },
-            { code: 'LT', label: 'リトアニア' },
-            { code: 'SE', label: 'スウェーデン' },
-            { code: 'NO', label: 'ノルウェー' },
-            { code: 'HU', label: 'ハンガリー' },
-            { code: 'AT', label: 'オーストリア' }
-        ]
-    },
-    {
-        name: 'アフリカ',
-        tags: [
-            { code: 'EG', label: 'エジプト' },
-            { code: 'GH', label: 'ガーナ' },
-            { code: 'NG', label: 'ナイジェリア' },
-            { code: 'ET', label: 'エチオピア' },
-            { code: 'BF', label: 'ブルキナファソ' },
-            { code: 'UG', label: 'ウガンダ' },
-            { code: 'NA', label: 'ナミビア' },
-            { code: 'MA', label: 'モロッコ' },
-            { code: 'GA', label: 'ガボン' }
-        ]
-    }
-])
+// ロケールに応じた地域カテゴリを生成
+const regionCategories = computed(() => {
+    return regionCategoriesData.map(region => ({
+        name: locale.value === 'en' ? region.nameEn : region.nameJa,
+        tags: region.codes.map(code => ({
+            code,
+            label: getCountryNameByLocale(code, locale.value)
+        }))
+    }))
+})
 
 // 初期タブ設定は CategorySelect 側で管理するため不要
 

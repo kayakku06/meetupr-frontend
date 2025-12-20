@@ -58,7 +58,7 @@
         <label class="flex flex-col gap-2">
           <div class="text-sm text-[#6a5a3b]">{{ t.otherProfile.origin }}</div>
           <div class="px-2 py-2 bg-white border-2 rounded-md text-sm text-[#4b3b2b]"
-            :class="['border-[var(--meetupr-sub)]']">{{ user.origin }}</div>
+            :class="['border-[var(--meetupr-sub)]']">{{ localizedOrigin }}</div>
         </label>
 
         <div class="flex flex-col gap-3">
@@ -128,11 +128,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useRuntimeConfig } from '#app'
 import { useAuth } from '~/composables/useAuth'
-import { getFlagCodeFromCountryCode, getJapaneseCountryName } from '~/utils/countryMapping'
+import { getFlagCodeFromCountryCode, getCountryNameByLocale } from '~/utils/countryMapping'
 import { getMajorLabel } from '~/utils/majorMapping'
 import { getGenderLabel } from '~/utils/genderMapping'
 import { getLanguageLabel } from '~/utils/languageMapping'
@@ -146,6 +146,9 @@ const router = useRouter()
 const route = useRoute()
 const config = useRuntimeConfig()
 const { getAccessToken } = useAuth()
+
+// residenceコード（生データ）を保持
+const residenceCode = ref('')
 
 const user = ref({
   name: '',
@@ -161,6 +164,11 @@ const user = ref({
   bio: '',
   id: '',
   avatarUrl: ''
+})
+
+// ロケールに応じて出身国名を取得
+const localizedOrigin = computed(() => {
+  return getCountryNameByLocale(residenceCode.value, locale.value) || residenceCode.value || ''
 })
 
 const isLoading = ref(true)
@@ -205,12 +213,15 @@ async function fetchProfile() {
 
     const languageLabels = [...new Set([...nativeLanguages, ...spokenLanguages, ...learningLanguages])]
 
+    // residenceCodeを保存（ロケール切り替え時に使用）
+    residenceCode.value = response.residence || ''
+
     // データを反映
     user.value = {
       name: response.username || '',
       department: getMajorLabel(response.major) || '',
       gender: getGenderLabel(response.gender) || '',
-      origin: getJapaneseCountryName(response.residence) || response.residence || '',
+      origin: '', // localizedOriginを使用
       flag: getFlagCodeFromCountryCode(response.residence) || '',
       languages: languageLabels,
       nativeLanguages,
