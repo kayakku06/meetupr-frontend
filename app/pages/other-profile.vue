@@ -68,12 +68,12 @@
             <div class="text-xs text-[#6a5a3b]">{{ t.otherProfile.nativeLanguage }}</div>
             <div class="flex flex-wrap gap-2">
               <span
-                v-for="(l, i) in user.nativeLanguages"
+                v-for="(l, i) in localizedNativeLanguages"
                 :key="`native-${i}`"
                 class="px-3 py-1 rounded-full text-sm bg-white"
                 :class="['border-2', 'border-[var(--meetupr-sub)]', 'text-[#4b3b2b]']"
               >{{ l }}</span>
-              <span v-if="!(Array.isArray(user.nativeLanguages) && user.nativeLanguages.length)" class="text-sm text-gray-400">{{ t.profile.notSet }}</span>
+              <span v-if="!localizedNativeLanguages.length" class="text-sm text-gray-400">{{ t.profile.notSet }}</span>
             </div>
           </div>
 
@@ -81,12 +81,12 @@
             <div class="text-xs text-[#6a5a3b]">{{ t.otherProfile.spokenLanguages }}</div>
             <div class="flex flex-wrap gap-2">
               <span
-                v-for="(l, i) in user.spokenLanguages"
+                v-for="(l, i) in localizedSpokenLanguages"
                 :key="`spoken-${i}`"
                 class="px-3 py-1 rounded-full text-sm bg-white"
                 :class="['border-2', 'border-[var(--meetupr-sub)]', 'text-[#4b3b2b]']"
               >{{ l }}</span>
-              <span v-if="!(Array.isArray(user.spokenLanguages) && user.spokenLanguages.length)" class="text-sm text-gray-400">{{ t.profile.notSet }}</span>
+              <span v-if="!localizedSpokenLanguages.length" class="text-sm text-gray-400">{{ t.profile.notSet }}</span>
             </div>
           </div>
 
@@ -94,12 +94,12 @@
             <div class="text-xs text-[#6a5a3b]">{{ t.otherProfile.learningLanguages }}</div>
             <div class="flex flex-wrap gap-2">
               <span
-                v-for="(l, i) in user.learningLanguages"
+                v-for="(l, i) in localizedLearningLanguages"
                 :key="`learning-${i}`"
                 class="px-3 py-1 rounded-full text-sm bg-white"
                 :class="['border-2', 'border-[var(--meetupr-sub)]', 'text-[#4b3b2b]']"
               >{{ l }}</span>
-              <span v-if="!(Array.isArray(user.learningLanguages) && user.learningLanguages.length)" class="text-sm text-gray-400">{{ t.profile.notSet }}</span>
+              <span v-if="!localizedLearningLanguages.length" class="text-sm text-gray-400">{{ t.profile.notSet }}</span>
             </div>
           </div>
         </div>
@@ -135,7 +135,7 @@ import { useAuth } from '~/composables/useAuth'
 import { getFlagCodeFromCountryCode, getCountryNameByLocale } from '~/utils/countryMapping'
 import { getMajorLabelByLocale } from '~/utils/majorMapping'
 import { getGenderLabelByLocale } from '~/utils/genderMapping'
-import { getLanguageLabel } from '~/utils/languageMapping'
+import { getLanguageLabelByLocale } from '~/utils/languageMapping'
 import { MessageCircle } from 'lucide-vue-next'
 import Footer from '~/components/Footer.vue'
 import ProfileHeader from '~/components/profile-header.vue'
@@ -153,6 +153,10 @@ const residenceCode = ref('')
 const majorCode = ref('')
 // genderコード（生データ）を保持
 const genderCode = ref('')
+// 言語コード（生データ）を保持
+const nativeLanguageCode = ref('')
+const spokenLanguageCodes = ref([])
+const learningLanguageCodes = ref([])
 
 const user = ref({
   name: '',
@@ -185,6 +189,25 @@ const localizedGender = computed(() => {
   return getGenderLabelByLocale(genderCode.value, locale.value) || ''
 })
 
+// ロケールに応じて言語名を取得
+const localizedNativeLanguages = computed(() => {
+  if (!nativeLanguageCode.value) return []
+  const label = getLanguageLabelByLocale(nativeLanguageCode.value, locale.value)
+  return label ? [label] : []
+})
+
+const localizedSpokenLanguages = computed(() => {
+  return spokenLanguageCodes.value
+    .map((code) => getLanguageLabelByLocale(code, locale.value))
+    .filter((l) => l != null && l !== '')
+})
+
+const localizedLearningLanguages = computed(() => {
+  return learningLanguageCodes.value
+    .map((code) => getLanguageLabelByLocale(code, locale.value))
+    .filter((l) => l != null && l !== '')
+})
+
 const isLoading = ref(true)
 
 // プロフィールデータを取得
@@ -211,28 +234,16 @@ async function fetchProfile() {
       return
     }
 
-    const nativeLanguages = response.native_language
-      ? [getLanguageLabel(response.native_language)].filter((l) => l != null && l !== '')
-      : []
-    const spokenLanguages = Array.isArray(response.spoken_languages)
-      ? response.spoken_languages
-          .map((l) => getLanguageLabel(l))
-          .filter((l) => l != null && l !== '')
-      : []
-    const learningLanguages = Array.isArray(response.learning_languages)
-      ? response.learning_languages
-          .map((l) => getLanguageLabel(l))
-          .filter((l) => l != null && l !== '')
-      : []
-
-    const languageLabels = [...new Set([...nativeLanguages, ...spokenLanguages, ...learningLanguages])]
-
     // residenceCodeを保存（ロケール切り替え時に使用）
     residenceCode.value = response.residence || ''
     // majorCodeを保存（ロケール切り替え時に使用）
     majorCode.value = response.major || ''
     // genderCodeを保存（ロケール切り替え時に使用）
     genderCode.value = response.gender || ''
+    // 言語コードを保存（ロケール切り替え時に使用）
+    nativeLanguageCode.value = response.native_language || ''
+    spokenLanguageCodes.value = Array.isArray(response.spoken_languages) ? response.spoken_languages : []
+    learningLanguageCodes.value = Array.isArray(response.learning_languages) ? response.learning_languages : []
 
     // データを反映
     user.value = {
@@ -241,10 +252,10 @@ async function fetchProfile() {
       gender: '', // localizedGenderを使用
       origin: '', // localizedOriginを使用
       flag: getFlagCodeFromCountryCode(response.residence) || '',
-      languages: languageLabels,
-      nativeLanguages,
-      spokenLanguages,
-      learningLanguages,
+      languages: [], // 使用しない（localizedXxxLanguagesを使用）
+      nativeLanguages: [], // localizedNativeLanguagesを使用
+      spokenLanguages: [], // localizedSpokenLanguagesを使用
+      learningLanguages: [], // localizedLearningLanguagesを使用
       hobbies: Array.isArray(response.interests) ? response.interests.map((i) => i.name || i) : [],
       bio: response.comment || '',
       id: userId,

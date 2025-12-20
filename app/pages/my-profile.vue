@@ -267,6 +267,7 @@ import Footer from '~/components/Footer.vue'
 import { useAuth } from '~/composables/useAuth'
 import { normalizeCountryCode, getCountryNameByLocale } from '~/utils/countryMapping'
 import { getGenderLabelByLocale } from '~/utils/genderMapping'
+import { getLanguageLabelByLocale } from '~/utils/languageMapping'
 import profileHeader from '~/components/profile-header.vue'
 import { useLocale } from '~/composables/useLocale'
 
@@ -314,39 +315,35 @@ const regionCategories = computed(() => {
   }))
 })
 
-const languageCategories = ref([
-  {
-    name: 'アジア',
-    tags: [
-      { code: 'ja', label: '日本語' },
-      { code: 'zh', label: '中国語' },
-      { code: 'ko', label: '韓国語' },
-      { code: 'vi', label: 'ベトナム語' },
-      { code: 'id', label: 'インドネシア語' },
-      { code: 'th', label: 'タイ語' },
-      { code: 'hi', label: 'ヒンディー語' },
-      { code: 'bn', label: 'ベンガル語' },
-      { code: 'pa', label: 'パンジャブ語' }
-    ]
+// 言語カテゴリの基本データ（コードのみ）
+const languageCategoriesData = [
+  { 
+    nameJa: 'アジア', 
+    nameEn: 'Asia', 
+    codes: ['ja', 'zh', 'ko', 'vi', 'id', 'th', 'hi', 'bn', 'pa']
   },
-  {
-    name: 'ヨーロッパ',
-    tags: [
-      { code: 'en', label: '英語' },
-      { code: 'fr', label: 'フランス語' },
-      { code: 'de', label: 'ドイツ語' },
-      { code: 'es', label: 'スペイン語' },
-      { code: 'pt', label: 'ポルトガル語' },
-      { code: 'ru', label: 'ロシア語' }
-    ]
+  { 
+    nameJa: 'ヨーロッパ', 
+    nameEn: 'Europe', 
+    codes: ['en', 'fr', 'de', 'es', 'pt', 'ru']
   },
-  {
-    name: 'その他',
-    tags: [
-      { code: 'ar', label: 'アラビア語' }
-    ]
+  { 
+    nameJa: 'その他', 
+    nameEn: 'Other', 
+    codes: ['ar']
   }
-])
+]
+
+// ロケールに応じた言語カテゴリを生成
+const languageCategories = computed(() => {
+  return languageCategoriesData.map(category => ({
+    name: locale.value === 'en' ? category.nameEn : category.nameJa,
+    tags: category.codes.map(code => ({
+      code,
+      label: getLanguageLabelByLocale(code, locale.value)
+    }))
+  }))
+})
 
 // タブや開閉状態はCategorySelect内部で管理するため不要
 
@@ -356,8 +353,7 @@ function getCountryLabel(countryCode: string): string {
 }
 
 function getLanguageLabel(langCode: string): string {
-  const all = languageCategories.value.flatMap(c => c.tags)
-  return all.find(t => t.code === langCode)?.label || langCode
+  return getLanguageLabelByLocale(langCode, locale.value)
 }
 
 function getGenderLabel(g: string): string {

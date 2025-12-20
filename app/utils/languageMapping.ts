@@ -22,6 +22,28 @@ const languageCodeToLabel: Record<string, string> = {
   ar: 'アラビア語'
 }
 
+/**
+ * 言語コードと英語名のマッピング
+ */
+const languageCodeToEnglish: Record<string, string> = {
+  ja: 'Japanese',
+  zh: 'Chinese',
+  ko: 'Korean',
+  vi: 'Vietnamese',
+  id: 'Indonesian',
+  th: 'Thai',
+  hi: 'Hindi',
+  bn: 'Bengali',
+  pa: 'Punjabi',
+  en: 'English',
+  fr: 'French',
+  de: 'German',
+  es: 'Spanish',
+  pt: 'Portuguese',
+  ru: 'Russian',
+  ar: 'Arabic'
+}
+
 export function getLanguageLabel(lang: string | null | undefined): string {
   if (!lang) return ''
 
@@ -48,8 +70,56 @@ export function getLanguageLabel(lang: string | null | undefined): string {
   return raw
 }
 
+/**
+ * 言語コードから英語ラベルを取得
+ */
+export function getLanguageLabelEnglish(lang: string | null | undefined): string {
+  if (!lang) return ''
+
+  const raw = String(lang).trim()
+  if (!raw) return ''
+
+  // 既に英語名の場合はそのまま返す
+  const values = Object.values(languageCodeToEnglish)
+  if (values.includes(raw)) return raw
+
+  // まずは raw 自体が code の場合
+  const direct = raw.toLowerCase()
+  if (languageCodeToEnglish[direct]) return languageCodeToEnglish[direct]
+
+  // "ja:日本語" / "ja-日本語" などの区切り文字がある場合
+  const head = raw.split(/\s*[:：\-–—|\/／]\s*/)[0]?.trim().toLowerCase()
+  if (head && languageCodeToEnglish[head]) return languageCodeToEnglish[head]
+
+  // "日本語(ja)" / "日本語（ja）" などから2文字コードを抽出
+  const match = raw.toLowerCase().match(/\b([a-z]{2})\b/)
+  const code = match?.[1]
+  if (code && languageCodeToEnglish[code]) return languageCodeToEnglish[code]
+
+  return raw
+}
+
+/**
+ * ロケールに応じて言語ラベルを取得
+ */
+export function getLanguageLabelByLocale(lang: string | null | undefined, locale: string): string {
+  if (locale === 'en') {
+    return getLanguageLabelEnglish(lang)
+  }
+  return getLanguageLabel(lang)
+}
+
 export function getLanguageLabels(langs: Array<string | null | undefined>): string[] {
   return (Array.isArray(langs) ? langs : [])
     .map(getLanguageLabel)
+    .filter((v) => v != null && v !== '')
+}
+
+/**
+ * ロケールに応じて言語ラベル配列を取得
+ */
+export function getLanguageLabelsByLocale(langs: Array<string | null | undefined>, locale: string): string[] {
+  return (Array.isArray(langs) ? langs : [])
+    .map((lang) => getLanguageLabelByLocale(lang, locale))
     .filter((v) => v != null && v !== '')
 }
