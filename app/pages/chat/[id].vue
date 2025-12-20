@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import MeetDesireSlider from '~/components/MeetDesireSlider.vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Smile, Send } from 'lucide-vue-next'
+import { Send } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
 import { useChatVerification } from '~/composables/useChatVerification'
 
@@ -102,7 +102,7 @@ const fetchChatDetails = async () => {
 // パートナーのプロフィールを取得してネイティブ言語を取得
 const fetchPartnerProfile = async (userId: string) => {
   try {
-    const profileResponse = await $fetch<{ native_language?: string }>('/api/profile', {
+    const profileResponse = await $fetch<{ native_language?: string, avatar_url?: string | null }>('/api/profile', {
       query: {
         user_id: userId
       }
@@ -110,6 +110,12 @@ const fetchPartnerProfile = async (userId: string) => {
 
     if (profileResponse.native_language) {
       partnerNativeLanguage.value = profileResponse.native_language
+    }
+
+    if (profileResponse.avatar_url) {
+      partnerAvatarUrl.value = profileResponse.avatar_url
+    } else {
+      partnerAvatarUrl.value = null
     }
   } catch (err: any) {
     console.error('パートナーのプロフィール取得に失敗しました:', err)
@@ -126,6 +132,7 @@ const errorMessage = ref('')
 const partnerName = ref<string>('ユーザー')
 const partnerNativeLanguage = ref<string>('ja') // デフォルトは日本語
 const partnerId = ref<string | null>(null)
+const partnerAvatarUrl = ref<string | null>(null)
 
 let ws: WebSocket | null = null
 let reconnectAttempts = 0
@@ -424,6 +431,16 @@ const retryConnection = () => {
   connectWebSocket()
 }
 
+const goToPartnerProfile = () => {
+  if (!partnerId.value) return
+  router.push({
+    path: '/other-profile',
+    query: {
+      user_id: partnerId.value
+    }
+  })
+}
+
 // メッセージを翻訳（日本語⇔英語のみ）
 const translateMessage = async (msg: Message) => {
   // 既に翻訳が表示されている場合は非表示にする
@@ -507,20 +524,6 @@ onUnmounted(() => {
                         <span class="text-xs text-gray-600">?</span>
                     </button>
                 </div>
-                <!-- 右側：禁止マークと電話アイコン -->
-                <div class="flex items-center space-x-3">
-                    <button class="text-[#ff8c69] hover:text-orange-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M8 12h8" stroke-linecap="round" />
-                        </svg>
-                    </button>
-                    <button class="text-[#ff8c69] hover:text-orange-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                    </button>
-                </div>
             </div>
             
             <!-- エラーメッセージ表示 -->
@@ -538,7 +541,7 @@ onUnmounted(() => {
             </div>
 
             <!-- MeetDesireSlider（playground と同様の表示） -->
-            <div class="p-4 border-b border-gray-100">
+            <div class=" border-b border-gray-100">
               <div class="max-w-md mx-auto">
                 <MeetDesireSlider v-model="desire" />
               </div>
@@ -560,7 +563,23 @@ onUnmounted(() => {
                         <!-- 相手のメッセージ（左側） -->
                         <div v-if="msg.sender_id !== currentUserId" class="flex items-start space-x-3 mb-4">
                             <!-- 緑のアバター -->
-                            <div class="w-10 h-10 rounded-full bg-teal-600 flex-shrink-0"></div>
+                          <button
+                            type="button"
+                            class="w-10 h-10 flex-shrink-0 cursor-pointer"
+                            :class="{ 'cursor-default': !partnerId }"
+                            :disabled="!partnerId"
+                            @click="goToPartnerProfile"
+                            aria-label="相手のプロフィールへ"
+                          >
+                          <img
+                            v-if="partnerAvatarUrl"
+                            :src="partnerAvatarUrl"
+                            :alt="partnerName"
+                            class="w-10 h-10 rounded-full object-cover"
+                            @error="partnerAvatarUrl = null"
+                          />
+                          <div v-else class="w-10 h-10 rounded-full bg-teal-600"></div>
+                          </button>
                             <div class="space-y-1 max-w-[75%]">
                                 <!-- 薄いオレンジの吹き出し（タップ可能） -->
                                 <div 
@@ -621,9 +640,13 @@ onUnmounted(() => {
                             placeholder="メッセージを入力"
                             class="w-full bg-yellow-50 border-2 border-orange-300 rounded-full px-6 pr-14 py-3 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-orange-400 transition-colors" 
                         />
-                        <!-- 絵文字アイコン（右側、円形） -->
-                        <button class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white flex items-center justify-center border border-gray-300 hover:bg-gray-50">
-                            <Smile class="w-5 h-5 text-gray-600" />
+                        <!-- 送信ボタン（右側、円形） -->
+                        <button
+                          type="button"
+                          @click="sendMessage"
+                          class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white flex items-center justify-center border border-gray-300 hover:bg-gray-50"
+                        >
+                          <Send class="w-5 h-5 text-gray-600" />
                         </button>
                     </div>
                 </div>

@@ -1,11 +1,14 @@
 <template>
   <div class="flex items-center justify-between p-5 bg-[var(--meetupr-main)] hover:bg-gray-50 transition zen-maru cursor-pointer"
-  @click="goProfile">
+  @click="goChat">
     <!-- 左側（アバター＋名前＋メッセージ） -->
     <div class="flex items-center space-x-4 flex-1 min-w-0">
-      <!-- アバター -->
-      <div class="w-16 h-16 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center"
-        :class="avatarUrl ? '' : avatarColor">
+      <!-- アバター（クリックでプロフィールに遷移） -->
+      <div 
+        class="w-16 h-16 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+        :class="avatarUrl ? '' : avatarColor"
+        @click.stop="goProfile"
+      >
         <img v-if="avatarUrl" :src="avatarUrl" :alt="name || 'ユーザー'" class="w-full h-full object-cover" />
         <svg v-else viewBox="0 0 64 64" class="w-10 h-10" aria-hidden>
           <circle cx="32" cy="24" r="12" fill="none" stroke="#6aaea0" stroke-width="2" />
@@ -20,8 +23,11 @@
       </div>
     </div>
 
-    <!-- 右側（日付） -->
-    <span class="text-gray-400 text-base ml-3 flex-shrink-0">{{ date }}</span>
+    <!-- 右側（日付と時刻） -->
+    <div class="flex flex-col items-end ml-3 flex-shrink-0">
+      <span class="text-gray-400 text-base">{{ date }}</span>
+      <span v-if="time" class="text-gray-400 text-sm">{{ time }}</span>
+    </div>
   </div>
 </template>
 
@@ -38,14 +44,22 @@ const props = defineProps<{
   name: string
   message: string
   date: string
+  time?: string
   avatarColor: string
   avatarUrl?: string | null
   chatId?: number
   partnerId?: string
 }>()
 
+// アバターをクリックしたらプロフィールページに飛ぶ
+const goProfile = () => {
+  if (props.partnerId) {
+    router.push(`/other-profile?user_id=${props.partnerId}`)
+  }
+}
+
 // クリックしたらチャットページに飛ぶ
-const goProfile = async () => {
+const goChat = async () => {
   try {
     let targetChatId = props.chatId
 

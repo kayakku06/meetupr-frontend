@@ -303,3 +303,102 @@ export function getJapaneseCountryName(countryCode: string | null | undefined): 
   console.warn('[countryMapping] Unknown country code:', countryCode)
   return countryCode
 }
+
+// 国コードから英語の国名を取得
+const countryCodeToEnglish: Record<string, string> = {
+  'JP': 'Japan',
+  'US': 'United States',
+  'KR': 'South Korea',
+  'CN': 'China',
+  'GB': 'United Kingdom',
+  'FR': 'France',
+  'ES': 'Spain',
+  'DE': 'Germany',
+  'IT': 'Italy',
+  'CA': 'Canada',
+  'AU': 'Australia',
+  'BR': 'Brazil',
+  'MX': 'Mexico',
+  'IN': 'India',
+  'TH': 'Thailand',
+  'VN': 'Vietnam',
+  'ID': 'Indonesia',
+  'PH': 'Philippines',
+  'SG': 'Singapore',
+  'MY': 'Malaysia',
+  'TW': 'Taiwan',
+  'HK': 'Hong Kong',
+  'NL': 'Netherlands',
+  'BE': 'Belgium',
+  'CH': 'Switzerland',
+  'AT': 'Austria',
+  'SE': 'Sweden',
+  'NO': 'Norway',
+  'DK': 'Denmark',
+  'FI': 'Finland',
+  'PL': 'Poland',
+  'RU': 'Russia',
+  'TR': 'Turkey',
+  'EG': 'Egypt',
+  'ZA': 'South Africa',
+  'AR': 'Argentina',
+  'CL': 'Chile',
+  'CO': 'Colombia',
+  'PE': 'Peru',
+  'NZ': 'New Zealand',
+  'MM': 'Myanmar',
+  'KH': 'Cambodia',
+  'LA': 'Laos',
+  'BN': 'Brunei',
+  'BD': 'Bangladesh',
+  'PK': 'Pakistan',
+  'NP': 'Nepal',
+  'LK': 'Sri Lanka',
+  'MV': 'Maldives',
+  'KG': 'Kyrgyzstan',
+  'UZ': 'Uzbekistan',
+  'TJ': 'Tajikistan',
+  'KZ': 'Kazakhstan',
+  'AF': 'Afghanistan',
+  'IL': 'Israel',
+  'OM': 'Oman',
+  'GH': 'Ghana',
+  'NG': 'Nigeria',
+  'ET': 'Ethiopia',
+  'BF': 'Burkina Faso',
+  'UG': 'Uganda',
+  'NA': 'Namibia',
+  'MA': 'Morocco',
+  'GA': 'Gabon',
+  'GT': 'Guatemala',
+  'UA': 'Ukraine',
+  'LT': 'Lithuania',
+  'HU': 'Hungary',
+  'MN': 'Mongolia',
+}
+
+// 国コードから英語の国名を取得
+export function getEnglishCountryName(countryCode: string | null | undefined): string {
+  if (!countryCode) return ''
+  
+  // 国コードを大文字に正規化
+  const upperCode = countryCode.toUpperCase()
+  
+  // マッピングから英語の国名を取得
+  const englishName = countryCodeToEnglish[upperCode]
+  if (englishName) {
+    return englishName
+  }
+  
+  // マッピングが見つからない場合は警告を出力して国コードをそのまま返す
+  console.warn('[countryMapping] Unknown country code:', countryCode)
+  return countryCode
+}
+
+// ロケールに応じて国名を取得
+export function getCountryNameByLocale(countryCode: string | null | undefined, locale: 'ja' | 'en'): string {
+  if (locale === 'en') {
+    return getEnglishCountryName(countryCode)
+  }
+  return getJapaneseCountryName(countryCode)
+}
