@@ -15,11 +15,25 @@
 }
 
 /* 最小限の global 基本設定 */
+html {
+  /* PWA セーフエリア対応 */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
 body {
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
-  background-color: #f3f4f6; /* gray-100 */
+  background-color: #FFF5C9;
   margin: 0;
   padding: 0;
+  /* PWA で全画面表示時にオーバースクロールを防ぐ */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* PWA インストール時のスプラッシュ画面との統一感 */
+#__nuxt {
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
 }
 
 /* select のカスタム矢印（Tailwind のみだと微調整が必要なため残す） */
