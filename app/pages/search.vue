@@ -5,6 +5,7 @@ import Footer from '~/components/Footer.vue'
 import { Search, UserRoundPlus, ChevronUp } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
 import { normalizeCountryCode, getFlagCodeFromCountryCode } from '~/utils/countryMapping'
+import { normalizeLanguageCode } from '~/utils/languageMapping'
 
 const { getAccessToken } = useAuth()
 const config = useRuntimeConfig()
@@ -150,13 +151,28 @@ const runSearch = async () => {
             }
         }
         
+        // 言語名を言語コードに変換（データベースでは言語コード（例: "ja"）で管理）
+        const languageCodes = [];
+        for (const language of selectedLanguages.value) {
+            console.log('[search] Processing language:', language);
+            const code = normalizeLanguageCode(language);
+            console.log('[search] Language conversion result:', { original: language, code: code, type: typeof code });
+            if (code && code !== language) {
+                languageCodes.push(code);
+                console.log('[search] Added language code:', code);
+            } else {
+                console.warn('[search] Failed to convert language to code:', language, 'result:', code);
+            }
+        }
+        
         const requestBody = {
-            languages: selectedLanguages.value.length > 0 ? selectedLanguages.value : [],
+            languages: languageCodes.length > 0 ? languageCodes : [],
             countries: countryCodes.length > 0 ? countryCodes : []
         };
 
         console.log('[search] Request body:', JSON.stringify(requestBody, null, 2));
-        console.log('[search] Selected languages:', selectedLanguages.value);
+        console.log('[search] Selected languages (original):', selectedLanguages.value);
+        console.log('[search] Language codes (converted):', languageCodes);
         console.log('[search] Selected countries (original):', selectedCountries.value);
         console.log('[search] Country codes (converted):', countryCodes);
         console.log('[search] API URL:', `${config.public.apiBaseUrl}/api/v1/search/users`);
