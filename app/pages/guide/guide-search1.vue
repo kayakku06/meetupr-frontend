@@ -22,12 +22,12 @@ function onClose() {
 </script>
 
 <template>
-  <div class="fixed top-0 left-0 w-full flex flex-col items-center gap-4
-          p-4 pt-10 z-50">
-    <h1 class="z-[100] text-white text-xl">＜使い方＞検索画面</h1>
+  <div class="fixed top-0 left-0 w-full flex flex-col items-center gap-2 sm:gap-4
+          p-2 sm:p-4 pt-8 sm:pt-10 z-50">
+    <h1 class="z-[100] text-white text-base sm:text-xl">＜使い方＞検索画面</h1>
     <!-- 検索ボックス（デザインのみ） -->
-    <div class="bg-white border-[3px] border-[#FEBC6E] rounded-md shadow-lg p-4
-         absolute top-full left-0 mt-2 w-full z-50">
+    <div class="bg-white border-[3px] border-[#FEBC6E] rounded-md shadow-lg p-2 sm:p-4
+         absolute top-full left-0 mt-1 sm:mt-2 w-full z-50">
       <div>
         <div class="flex items-center justify-between mb-1"> <label
             class="text-sm font-semibold text-gray-800">検索</label>
@@ -59,10 +59,10 @@ function onClose() {
     </div>
   </div>
   <!-- メイン（見た目完全固定） -->
-  <main class="bg-[#FFF5C9] h-screen pt-[260px] pb-24 overflow-hidden">
+  <main class="bg-[#FFF5C9] h-screen pt-[220px] sm:pt-[260px] pb-20 sm:pb-24 overflow-hidden">
 
     <!-- 中央コンテンツ（高さ固定） -->
-    <div class="mx-auto max-w-md p-4 space-y-2 h-[calc(100vh-360px)] overflow-hidden">
+    <div class="mx-auto max-w-md p-2 sm:p-4 space-y-2 h-[calc(100vh-300px)] sm:h-[calc(100vh-360px)] overflow-hidden">
       <GuideSearchUser v-for="i in 7" :key="i" />
     </div>
     <Footer class="fixed inset-x-0 bottom-0" />
