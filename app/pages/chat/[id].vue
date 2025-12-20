@@ -620,18 +620,19 @@ onUnmounted(() => {
             </div>
 
             <div ref="messagesContainer" class="flex-1 overflow-y-auto bg-[var(--meetupr-main)] p-4 space-y-4">
-                <template v-if="messages.length === 0 && connectionStatus === 'connected'">
-                    <div class="text-center text-gray-500 py-8">
+                <template v-if="!messages || messages.length === 0">
+                    <div v-if="connectionStatus === 'connected'" class="text-center text-gray-500 py-8">
                         <p>メッセージがありません</p>
                     </div>
-                </template>
-                <template v-else-if="messages.length === 0 && connectionStatus === 'connecting'">
-                    <div class="text-center text-gray-500 py-8">
+                    <div v-else-if="connectionStatus === 'connecting'" class="text-center text-gray-500 py-8">
                         <p>接続中...</p>
+                    </div>
+                    <div v-else class="text-center text-gray-500 py-8">
+                        <p>読み込み中...</p>
                     </div>
                 </template>
                 <template v-else>
-                    <template v-for="msg in messages" :key="msg.id">
+                    <template v-for="msg in (messages || [])" :key="msg.id">
                         <!-- 相手のメッセージ（左側） -->
                         <div v-if="msg.sender_id !== currentUserId" class="flex items-start space-x-3 mb-4">
                             <!-- 緑のアバター -->
