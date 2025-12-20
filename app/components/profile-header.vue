@@ -16,7 +16,7 @@ import { BadgeQuestionMark, BadgeQuestionMarkIcon } from 'lucide-vue-next'
         <!-- タイトル"トーク" -->
         <h1
           class="text-2xl font-normal text-yellow-950 flex-1 text-center mt-10 flex items-center justify-center gap-2">
-          トーク
+          プロフィール
           <NuxtLink to="/guide/guide-search1">
             <BadgeQuestionMarkIcon class="w-5 h-5" />
           </NuxtLink>

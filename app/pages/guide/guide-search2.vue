@@ -4,13 +4,28 @@ import Footer from '~/components/Footer.vue'
 import { Search, UserRoundPlus, ChevronUp } from 'lucide-vue-next'
 import LogoBubble from '~/components/guide-speech.vue'
 import Button from '~/components/meetup-button.vue'
+
+const router = useRouter()
+
+function onBack() {
+  router.push('/guide/guide-search1')  // 戻る先のページ
+}
+
+function onNext() {
+  router.push('/guide/guide-chat1')      // 次へ先のページ
+}
+
+function onClose() {
+  router.push('/home')     
+}
+
 </script>
 
 <template>
     <h1 class="fixed top-8 left-1/2 -translate-x-1/2
          z-[999] text-white text-xl
          m-0 p-0 leading-none pointer-events-none">
-        検索画面
+        ＜使い方＞検索画面
     </h1>
     <div class="fixed top-0 left-0 translate-y-8 w-full
             flex flex-col items-center

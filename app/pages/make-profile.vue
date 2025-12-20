@@ -914,7 +914,7 @@ const registerProfile = async () => {
         console.log('[registerProfile] Profile saved successfully:', result)
         alert('プロフィールを保存しました。')
         // プロフィール登録成功後は/homeにリダイレクト
-        navigateTo('/home')
+        navigateTo('/guide/guide-search1')
     } catch (err: any) {
         console.error('[registerProfile] Error saving profile:', err)
         console.error('[registerProfile] Error details:', {
