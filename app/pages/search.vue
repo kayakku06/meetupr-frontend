@@ -191,29 +191,46 @@ const runSearch = async () => {
         // レスポンスを検索結果に設定
         let results = response || [];
         
+        // デバッグ: レスポンスの全フィールドを確認
+        if (results.length > 0) {
+            console.log('[search] Response sample user (all fields):', results[0]);
+            console.log('[search] Response sample user keys:', Object.keys(results[0]));
+        }
+        
         // 言語検索の場合、ネイティブ言語でフィルタリング
         if (languageCodes.length > 0) {
             console.log('[search] Filtering by native language. Language codes:', languageCodes);
-            console.log('[search] Sample user data:', results.length > 0 ? {
-                username: results[0].username,
-                native_language: results[0].native_language,
-                spoken_languages: results[0].spoken_languages,
-                learning_languages: results[0].learning_languages
-            } : 'No results');
+            console.log('[search] Total users before filtering:', results.length);
+            
+            if (results.length > 0) {
+                console.log('[search] Sample user data:', {
+                    username: results[0].username,
+                    native_language: results[0].native_language,
+                    native_language_type: typeof results[0].native_language,
+                    spoken_languages: results[0].spoken_languages,
+                    learning_languages: results[0].learning_languages,
+                    all_fields: Object.keys(results[0])
+                });
+            }
             
             results = results.filter(user => {
                 // native_languageが含まれている場合は、ネイティブ言語でフィルタリング
                 if (user.native_language) {
-                    const userNativeLang = String(user.native_language).toLowerCase();
-                    const matches = languageCodes.some(langCode => 
-                        userNativeLang === langCode.toLowerCase()
-                    );
+                    const userNativeLang = String(user.native_language).toLowerCase().trim();
+                    const matches = languageCodes.some(langCode => {
+                        const normalizedLangCode = langCode.toLowerCase().trim();
+                        const match = userNativeLang === normalizedLangCode;
+                        if (!match) {
+                            console.log(`[search] User ${user.username}: native_language="${user.native_language}" (normalized: "${userNativeLang}") !== langCode="${langCode}" (normalized: "${normalizedLangCode}")`);
+                        }
+                        return match;
+                    });
                     console.log(`[search] User ${user.username}: native_language="${user.native_language}", matches=${matches}`);
                     return matches;
                 }
-                // native_languageが含まれていない場合は警告を出してそのまま表示
-                console.warn(`[search] User ${user.username} has no native_language field - cannot filter by native language`);
-                return true;
+                // native_languageが含まれていない場合は警告を出して除外
+                console.warn(`[search] User ${user.username} has no native_language field - excluding from results`);
+                return false; // native_languageがない場合は除外
             });
             
             console.log(`[search] Filtered results: ${results.length} users (from ${response?.length || 0} total)`);
