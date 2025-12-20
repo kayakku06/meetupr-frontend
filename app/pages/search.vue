@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import SearchUser from '~/components/searchuser.vue'
 import Footer from '~/components/Footer.vue'
+import CategorySelect from '~/components/CategorySelect.vue'
 import { Search, UserRoundPlus, ChevronUp } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
 import { useLocale } from '~/composables/useLocale'
@@ -18,106 +19,92 @@ const toggleDropdown = () => {
     showDropdown.value = !showDropdown.value;
 };
 
-const form = ref({
-    hobbies: []
+// 選択された言語と国（コードで管理）
+const selectedLanguages = ref([]);
+const selectedCountries = ref([]);
+
+// 動的なカテゴリ（言語に応じて切り替え）- コードとラベルを持つ形式
+const languageCategory = computed(() => ({
+    name: t.value.search.language,
+    tags: [
+        { code: 'ja', label: t.value.search.languages.japanese },
+        { code: 'en', label: t.value.search.languages.english },
+        { code: 'ko', label: t.value.search.languages.korean },
+        { code: 'zh', label: t.value.search.languages.chinese },
+        { code: 'fr', label: t.value.search.languages.french },
+        { code: 'es', label: t.value.search.languages.spanish }
+    ]
+}));
+
+const countryCategory = computed(() => ({
+    name: t.value.search.country,
+    tags: [
+        { code: 'JP', label: t.value.search.countries.japan },
+        { code: 'US', label: t.value.search.countries.usa },
+        { code: 'KR', label: t.value.search.countries.korea },
+        { code: 'CN', label: t.value.search.countries.china },
+        { code: 'GB', label: t.value.search.countries.uk },
+        { code: 'FR', label: t.value.search.countries.france }
+    ]
+}));
+
+// 選択されたタグのラベルを取得（表示用）
+const selectedLabels = computed(() => {
+    const langLabels = selectedLanguages.value.map(code => {
+        const tag = languageCategory.value.tags.find(t => t.code === code);
+        return tag?.label || code;
+    });
+    const countryLabels = selectedCountries.value.map(code => {
+        const tag = countryCategory.value.tags.find(t => t.code === code);
+        return tag?.label || code;
+    });
+    return [...langLabels, ...countryLabels];
 });
 
-// 動的なカテゴリ（言語に応じて切り替え）
-const choiceCategories = computed(() => [
-    {
-        name: t.value.search.language,
-        tags: [
-            t.value.search.languages.japanese,
-            t.value.search.languages.english,
-            t.value.search.languages.korean,
-            t.value.search.languages.chinese,
-            t.value.search.languages.french,
-            t.value.search.languages.spanish
-        ]
-    },
-    {
-        name: t.value.search.country,
-        tags: [
-            t.value.search.countries.japan,
-            t.value.search.countries.usa,
-            t.value.search.countries.korea,
-            t.value.search.countries.china,
-            t.value.search.countries.uk,
-            t.value.search.countries.france
-        ]
-    }
-]);
-
-// ★ 初期タブ
-const activeTab = computed(() => choiceCategories.value[0]?.name || '');
-const activeTabRef = ref('');
-
-const addHobby = (hobby) => {
-    if (!form.value.hobbies.includes(hobby)) {
-        form.value.hobbies.push(hobby);
-    }
-};
-
-const removeHobby = (hobby) => {
-    form.value.hobbies = form.value.hobbies.filter(h => h !== hobby);
-    // フィルターを削除した場合、全ユーザーを取得するために検索を実行
-    // ただし、検索中でない場合は自動実行しない（ユーザーが検索ボタンをクリックするまで待つ）
-    if (isSearching.value && form.value.hobbies.length === 0) {
-        // 既に検索中の場合は、フィルターなしで再検索（全ユーザー取得）
-        runSearch();
-    }
-};
-
-const toggleHobby = (tag) => {
-    const category = getCategoryByTag(tag);
-
-    const selected = form.value.hobbies;
-
-    // すでに選択されていれば削除
-    if (selected.includes(tag)) {
-        removeHobby(tag);
-        return;
-    }
-
-    // ▼ 合計 4 個まで
-    if (selected.length >= LIMIT_TOTAL) {
-        alert(t.value.search.limitTotal);
-        return;
-    }
-
-    // ▼ 言語の上限チェック
-    if (category === t.value.search.language) {
-        const countLang = selected.filter(h => getCategoryByTag(h) === t.value.search.language).length;
-        if (countLang >= LIMIT_LANGUAGE) {
-            alert(t.value.search.limitLanguage);
-            return;
-        }
-    }
-
-    // ▼ 国の上限チェック
-    if (category === t.value.search.country) {
-        const countCountry = selected.filter(h => getCategoryByTag(h) === t.value.search.country).length;
-        if (countCountry >= LIMIT_COUNTRY) {
-            alert(t.value.search.limitCountry);
-            return;
-        }
-    }
-
-    // 条件クリア → 追加
-    addHobby(tag);
-};
-
+// 上限チェック
 const LIMIT_LANGUAGE = 2;
 const LIMIT_COUNTRY = 2;
 const LIMIT_TOTAL = 4;
 
-const getCategoryByTag = (tag) => {
-    const langCategory = choiceCategories.value.find(c => c.name === t.value.search.language);
-    const countryCategory = choiceCategories.value.find(c => c.name === t.value.search.country);
+// 言語選択時の処理
+const onLanguageChange = (newValue) => {
+    const totalCount = newValue.length + selectedCountries.value.length;
+    if (newValue.length > LIMIT_LANGUAGE) {
+        alert(t.value.search.limitLanguage);
+        return;
+    }
+    if (totalCount > LIMIT_TOTAL) {
+        alert(t.value.search.limitTotal);
+        return;
+    }
+    selectedLanguages.value = newValue;
+};
 
-    if (langCategory?.tags.includes(tag)) return t.value.search.language;
-    if (countryCategory?.tags.includes(tag)) return t.value.search.country;
-    return null;
+// 国選択時の処理
+const onCountryChange = (newValue) => {
+    const totalCount = selectedLanguages.value.length + newValue.length;
+    if (newValue.length > LIMIT_COUNTRY) {
+        alert(t.value.search.limitCountry);
+        return;
+    }
+    if (totalCount > LIMIT_TOTAL) {
+        alert(t.value.search.limitTotal);
+        return;
+    }
+    selectedCountries.value = newValue;
+};
+
+// フィルターをクリア
+const clearFilter = (type, code) => {
+    if (type === 'language') {
+        selectedLanguages.value = selectedLanguages.value.filter(c => c !== code);
+    } else {
+        selectedCountries.value = selectedCountries.value.filter(c => c !== code);
+    }
+    // フィルターを削除した場合、検索中なら再検索
+    if (isSearching.value && selectedLanguages.value.length === 0 && selectedCountries.value.length === 0) {
+        runSearch();
+    }
 };
 
 // 検索結果とローディング状態
@@ -125,15 +112,6 @@ const searchResults = ref([]);
 const isLoading = ref(false);
 const searchError = ref(null);
 const isSearching = ref(false);
-
-// 言語と国を分離
-const selectedLanguages = computed(() => {
-    return form.value.hobbies.filter(h => getCategoryByTag(h) === t.value.search.language);
-});
-
-const selectedCountries = computed(() => {
-    return form.value.hobbies.filter(h => getCategoryByTag(h) === t.value.search.country);
-});
 
 // 国旗コードの取得は共通ユーティリティを使用
 
@@ -152,34 +130,14 @@ const runSearch = async () => {
         }
 
         // リクエストボディを構築
-        // 要件: フィルター条件がない場合（空配列）でもAPIを呼び出して全ユーザー（自分以外）を取得
-        // - フィルター条件がない場合: 全ユーザー（自分以外）を返す。プロフィール情報（comment, residence, avatar_url）も取得
-        // - フィルター条件がある場合: 条件に一致するユーザーのみを返す。フィルタリングに必要なプロフィール情報のみを取得
-        // 国名を国コードに変換（データベースでは英語の国コードで管理）
-        const countryCodes = [];
-        for (const country of selectedCountries.value) {
-            console.log('[search] Processing country:', country);
-            const code = normalizeCountryCode(country);
-            console.log('[search] Country conversion result:', { original: country, code: code, type: typeof code });
-            if (code && code !== country) {
-                countryCodes.push(code);
-                console.log('[search] Added country code:', code);
-            } else {
-                console.warn('[search] Failed to convert country to code:', country, 'result:', code);
-            }
-        }
-        
+        // selectedLanguages と selectedCountries はすでにコードで管理されている
         const requestBody = {
             languages: selectedLanguages.value.length > 0 ? selectedLanguages.value : [],
-            countries: countryCodes.length > 0 ? countryCodes : []
+            countries: selectedCountries.value.length > 0 ? selectedCountries.value : []
         };
 
         console.log('[search] Request body:', JSON.stringify(requestBody, null, 2));
-        console.log('[search] Selected languages:', selectedLanguages.value);
-        console.log('[search] Selected countries (original):', selectedCountries.value);
-        console.log('[search] Country codes (converted):', countryCodes);
         console.log('[search] API URL:', `${config.public.apiBaseUrl}/api/v1/search/users`);
-        console.log('[search] Token length:', token ? token.length : 0);
 
         // APIを呼び出し
         const response = await $fetch(`${config.public.apiBaseUrl}/api/v1/search/users`, {
@@ -192,7 +150,6 @@ const runSearch = async () => {
         });
 
         // レスポンスを検索結果に設定
-        // バックエンドから受け取ったデータは国コード（英語）なので、そのまま使用
         searchResults.value = response || [];
         
         // デバッグ: 国旗マッピングの確認
@@ -287,17 +244,16 @@ onMounted(async () => {
                         
                         <!-- 選択されたタグまたはプレースホルダー -->
                         <div class="flex items-center gap-2 flex-1 overflow-x-auto">
-                            <span v-if="form.hobbies.length === 0" class="text-gray-400 text-sm">
+                            <span v-if="selectedLabels.length === 0" class="text-gray-400 text-sm">
                                 {{ t.search.searchPlaceholder }}
                             </span>
                             <div v-else class="flex items-center gap-2 flex-wrap">
-                                <button
-                                    v-for="hobby in form.hobbies" 
-                                    :key="hobby"
-                                    @click.stop="removeHobby(hobby)"
-                                    class="bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-xs whitespace-nowrap text-[#4b3b2b] hover:bg-gray-50">
-                                    {{ hobby }}
-                                </button>
+                                <span
+                                    v-for="label in selectedLabels" 
+                                    :key="label"
+                                    class="bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-xs whitespace-nowrap text-[#4b3b2b]">
+                                    {{ label }}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -329,49 +285,55 @@ onMounted(async () => {
                     <!-- 選択されたフィルター表示エリア -->
                     <div class="mb-3 p-2 bg-white border-2 border-[#FEBC6E] rounded-lg min-h-[46px] flex items-center gap-2">
                         <div class="flex flex-wrap gap-2 flex-1">
+                            <!-- 言語のタグ -->
                             <button
-                                v-for="hobby in form.hobbies" 
-                                :key="hobby"
-                                @click.stop="removeHobby(hobby)"
+                                v-for="code in selectedLanguages" 
+                                :key="'lang-' + code"
+                                @click.stop="clearFilter('language', code)"
                                 class="bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-xs whitespace-nowrap text-[#4b3b2b] hover:bg-gray-50">
-                                {{ hobby }} ×
+                                {{ languageCategory.tags.find(t => t.code === code)?.label || code }} ×
                             </button>
-                            <span v-if="form.hobbies.length === 0" class="text-gray-400 text-xs">
+                            <!-- 国のタグ -->
+                            <button
+                                v-for="code in selectedCountries" 
+                                :key="'country-' + code"
+                                @click.stop="clearFilter('country', code)"
+                                class="bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-xs whitespace-nowrap text-[#4b3b2b] hover:bg-gray-50">
+                                {{ countryCategory.tags.find(t => t.code === code)?.label || code }} ×
+                            </button>
+                            <span v-if="selectedLabels.length === 0" class="text-gray-400 text-xs">
                                 {{ t.search.selectFilters }}
                             </span>
                         </div>
                         <Search class="w-5 h-5 cursor-pointer text-[#FEBC6E] flex-shrink-0" @click="runSearch" />
                     </div>
 
-                    <!-- 言語・国のタブ -->
-                    <div class="bg-white p-3 border-2 border-[#FEBC6E] rounded-lg">
-                        <div class="flex gap-4 pb-3 border-b border-[#FEBC6E] mb-3">
-                            <span 
-                                v-for="category in choiceCategories" 
-                                :key="category.name"
-                                @click="activeTabRef = category.name" 
-                                :class="(activeTabRef || activeTab) === category.name
-                                    ? 'text-[#4a90e2] font-bold border-b-2 border-[#4a90e2] pb-1'
-                                    : 'text-gray-600 font-medium cursor-pointer'">
-                                {{ category.name }}
-                            </span>
+                    <!-- 言語と国を横並びで表示 -->
+                    <div class="flex gap-3">
+                        <!-- CategorySelectを使用した言語選択 -->
+                        <div class="flex-1">
+                            <CategorySelect
+                                :title="t.search.language"
+                                :categories="[languageCategory]"
+                                :modelValue="selectedLanguages"
+                                @update:modelValue="onLanguageChange"
+                                :multiple="true"
+                                :panelOnly="true"
+                                :placeholder="t.search.selectFilters"
+                            />
                         </div>
 
-                        <!-- タグ選択エリア -->
-                        <div 
-                            v-for="category in choiceCategories" 
-                            :key="category.name" 
-                            v-show="(activeTabRef || activeTab) === category.name"
-                            class="flex flex-wrap gap-2">
-                            <button 
-                                v-for="tag in category.tags" 
-                                :key="tag" 
-                                @click="toggleHobby(tag)" 
-                                :class="form.hobbies.includes(tag)
-                                    ? 'bg-[#fceb96] text-gray-800 border border-[#FEBC6E] rounded-full px-3 py-1 text-sm'
-                                    : 'bg-white border border-[#FEBC6E] rounded-full px-3 py-1 text-sm hover:bg-gray-50'">
-                                {{ tag }}
-                            </button>
+                        <!-- CategorySelectを使用した国選択 -->
+                        <div class="flex-1">
+                            <CategorySelect
+                                :title="t.search.country"
+                                :categories="[countryCategory]"
+                                :modelValue="selectedCountries"
+                                @update:modelValue="onCountryChange"
+                                :multiple="true"
+                                :panelOnly="true"
+                                :placeholder="t.search.selectFilters"
+                            />
                         </div>
                     </div>
                 </div>
@@ -394,14 +356,14 @@ onMounted(async () => {
                 <!-- 検索結果がない場合 -->
                 <div v-else-if="isSearching && !isLoading && searchResults.length === 0" class="flex items-center justify-center py-8">
                     <div class="text-[#4b3b2b]">
-                        {{ form.hobbies.length === 0 ? t.search.noUsers : t.search.noResults }}
+                        {{ selectedLabels.length === 0 ? t.search.noUsers : t.search.noResults }}
                     </div>
                 </div>
 
                 <!-- 検索結果表示 -->
                 <div v-else-if="isSearching && !isLoading && searchResults.length > 0">
                     <!-- おすすめのユーザータイトル（フィルター条件がない場合） -->
-                    <div v-if="form.hobbies.length === 0" class="mb-2 px-2">
+                    <div v-if="selectedLabels.length === 0" class="mb-2 px-2">
                         <div class="flex items-center gap-2 text-[#473c3c]">
                             <UserRoundPlus class="w-5 h-5" />
                             <span class="text-sm font-semibold">{{ t.search.recommendedUsers }}</span>
