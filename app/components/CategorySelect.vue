@@ -86,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 type TagObj = { code: string; label: string }
 type Tag = TagObj | string
@@ -119,13 +119,27 @@ const readonlyOrDisabled = computed(() => isReadOnly.value || !!props.disabled)
 const open = ref(false)
 const activeTab = ref(props.categories?.[0]?.name || '')
 
+// disabled または readonly が true になったらパネルを閉じる
+watch(
+  () => props.disabled || props.readonly,
+  (newVal) => {
+    if (newVal) {
+      open.value = false
+    }
+  }
+)
+
 function toggleOpen() {
   if (isReadOnly.value || props.disabled) return
   open.value = !open.value
 }
 
 const panelOnly = computed(() => !!props.panelOnly)
-const showPanel = computed(() => panelOnly.value ? true : open.value)
+// panelOnlyの場合でも、disabled/readonlyの時はパネルを閉じる
+const showPanel = computed(() => {
+  if (readonlyOrDisabled.value) return false
+  return panelOnly.value ? true : open.value
+})
 
 // 値の正規化
 const arrayValue = computed<string[]>(() =>
