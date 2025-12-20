@@ -12,13 +12,13 @@
 
     <main class="max-w-[420px] mx-2 sm:mx-auto p-5 pt-16 bg-transparent">
       <div v-if="isLoading" class="flex items-center justify-center py-8">
-        <div class="text-[#4b3b2b]">読み込み中...</div>
+        <div class="text-[#4b3b2b]">{{ t.profile.loading }}</div>
       </div>
       <div v-else>
         <div class="flex items-center gap-3 mb-3">
           <div class="w-24 h-24 rounded-full flex items-center justify-center border-2 overflow-hidden"
             :class="['border-[var(--container-border-color)]', 'bg-[var(--meetupr-main)]']">
-            <img v-if="user.avatarUrl" :src="user.avatarUrl" :alt="user.name || 'ユーザー'" class="w-full h-full object-cover" />
+            <img v-if="user.avatarUrl" :src="user.avatarUrl" :alt="user.name || t.profile.user" class="w-full h-full object-cover" />
             <svg v-else viewBox="0 0 64 64" class="w-16 h-16" aria-hidden>
               <circle cx="32" cy="24" r="12" fill="none" stroke="#6aaea0" stroke-width="2" />
               <path d="M10 54c4-10 18-14 22-14s18 4 22 14" fill="none" stroke="#6aaea0" stroke-width="2" />
@@ -27,13 +27,13 @@
 
           <div class="flex-1">
             <div class="flex items-center gap-2 mb-2">
-              <h2 class="m-0 text-lg text-[#2f5f56]">{{ user.name || 'ユーザー' }}</h2>
+              <h2 class="m-0 text-lg text-[#2f5f56]">{{ user.name || t.profile.user }}</h2>
               <span v-if="user.flag" :class="['flag', `fi fi-${user.flag}`, 'w-6 h-6']"></span>
             </div>
             <button v-if="user.id" @click="sendMessage(user.id)"
               class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed"
               :class="['bg-[var(--meetupr-color-3)]']">
-              メッセージ
+              {{ t.otherProfile.sendMessage }}
               <MessageCircle class="w-4 h-4" />
             </button>
           </div>
@@ -41,13 +41,13 @@
 
       <div class="flex flex-col gap-3">
         <label class="flex flex-col gap-2">
-          <div class="text-sm text-[#6a5a3b]">学部</div>
+          <div class="text-sm text-[#6a5a3b]">{{ t.otherProfile.faculty }}</div>
           <div class="px-2 py-2 bg-white border-2 rounded-md text-sm text-[#4b3b2b]"
             :class="['border-[var(--meetupr-sub)]']">{{ user.department }}</div>
         </label>
 
         <div class="flex flex-col gap-2">
-          <div class="text-sm text-[#6a5a3b]">性別</div>
+          <div class="text-sm text-[#6a5a3b]">{{ t.otherProfile.gender }}</div>
           <div class="inline-flex items-center gap-1.5 text-sm text-[#4b3b2b]">
             <input
               type="radio"
@@ -55,21 +55,21 @@
               :checked="!!user.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            {{ user.gender || '未設定' }}
+            {{ user.gender || t.profile.notSet }}
           </div>
         </div>
 
         <label class="flex flex-col gap-2">
-          <div class="text-sm text-[#6a5a3b]">出身</div>
+          <div class="text-sm text-[#6a5a3b]">{{ t.otherProfile.origin }}</div>
           <div class="px-2 py-2 bg-white border-2 rounded-md text-sm text-[#4b3b2b]"
             :class="['border-[var(--meetupr-sub)]']">{{ user.origin }}</div>
         </label>
 
         <div class="flex flex-col gap-3">
-          <div class="text-sm text-[#6a5a3b]">言語</div>
+          <div class="text-sm text-[#6a5a3b]">{{ t.otherProfile.language }}</div>
 
           <div class="flex flex-col gap-2">
-            <div class="text-xs text-[#6a5a3b]">ネイティブ</div>
+            <div class="text-xs text-[#6a5a3b]">{{ t.otherProfile.nativeLanguage }}</div>
             <div class="flex flex-wrap gap-2">
               <span
                 v-for="(l, i) in user.nativeLanguages"
@@ -77,12 +77,12 @@
                 class="px-3 py-1 rounded-full text-sm bg-white"
                 :class="['border-2', 'border-[var(--meetupr-sub)]', 'text-[#4b3b2b]']"
               >{{ l }}</span>
-              <span v-if="!(Array.isArray(user.nativeLanguages) && user.nativeLanguages.length)" class="text-sm text-gray-400">未設定</span>
+              <span v-if="!(Array.isArray(user.nativeLanguages) && user.nativeLanguages.length)" class="text-sm text-gray-400">{{ t.profile.notSet }}</span>
             </div>
           </div>
 
           <div class="flex flex-col gap-2">
-            <div class="text-xs text-[#6a5a3b]">話せる言語</div>
+            <div class="text-xs text-[#6a5a3b]">{{ t.otherProfile.spokenLanguages }}</div>
             <div class="flex flex-wrap gap-2">
               <span
                 v-for="(l, i) in user.spokenLanguages"
@@ -90,12 +90,12 @@
                 class="px-3 py-1 rounded-full text-sm bg-white"
                 :class="['border-2', 'border-[var(--meetupr-sub)]', 'text-[#4b3b2b]']"
               >{{ l }}</span>
-              <span v-if="!(Array.isArray(user.spokenLanguages) && user.spokenLanguages.length)" class="text-sm text-gray-400">未設定</span>
+              <span v-if="!(Array.isArray(user.spokenLanguages) && user.spokenLanguages.length)" class="text-sm text-gray-400">{{ t.profile.notSet }}</span>
             </div>
           </div>
 
           <div class="flex flex-col gap-2">
-            <div class="text-xs text-[#6a5a3b]">学びたい言語</div>
+            <div class="text-xs text-[#6a5a3b]">{{ t.otherProfile.learningLanguages }}</div>
             <div class="flex flex-wrap gap-2">
               <span
                 v-for="(l, i) in user.learningLanguages"
@@ -103,13 +103,13 @@
                 class="px-3 py-1 rounded-full text-sm bg-white"
                 :class="['border-2', 'border-[var(--meetupr-sub)]', 'text-[#4b3b2b]']"
               >{{ l }}</span>
-              <span v-if="!(Array.isArray(user.learningLanguages) && user.learningLanguages.length)" class="text-sm text-gray-400">未設定</span>
+              <span v-if="!(Array.isArray(user.learningLanguages) && user.learningLanguages.length)" class="text-sm text-gray-400">{{ t.profile.notSet }}</span>
             </div>
           </div>
         </div>
 
         <div class="flex flex-col gap-2">
-          <div class="text-sm text-[#6a5a3b]">趣味</div>
+          <div class="text-sm text-[#6a5a3b]">{{ t.otherProfile.hobbies }}</div>
           <div class="flex flex-wrap gap-2">
             <span v-for="(h, i) in user.hobbies" :key="i" class="px-3 py-1 rounded-full text-sm bg-white"
               :class="['border-2', 'border-[var(--meetupr-sub)]', 'text-[#4b3b2b]']">{{ h }}</span>
@@ -117,7 +117,7 @@
         </div>
 
         <label class="flex flex-col gap-2">
-          <div class="text-sm text-[#6a5a3b]">一言</div>
+          <div class="text-sm text-[#6a5a3b]">{{ t.otherProfile.bio }}</div>
           <div
             class="px-2 py-2 bg-white border-2 rounded-md text-sm text-[#4b3b2b] min-h-[60px] whitespace-pre-wrap break-words"
             :class="['border-[var(--meetupr-sub)]']">{{ user.bio }}</div>
@@ -142,7 +142,9 @@ import { getGenderLabel } from '~/utils/genderMapping'
 import { getLanguageLabel } from '~/utils/languageMapping'
 import { MessageCircle } from 'lucide-vue-next'
 import Footer from '~/components/Footer.vue'
+import { useLocale } from '~/composables/useLocale'
 
+const { t, locale } = useLocale()
 const router = useRouter()
 const route = useRoute()
 const config = useRuntimeConfig()
@@ -255,16 +257,16 @@ const sendMessage = async (otherUserId) => {
     if (chatId) {
       router.push(`/chat/${chatId}`)
     } else {
-      console.error('チャットIDが取得できませんでした')
-      alert('チャットの開始に失敗しました。')
+      console.error('Chat ID not found')
+      alert(t.otherProfile.chatStartError)
     }
   } catch (error) {
-    console.error('チャット開始エラー:', error)
+    console.error('Chat start error:', error)
     
     // エラーメッセージを表示
-    let errorMessage = 'チャットの開始に失敗しました。'
+    let errorMessage = t.otherProfile.chatStartError
     if (error?.statusCode === 400) {
-      errorMessage = '自分自身とはチャットできません。'
+      errorMessage = t.otherProfile.cannotChatSelf
     } else if (error?.data?.message) {
       errorMessage = error.data.message
     } else if (error?.message) {

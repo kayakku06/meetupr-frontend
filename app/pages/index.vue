@@ -2,9 +2,12 @@
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuth0 } from '@auth0/auth0-vue';
+import { useLocale } from '~/composables/useLocale'
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 const { isAuthenticated, isLoading, login } = useAuth()
 const route = useRoute()
+const { t } = useLocale()
 
 const email = ref('')
 const password = ref('')
@@ -27,11 +30,11 @@ if (import.meta.client) {
 // 学内メールアドレスのバリデーション
 const validateEmail = (emailValue: string) => {
   if (!emailValue) {
-    emailError.value = '学内メールアドレスを入力してください'
+    emailError.value = t.value.login.emailRequired
     return false
   }
   if (!emailValue.endsWith('@ed.ritsumei.ac.jp')) {
-    emailError.value = '@ed.ritsumei.ac.jpで終わる学内メールアドレスを入力してください'
+    emailError.value = t.value.login.emailInvalid
     return false
   }
   emailError.value = ''
@@ -41,7 +44,7 @@ const validateEmail = (emailValue: string) => {
 // メールアドレスの入力時にリアルタイムでバリデーション
 watch(email, () => {
   if (email.value && !email.value.endsWith('@ed.ritsumei.ac.jp')) {
-    emailError.value = '@ed.ritsumei.ac.jpで終わる学内メールアドレスを入力してください'
+    emailError.value = t.value.login.emailInvalid
   } else {
     emailError.value = ''
   }
@@ -104,7 +107,7 @@ const handleLogin = async () => {
     return
   }
   if (!password.value) {
-    alert('パスワードを入力してください')
+    alert(t.value.login.passwordRequired)
     return
   }
   
@@ -122,18 +125,18 @@ const handleLogin = async () => {
       // エラーハンドリング
       // ROPCが有効になっていない場合のエラー
       if (loginResponse.error === 'ropc_not_enabled') {
-        alert('認証設定が正しくありません。Auth0 DashboardでROPC (Password Grant Type) を有効にしてください。\n\n詳細: ' + (loginResponse.error_description || ''))
+        alert(t.value.login.authConfigError + '\n\n' + (loginResponse.error_description || ''))
         return
       }
       
       // 認証情報が間違っている場合
       if (loginResponse.error === 'invalid_credentials') {
         password.value = '' // パスワードをクリア
-        alert(loginResponse.error_description || 'メールアドレスまたはパスワードが正しくありません')
+        alert(loginResponse.error_description || t.value.login.invalidCredentials)
         return
       }
       
-      const errorMessage = loginResponse.error_description || loginResponse.error || 'ログインに失敗しました'
+      const errorMessage = loginResponse.error_description || loginResponse.error || t.value.login.loginFailed
       alert(errorMessage)
       return
     }
@@ -221,19 +224,19 @@ const handleLogin = async () => {
     
     // ROPCが有効になっていない場合のエラー
     if (errorData?.error === 'ropc_not_enabled') {
-      alert('認証設定が正しくありません。Auth0 DashboardでROPC (Password Grant Type) を有効にしてください。\n\n詳細: ' + (errorData.error_description || ''))
+      alert(t.value.login.authConfigError + '\n\n' + (errorData.error_description || ''))
       return
     }
     
     // 認証情報が間違っている場合
     if (errorData?.error === 'invalid_credentials') {
       password.value = '' // パスワードをクリア
-      alert(errorData.error_description || 'メールアドレスまたはパスワードが正しくありません')
+      alert(errorData.error_description || t.value.login.invalidCredentials)
       return
     }
     
     // その他のエラー
-    const errorMessage = errorData?.error_description || errorData?.error || errorData?.message || 'ログインに失敗しました。もう一度お試しください。'
+    const errorMessage = errorData?.error_description || errorData?.error || errorData?.message || t.value.login.loginFailed
     alert(errorMessage)
   }
 }
@@ -246,6 +249,11 @@ const handleSignUp = () => {
 
 <template>
   <div class="min-h-screen flex flex-col items-center justify-center bg-[var(--meetupr-main)] px-4">
+        <!-- 言語切り替え -->
+        <div class="absolute top-4 right-4">
+          <LanguageSwitcher />
+        </div>
+        
         <div class="w-full max-w-md space-y-8">
             <!-- ロゴとタイトル -->
             <div class="text-center space-y-4">
@@ -254,7 +262,7 @@ const handleSignUp = () => {
                     <div class="w-56 h-56 rounded-full overflow-hidden">
                         <img 
                             src="/icon.png" 
-                            alt="MeetUp+R ロゴ" 
+                            :alt="t.header.logo" 
                             class="w-full h-full object-cover"
                         />
                     </div>
@@ -270,13 +278,13 @@ const handleSignUp = () => {
                     <!-- 学内メールアドレス入力欄 -->
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                            学内メールアドレス
+                            {{ t.login.universityEmail }}
                         </label>
                         <input
                             id="email"
                             v-model="email"
                             type="email"
-                            placeholder="example@ed.ritsumei.ac.jp"
+                            :placeholder="t.login.emailPlaceholder"
                 :class="[
                     'w-full px-4 py-3 border-[3px] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--meetupr-sub)] focus:border-transparent',
                     emailError ? 'border-red-500 focus:ring-red-500' : 'border-[var(--meetupr-sub)] focus:ring-[var(--meetupr-sub)]'
@@ -290,13 +298,13 @@ const handleSignUp = () => {
                     <!-- パスワード入力欄 -->
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                            パスワード
+                            {{ t.login.password }}
                         </label>
                         <input
                             id="password"
                             v-model="password"
                             type="password"
-                            placeholder="パスワードを入力"
+                            :placeholder="t.login.passwordPlaceholder"
                             class="w-full px-4 py-3 border-[3px] border-[var(--meetupr-sub)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--meetupr-sub)] focus:border-transparent"
                             required
                         />
@@ -307,7 +315,7 @@ const handleSignUp = () => {
                         type="submit"
             class="w-full bg-[var(--meetupr-color-3)] text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
                     >
-                        ログイン
+                        {{ t.login.loginButton }}
                     </button>
                 </form>
 
@@ -317,20 +325,20 @@ const handleSignUp = () => {
                 <!-- 新規登録セクション -->
                 <div class="text-center space-y-3">
                     <p class="text-sm text-gray-600">
-                        初めての方はこちら
+                        {{ t.login.firstTime }}
                     </p>
           <button
             @click="handleSignUp"
             class="w-full bg-[var(--meetupr-color-3)] text-white py-3 rounded-md font-semibold hover:bg-[#4a8079] transition-colors"
           >
-            新規登録
+            {{ t.login.signupButton }}
           </button>
                 </div>
             </div>
 
             <!-- 読み込み中 -->
             <div v-if="isLoading" class="text-center text-gray-500">
-                読み込み中...
+                {{ t.common.loading }}
             </div>
         </div>
     </div>

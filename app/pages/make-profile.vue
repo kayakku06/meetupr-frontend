@@ -6,11 +6,11 @@
                 <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
 
                 <div class="w-full">
-                    <h2 class="m-0 mb-2 text-xl sm:text-2xl font-bold text-teal-900 text-center">プロフィール登録</h2>
+                    <h2 class="m-0 mb-2 text-xl sm:text-2xl font-bold text-teal-900 text-center">{{ t.profile.profileRegistration }}</h2>
                 </div>
                 <div class="relative inline-block">
                     <div class="w-20 h-20 rounded-full bg-[var(--meetup-color-3)] flex items-center justify-center border-2 border-[var(--meetupr-color-3)] overflow-hidden cursor-pointer"
-                        role="button" aria-label="プロフィール画像を選択" @click="onAvatarClick">
+                        role="button" :aria-label="t.profile.selectProfileImage" @click="onAvatarClick">
                         <template v-if="profileImageDataUrl">
                             <img :src="profileImageDataUrl" alt="avatar" class="w-full h-full object-cover" />
                         </template>
@@ -37,68 +37,68 @@
             <form @submit.prevent="registerProfile" class="flex flex-col gap-3">
 
                 <label class="flex flex-col gap-1">
-                    <div class="text-sm text-yellow-900">学部 <span class="text-red-500">*</span></div>
+                    <div class="text-sm text-yellow-900">{{ t.profile.faculty }} <span class="text-red-500">{{ t.profile.required }}</span></div>
                     <select v-model="form.faculty" required
                         class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 appearance-none">
-                        <option value="" disabled>学部を選択</option>
-                        <option value="business">経営学部</option>
-                        <option value="production_science">政策科学部</option>
-                        <option value="information_science">情報理工学部</option>
-                        <option value="film_studies">映像学部</option>
-                        <option value="psychology">総合心理学部</option>
-                        <option value="global_liberal_arts">グローバル教養学部</option>
+                        <option value="" disabled>{{ t.profile.selectFaculty }}</option>
+                        <option value="business">{{ t.profile.faculties.business }}</option>
+                        <option value="production_science">{{ t.profile.faculties.productionScience }}</option>
+                        <option value="information_science">{{ t.profile.faculties.informationScience }}</option>
+                        <option value="film_studies">{{ t.profile.faculties.filmStudies }}</option>
+                        <option value="psychology">{{ t.profile.faculties.psychology }}</option>
+                        <option value="global_liberal_arts">{{ t.profile.faculties.globalLiberalArts }}</option>
                     </select>
                 </label>
 
                 <fieldset class="flex flex-col gap-2">
-                    <legend class="text-xs text-amber-900">性別</legend>
+                    <legend class="text-xs text-amber-900">{{ t.profile.gender }}</legend>
                     <label class="inline-flex items-center gap-1.5 text-sm text-amber-900"><input type="radio"
                             value="male" v-model="form.gender"
-                            class="disabled:opacity-50 disabled:cursor-not-allowed" /> 男性</label>
+                            class="disabled:opacity-50 disabled:cursor-not-allowed" /> {{ t.profile.male }}</label>
                     <label class="inline-flex items-center gap-1.5 text-sm text-amber-900"><input type="radio"
                             value="female" v-model="form.gender"
-                            class="disabled:opacity-50 disabled:cursor-not-allowed" /> 女性</label>
+                            class="disabled:opacity-50 disabled:cursor-not-allowed" /> {{ t.profile.female }}</label>
                     <label class="inline-flex items-center gap-1.5 text-sm text-amber-900"><input type="radio"
                             value="other" v-model="form.gender"
-                            class="disabled:opacity-50 disabled:cursor-not-allowed" /> その他</label>
+                            class="disabled:opacity-50 disabled:cursor-not-allowed" /> {{ t.profile.other }}</label>
                 </fieldset>
 
                 <!-- 出身（CategorySelectへ統一） -->
                 <div class="flex flex-col gap-4">
-                    <div class="text-sm text-amber-900">出身 <span class="text-red-500">*</span></div>
+                    <div class="text-sm text-amber-900">{{ t.profile.origin }} <span class="text-red-500">{{ t.profile.required }}</span></div>
                     <CategorySelect v-model="form.origin" :categories="regionCategories" :multiple="false"
-                        placeholder="選択してください" aria-required="true" />
+                        :placeholder="t.profile.selectPlaceholder" aria-required="true" />
                 </div>
 
                 <div class="flex flex-col gap-4">
-                    <div class="text-sm text-amber-900">言語</div>
+                    <div class="text-sm text-amber-900">{{ t.profile.language }}</div>
                     <!-- ネイティブ: CategorySelect（話せる言語と同形式、1件のみ保持） -->
                     <CategorySelect
                         v-model="form.langNative"
                         :categories="languageCategories"
                         :multiple="true"
-                        placeholder="選択してください（必須）"
-                        title="ネイティブ"
+                        :placeholder="t.profile.selectRequiredPlaceholder"
+                        :title="t.profile.nativeLanguage"
                         :required="true"
-                        selectButtonLabel="選択"
+                        :selectButtonLabel="t.profile.select"
                         aria-required="true"
                     />
 
                     <!-- 話せる言語: CategorySelect -->
                     <CategorySelect v-model="form.langSpoken" :categories="languageCategories" :multiple="true"
-                        placeholder="選択してください" title="話せる言語" selectButtonLabel="選択" />
+                        :placeholder="t.profile.selectPlaceholder" :title="t.profile.spokenLanguages" :selectButtonLabel="t.profile.select" />
 
                     <!-- 学びたい言語: CategorySelect -->
                     <CategorySelect v-model="form.langLearning" :categories="languageCategories" :multiple="true"
-                        placeholder="選択してください" title="学びたい言語" selectButtonLabel="選択" />
+                        :placeholder="t.profile.selectPlaceholder" :title="t.profile.learningLanguages" :selectButtonLabel="t.profile.select" />
                 </div>
 
                 <!-- 趣味（従来のchips＋入力＋既存選択肢UIを維持） -->
                 <div class="flex flex-col gap-2">
-                    <div class="text-sm text-amber-900">趣味</div>
+                    <div class="text-sm text-amber-900">{{ t.profile.hobbies }}</div>
                     <div class="flex flex-wrap gap-2">
                         <span v-if="!(Array.isArray(form.hobbies) && form.hobbies.length > 0)"
-                            class="text-gray-400 text-sm">下の選択肢から趣味を選んでください</span>
+                            class="text-gray-400 text-sm">{{ t.profile.hobbiesHint }}</span>
                         <button v-for="hobby in (Array.isArray(form.hobbies) ? form.hobbies : [])" :key="hobby"
                             type="button" @click="removeHobby(hobby)"
                             class="bg-white text-amber-900 border-2 border-[var(--meetupr-sub)] rounded-full px-3 py-1 text-xs">
@@ -109,36 +109,36 @@
 
 
                 <div v-if="true">
-                    <label class="text-xs text-amber-900 mb-1 block">既存の選択肢</label>
+                    <label class="text-xs text-amber-900 mb-1 block">{{ t.profile.existingOptions }}</label>
                     <div class="flex gap-2 items-center mt-1.5">
                         <input v-model="newHobby"
                             class="flex-1 border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
-                            placeholder="趣味を入力してEnter" @keyup.enter="addHobby()" />
+                            :placeholder="t.profile.hobbiesPlaceholder" @keyup.enter="addHobby()" />
                         <button type="button"
                             class="bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition"
-                            @click="addHobby()">追加</button>
+                            @click="addHobby()">{{ t.profile.add }}</button>
                     </div>
 
                     
                     <!-- 下の選択欄をCategorySelectで統一 -->
                     <div class="mt-3">
                         <CategorySelect v-model="form.hobbies" :categories="choiceCategories" :multiple="true"
-                            :panelOnly="true" placeholder="選択してください" title="趣味" selectButtonLabel="選択" />
+                            :panelOnly="true" :placeholder="t.profile.selectPlaceholder" :title="t.profile.hobbies" :selectButtonLabel="t.profile.select" />
                     </div>
                 </div>
 
                 <label class="flex flex-col gap-2">
-                    <div class="text-sm text-amber-900">一言（50文字以内）</div>
+                    <div class="text-sm text-amber-900">{{ t.profile.bio }}</div>
                     <textarea v-model="form.bio"
                         class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 min-h-16 resize-none"
-                        maxlength="50" placeholder="一言を入力してください"></textarea>
+                        maxlength="50" :placeholder="t.profile.bioPlaceholder"></textarea>
                     <div class="text-xs text-amber-700 text-right mt-1">{{ (form.bio || '').length }}/50</div>
                 </label>
 
                 <div class="flex gap-2 mt-1.5">
                     <button type="submit"
                         :disabled="isSubmitDisabled"
-                        class="bg-[var(--meetupr-color-3)] text-white px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-teal-600 transition flex-1 disabled:opacity-50 disabled:cursor-not-allowed">登録</button>
+                        class="bg-[var(--meetupr-color-3)] text-white px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-teal-600 transition flex-1 disabled:opacity-50 disabled:cursor-not-allowed">{{ t.profile.register }}</button>
                 </div>
 
             </form>
@@ -158,6 +158,9 @@ import Footer from '~/components/Footer.vue'
 import CategorySelect from '~/components/CategorySelect.vue'
 
 import { normalizeCountryCode } from '~/utils/countryMapping';
+import { useLocale } from '~/composables/useLocale'
+
+const { t, locale } = useLocale()
 
 
 // フォームデータをrefで管理

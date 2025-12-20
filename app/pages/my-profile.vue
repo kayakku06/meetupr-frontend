@@ -42,17 +42,17 @@
 
         <div class="flex-1">
           <template v-if="!editing">
-            <h2 class="m-0 mb-2 text-lg text-teal-900">{{ form.name || 'なまえ' }}</h2>
+            <h2 class="m-0 mb-2 text-lg text-teal-900">{{ form.name || t.profile.name }}</h2>
           </template>
           <template v-else>
-            <label class="sr-only" for="username-input">ユーザー名</label>
+            <label class="sr-only" for="username-input">{{ t.profile.name }}</label>
             <textarea
               id="username-input"
               v-model="form.name"
               :disabled="isLoading"
               rows="1"
               class="w-full border-2 border-[var(--meetupr-sub)] p-1.5 rounded bg-white text-lg outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 h-10 leading-tight disabled:opacity-50 disabled:cursor-not-allowed mb-1"
-              placeholder="ユーザー名を入力"
+              :placeholder="t.profile.usernamePlaceholder"
             ></textarea>
           </template>
           <button v-if="!editing && !isLoading"
@@ -63,29 +63,29 @@
                 d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
                 fill="#fff" />
             </svg>
-            プロフィール編集
+            {{ t.profile.profileEdit }}
           </button>
         </div>
       </div>
 
       <form class="flex flex-col gap-3" @submit.prevent>
         <label class="flex flex-col gap-1">
-          <div class="text-sm text-yellow-900">学部 <span class="text-red-500">*</span></div>
+          <div class="text-sm text-yellow-900">{{ t.profile.faculty }} <span class="text-red-500">{{ t.profile.required }}</span></div>
           <!-- 値はコードに統一（make-profile準拠） -->
           <select :disabled="!editing || isLoading" v-model="form.department"
             class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 appearance-none ">
-            <option value="" disabled>学部を選択</option>
-            <option value="business">経営学部</option>
-            <option value="production_science">政策科学部</option>
-            <option value="information_science">情報理工学部</option>
-            <option value="film_studies">映像学部</option>
-            <option value="psychology">総合心理学部</option>
-            <option value="global_liberal_arts">グローバル教養学部</option>
+            <option value="" disabled>{{ t.profile.selectFaculty }}</option>
+            <option value="business">{{ t.profile.faculties.business }}</option>
+            <option value="production_science">{{ t.profile.faculties.productionScience }}</option>
+            <option value="information_science">{{ t.profile.faculties.informationScience }}</option>
+            <option value="film_studies">{{ t.profile.faculties.filmStudies }}</option>
+            <option value="psychology">{{ t.profile.faculties.psychology }}</option>
+            <option value="global_liberal_arts">{{ t.profile.faculties.globalLiberalArts }}</option>
           </select>
         </label>
 
         <fieldset v-if="editing" class="flex flex-col gap-2">
-          <legend class="text-xs text-amber-900">性別</legend>
+          <legend class="text-xs text-amber-900">{{ t.profile.gender }}</legend>
           <label class="inline-flex items-center gap-1.5 text-sm text-amber-900">
             <input
               type="radio"
@@ -94,7 +94,7 @@
               v-model="form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            男性
+            {{ t.profile.male }}
           </label>
           <label class="inline-flex items-center gap-1.5 text-sm text-amber-900">
             <input
@@ -104,7 +104,7 @@
               v-model="form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            女性
+            {{ t.profile.female }}
           </label>
           <label class="inline-flex items-center gap-1.5 text-sm text-amber-900">
             <input
@@ -114,11 +114,11 @@
               v-model="form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            その他
+            {{ t.profile.other }}
           </label>
         </fieldset>
         <div v-else class="flex flex-col gap-1">
-          <div class="text-xs text-amber-900">性別</div>
+          <div class="text-xs text-amber-900">{{ t.profile.gender }}</div>
           <div class="inline-flex items-center gap-1.5 text-sm text-amber-900">
             <input
               type="radio"
@@ -126,60 +126,60 @@
               :checked="!!form.gender"
               class="disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            {{ getGenderLabel(form.gender) || '未設定' }}
+            {{ getGenderLabel(form.gender) || t.profile.notSet }}
           </div>
         </div>
 
         <!-- 出身（選択UIのみコンポーネント化） -->
         <div class="flex flex-col gap-4">
-          <div class="text-sm text-amber-900">出身 <span class="text-red-500">*</span></div>
+          <div class="text-sm text-amber-900">{{ t.profile.origin }} <span class="text-red-500">{{ t.profile.required }}</span></div>
           <CategorySelect
             :categories="regionCategories"
             v-model="form.origin"
             :multiple="false"
             :readonly="!editing"
             :disabled="!editing || isLoading"
-            placeholder="選択してください"
+            :placeholder="t.profile.selectPlaceholder"
           />
         </div>
 
         <div class="flex flex-col gap-4">
-          <div class="text-sm text-amber-900">言語</div>
+          <div class="text-sm text-amber-900">{{ t.profile.language }}</div>
           <!-- ネイティブ・話せる・学びたい をCategorySelectへ統一（選択UIのみコンポーネント化） -->
           <CategorySelect
-            title="ネイティブ"
+            :title="t.profile.nativeLanguage"
             :required="true"
             :categories="languageCategories"
             v-model="form.nativeLanguage"
             :multiple="true"
             :readonly="!editing"
             :disabled="!editing || isLoading"
-            placeholder="選択してください（必須）"
+            :placeholder="t.profile.selectRequiredPlaceholder"
           />
 
           <CategorySelect
-            title="話せる言語"
+            :title="t.profile.spokenLanguages"
             :categories="languageCategories"
             v-model="form.spokenLanguages"
             :multiple="true"
             :readonly="!editing"
             :disabled="!editing || isLoading"
-            placeholder="選択してください"
+            :placeholder="t.profile.selectPlaceholder"
           />
 
           <CategorySelect
-            title="学びたい言語"
+            :title="t.profile.learningLanguages"
             :categories="languageCategories"
             v-model="form.learningLanguages"
             :multiple="true"
             :readonly="!editing"
             :disabled="!editing || isLoading"
-            placeholder="選択してください"
+            :placeholder="t.profile.selectPlaceholder"
           />
         </div>
 
         <div class="flex flex-col gap-2">
-          <div class="text-xs text-amber-900">趣味</div>
+          <div class="text-xs text-amber-900">{{ t.profile.hobbies }}</div>
           <div class="flex gap-2 flex-wrap">
             <!-- 統合したタグ表示: 選択・入力どちらでもここに追加され、×で削除可能にする -->
             <template v-for="(h, i) in form.hobbies" :key="h + '-' + i">
@@ -196,14 +196,14 @@
           </div>
           <!-- make-profileと同じ構成: 上にラベル、入力+追加ボタン、下にpanelOnlyのCategorySelect -->
           <div v-if="editing">
-            <label class="text-xs text-amber-900 mb-1 block">既存の選択肢</label>
+            <label class="text-xs text-amber-900 mb-1 block">{{ t.profile.existingOptions }}</label>
             <div class="flex gap-2 items-center mt-1.5">
               <input v-model="newHobby"
                 class="flex-1 border-2 border-[var(--meetupr-sub)] p-2 rounded bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
-                placeholder="趣味を入力してEnter" @keyup.enter="addHobby()" />
+                :placeholder="t.profile.hobbiesPlaceholder" @keyup.enter="addHobby()" />
               <button type="button"
                 class="bg-[var(--meetupr-sub)] text-white px-2.5 py-1.5 rounded text-sm cursor-pointer hover:bg-orange-500 transition"
-                @click="addHobby()">追加</button>
+                @click="addHobby()">{{ t.profile.add }}</button>
             </div>
             <div class="mt-3">
               <CategorySelect
@@ -211,9 +211,9 @@
                 :categories="choiceCategories"
                 :multiple="true"
                 :panelOnly="true"
-                placeholder="選択してください"
-                title="趣味"
-                selectButtonLabel="選択"
+                :placeholder="t.profile.selectPlaceholder"
+                :title="t.profile.hobbies"
+                :selectButtonLabel="t.profile.select"
               />
             </div>
           </div>
@@ -221,10 +221,10 @@
 
 
         <label class="flex flex-col gap-2">
-          <div class="text-xs text-amber-900">一言（50文字以内）</div>
+          <div class="text-xs text-amber-900">{{ t.profile.bio }}</div>
           <textarea :disabled="!editing || isLoading" v-model="form.bio"
             class="border-2 border-[var(--meetupr-sub)] p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 min-h-16 resize-none"
-            maxlength="50" placeholder="よろしくお願いします！！"></textarea>
+            maxlength="50" :placeholder="t.profile.bioPlaceholderEdit"></textarea>
           <div class="text-xs text-amber-700 text-right mt-1">{{ (form.bio || '').length }}/50</div>
         </label>
 
@@ -232,11 +232,11 @@
           <button type="button"
             :disabled="isSaveDisabled"
             class="bg-[var(--meetupr-color-3)]  text-white px-3.5 py-2 rounded text-sm cursor-pointer hover:bg-teal-600 transition flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-            @click="save">{{ isSaving ? '保存中...' : '保存' }}</button>
+            @click="save">{{ isSaving ? t.profile.saving : t.profile.save }}</button>
           <button type="button"
             :disabled="isSaving"
             class="bg-gray-300 text-gray-800 px-3.5  py-2 rounded text-sm cursor-pointer hover:bg-gray-400 transition flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-            @click="cancel">キャンセル</button>
+            @click="cancel">{{ t.profile.cancel }}</button>
         </div>
       </form>
 
@@ -246,7 +246,7 @@
           @click="handleLogout"
           class="w-full px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
         >
-          ログアウト
+          {{ t.profile.logout }}
         </button>
       </div>
     </main>
@@ -267,7 +267,9 @@ import Footer from '~/components/Footer.vue'
 import { useAuth } from '~/composables/useAuth'
 import { normalizeCountryCode } from '~/utils/countryMapping'
 import profileHeader from '~/components/profile-header.vue'
+import { useLocale } from '~/composables/useLocale'
 
+const { t, locale } = useLocale()
 const { user, getAccessToken, logout } = useAuth()
 
 // ログアウト処理

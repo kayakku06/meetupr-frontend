@@ -1,5 +1,9 @@
 <script setup>
 import { BadgeQuestionMark, BadgeQuestionMarkIcon } from 'lucide-vue-next'
+import { useLocale } from '~/composables/useLocale'
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
+
+const { t } = useLocale()
 </script>
 
 <template>
@@ -10,21 +14,23 @@ import { BadgeQuestionMark, BadgeQuestionMarkIcon } from 'lucide-vue-next'
       <div class="flex items-center justify-between">
         <!-- ロゴ -->
         <div class="flex items-center mt-2">
-          <img src="/meetlogo.svg" alt="MeetUp+R ロゴ" class="w-14 h-14 " />
+          <img src="/meetlogo.svg" :alt="t.header.logo" class="w-14 h-14 " />
         </div>
 
         <!-- タイトル"トーク" -->
         <h1
           class="text-2xl font-normal text-yellow-950 flex-1 text-center mt-10 flex items-center justify-center gap-2">
-          トーク
+          {{ t.header.talk }}
           <NuxtLink to="/guide/guide-search1">
             <BadgeQuestionMarkIcon class="w-5 h-5" />
           </NuxtLink>
         </h1>
 
 
-        <!-- 右側のスペーサー（ロゴとタイトルのバランスを取る） -->
-        <div class="w-12"></div>
+        <!-- 右側：言語切り替え -->
+        <div class="mt-2 mr-2">
+          <LanguageSwitcher />
+        </div>
       </div>
 
       <!-- 緑の線 -->
