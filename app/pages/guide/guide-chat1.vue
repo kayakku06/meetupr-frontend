@@ -3,13 +3,28 @@ import { Smile } from 'lucide-vue-next'
 import LogoBubble from '~/components/guide-speech.vue'
 import Button from '~/components/meetup-button.vue'
 import MeetDesire from '~/components/guide-meetdesire.vue'
+
+const router = useRouter()
+
+function onBack() {
+  router.push('/guide/guide-search2')  // 戻る先のページ
+}
+
+function onNext() {
+  router.push('/guide/guide-chat2')      // 次へ先のページ
+}
+
+function onClose() {
+  router.push('/home')     
+}
+
 </script>
 
 <template>
     <h1 class="fixed top-8 left-1/2 -translate-x-1/2
        z-[999] text-white text-xl
        m-0 p-0 leading-none pointer-events-none">
-        チャット画面
+        ＜使い方＞チャット画面
     </h1>
 
     <div class="relative h-screen bg-gray-50 overflow-hidden">
@@ -65,8 +80,8 @@ import MeetDesire from '~/components/guide-meetdesire.vue'
 
         <!-- ボタン -->
         <div class="fixed inset-0 z-50 pointer-events-auto">
-            <Button position="bottom" back-text="戻る" next-text="次へ" />
-            <Button position="top-right" />
+            <Button position="bottom" back-text="戻る" next-text="次へ" @back="onBack" @next="onNext" />
+            <Button position="top-right" @close="onClose" />
         </div>
 
     </div>

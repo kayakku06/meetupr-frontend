@@ -1,11 +1,11 @@
 <template>
-
+  <ProfileHeader class="fixed inset-x-0 top-0 z-50"/>
   <div class="min-h-screen bg-[var(--meetupr-main)] pb-20 font-['Noto_Sans_JP']">
   
    <!--　<header class="fixed top-0 left-0 right-0 h-14 bg-white shadow-md z-40"></header>　-->
 
     <!-- コンテンツ -->
-    <main class="max-w-md mx-auto p-5 ">
+    <main class="max-w-md mx-auto p-5 pt-28">
       <div class="flex gap-3 items-center mb-3">
         <!-- 画像選択用のhidden input（編集時にだけ使う） -->
         <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange" />
@@ -266,6 +266,7 @@ import CategorySelect from '~/components/CategorySelect.vue'
 import Footer from '~/components/Footer.vue'
 import { useAuth } from '~/composables/useAuth'
 import { normalizeCountryCode } from '~/utils/countryMapping'
+import profileHeader from '~/components/profile-header.vue'
 
 const { user, getAccessToken, logout } = useAuth()
 
