@@ -94,6 +94,9 @@ const fetchChatDetails = async () => {
       // パートナーのプロフィールを取得してネイティブ言語を取得
       await fetchPartnerProfile(response.other_user.id)
     }
+
+    // 会いたい度を取得
+    await fetchChatInterest()
   } catch (err: any) {
     console.error('チャット詳細の取得に失敗しました:', err)
   }
@@ -117,10 +120,79 @@ const fetchPartnerProfile = async (userId: string) => {
   }
 }
 
+// 会いたい度を取得
+const fetchChatInterest = async () => {
+  if (!chatId.value || !currentUserId.value) return
+
+  try {
+    const response = await $fetch<{ success: boolean, data?: { interest: number } }>('/api/chat/interest', {
+      query: {
+        chat_id: chatId.value,
+        user_id: currentUserId.value
+      }
+    })
+
+    if (response.success && response.data?.interest) {
+      desire.value = response.data.interest
+      console.log('[Chat] Loaded interest:', desire.value)
+    }
+  } catch (err: any) {
+    console.error('会いたい度の取得に失敗しました:', err)
+    // エラーが発生してもデフォルト値（3）を使用
+  }
+}
+
+// 会いたい度を保存
+const saveChatInterest = async (newInterest: number) => {
+  if (!chatId.value || !currentUserId.value) return
+
+  // 値の検証
+  if (typeof newInterest !== 'number' || newInterest < 1 || newInterest > 5) {
+    console.error('[Chat] Invalid interest value:', newInterest)
+    return
+  }
+
+  // 既に保存中の場合はスキップ
+  if (isSavingInterest.value) {
+    console.log('[Chat] Already saving interest, skipping...')
+    return
+  }
+
+  isSavingInterest.value = true
+
+  try {
+    const response = await $fetch<{ success: boolean, message?: string }>('/api/chat/interest', {
+      method: 'POST',
+      body: {
+        chat_id: chatId.value,
+        user_id: currentUserId.value,
+        interest: Math.round(newInterest) // 整数に丸める
+      }
+    })
+
+    if (response.success) {
+      console.log('[Chat] Interest saved successfully:', newInterest)
+    } else {
+      console.error('[Chat] Failed to save interest:', response)
+    }
+  } catch (err: any) {
+    console.error('会いたい度の保存に失敗しました:', err)
+  } finally {
+    isSavingInterest.value = false
+  }
+}
+
+// 会いたい度の変更を監視
+watch(desire, (newValue) => {
+  console.log('[Chat] Interest changed:', newValue)
+  saveChatInterest(newValue)
+}, { immediate: false })
+
 const message = ref('')
 const messages = ref<Message[]>([])
 const desire = ref(3)
 const messagesContainer = ref<HTMLElement | null>(null)
+const isSavingInterest = ref(false)
 const connectionStatus = ref<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected')
 const errorMessage = ref('')
 const partnerName = ref<string>('ユーザー')
@@ -526,7 +598,7 @@ onUnmounted(() => {
             <!-- MeetDesireSlider（playground と同様の表示） -->
             <div class=" border-b border-gray-100">
               <div class="max-w-md mx-auto">
-                <MeetDesireSlider v-model="desire" />
+                <MeetDesireSlider v-model="desire" :disabled="isSavingInterest" />
               </div>
             </div>
 
