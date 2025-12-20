@@ -360,29 +360,65 @@ function getGenderLabel(g: string): string {
   return getGenderLabelByLocale(g, locale.value)
 }
 
-// ★ 既存の選択肢のデータ（サンプル）
-const choiceCategories = ref([
+// ★ 既存の選択肢のデータ（コードベース）
+const choiceCategoriesData = [
   {
-    name: 'スポーツ',
-    tags: ['野球', 'サッカー', 'バスケ', 'テニス', 'ゴルフ']
+    nameJa: 'スポーツ',
+    nameEn: 'Sports',
+    tags: [
+      { code: 'baseball', labelJa: '野球', labelEn: 'Baseball' },
+      { code: 'soccer', labelJa: 'サッカー', labelEn: 'Soccer' },
+      { code: 'basketball', labelJa: 'バスケ', labelEn: 'Basketball' },
+      { code: 'tennis', labelJa: 'テニス', labelEn: 'Tennis' },
+      { code: 'golf', labelJa: 'ゴルフ', labelEn: 'Golf' }
+    ]
   },
   {
-    name: '音楽',
-    tags: ['J-POP', 'ロック', 'クラシック', 'ジャズ', 'K-POP']
+    nameJa: '音楽',
+    nameEn: 'Music',
+    tags: [
+      { code: 'jpop', labelJa: 'J-POP', labelEn: 'J-POP' },
+      { code: 'rock', labelJa: 'ロック', labelEn: 'Rock' },
+      { code: 'classical', labelJa: 'クラシック', labelEn: 'Classical' },
+      { code: 'jazz', labelJa: 'ジャズ', labelEn: 'Jazz' },
+      { code: 'kpop', labelJa: 'K-POP', labelEn: 'K-POP' }
+    ]
   },
   {
-    name: '食べ物',
-    tags: ['寿司', 'ラーメン', '焼肉', 'イタリアン', '中華']
+    nameJa: '食べ物',
+    nameEn: 'Food',
+    tags: [
+      { code: 'sushi', labelJa: '寿司', labelEn: 'Sushi' },
+      { code: 'ramen', labelJa: 'ラーメン', labelEn: 'Ramen' },
+      { code: 'yakiniku', labelJa: '焼肉', labelEn: 'Yakiniku' },
+      { code: 'italian', labelJa: 'イタリアン', labelEn: 'Italian' },
+      { code: 'chinese', labelJa: '中華', labelEn: 'Chinese' }
+    ]
   },
   {
-    name: '国',
-    tags: ['日本', '中国', '韓国', 'アメリカ', 'イギリス']
+    nameJa: '国',
+    nameEn: 'Countries',
+    tags: [
+      { code: 'japan', labelJa: '日本', labelEn: 'Japan' },
+      { code: 'china', labelJa: '中国', labelEn: 'China' },
+      { code: 'korea', labelJa: '韓国', labelEn: 'Korea' },
+      { code: 'usa', labelJa: 'アメリカ', labelEn: 'USA' },
+      { code: 'uk', labelJa: 'イギリス', labelEn: 'UK' }
+    ]
   },
-])
+]
+
+// ロケールに応じた趣味カテゴリを生成
+const choiceCategories = computed(() => {
+  return choiceCategoriesData.map(category => ({
+    name: locale.value === 'en' ? category.nameEn : category.nameJa,
+    tags: category.tags.map(tag => locale.value === 'en' ? tag.labelEn : tag.labelJa)
+  }))
+})
 
 // ★ 現在選択されているタブ（初期は最初のカテゴリ）
 
-const activeTab = ref(choiceCategories.value[0]?.name || 'スポーツ')
+const activeTab = computed(() => choiceCategories.value[0]?.name || '')
 
 type FormState = {
   name: string
