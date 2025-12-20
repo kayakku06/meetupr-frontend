@@ -431,6 +431,16 @@ const retryConnection = () => {
   connectWebSocket()
 }
 
+const goToPartnerProfile = () => {
+  if (!partnerId.value) return
+  router.push({
+    path: '/other-profile',
+    query: {
+      user_id: partnerId.value
+    }
+  })
+}
+
 // メッセージを翻訳（日本語⇔英語のみ）
 const translateMessage = async (msg: Message) => {
   // 既に翻訳が表示されている場合は非表示にする
@@ -553,7 +563,14 @@ onUnmounted(() => {
                         <!-- 相手のメッセージ（左側） -->
                         <div v-if="msg.sender_id !== currentUserId" class="flex items-start space-x-3 mb-4">
                             <!-- 緑のアバター -->
-                        <div class="w-10 h-10 flex-shrink-0">
+                          <button
+                            type="button"
+                            class="w-10 h-10 flex-shrink-0 cursor-pointer"
+                            :class="{ 'cursor-default': !partnerId }"
+                            :disabled="!partnerId"
+                            @click="goToPartnerProfile"
+                            aria-label="相手のプロフィールへ"
+                          >
                           <img
                             v-if="partnerAvatarUrl"
                             :src="partnerAvatarUrl"
@@ -562,7 +579,7 @@ onUnmounted(() => {
                             @error="partnerAvatarUrl = null"
                           />
                           <div v-else class="w-10 h-10 rounded-full bg-teal-600"></div>
-                        </div>
+                          </button>
                             <div class="space-y-1 max-w-[75%]">
                                 <!-- 薄いオレンジの吹き出し（タップ可能） -->
                                 <div 
