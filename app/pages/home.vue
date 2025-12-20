@@ -62,6 +62,7 @@ onMounted(async () => {
         :name="chat.partner_name || `ユーザー ${chat.partner_id.slice(0, 8)}`"
         :message="chat.last_message || ''"
         :date="chat.last_message_time || ''"
+        :time="chat.last_message_hour || ''"
         avatarColor="bg-teal-600"
         :avatarUrl="chat.partner_avatar_url || null"
         :chatId="chat.id"

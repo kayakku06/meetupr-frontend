@@ -20,8 +20,11 @@
       </div>
     </div>
 
-    <!-- 右側（日付） -->
-    <span class="text-gray-400 text-base ml-3 flex-shrink-0">{{ date }}</span>
+    <!-- 右側（日付と時刻） -->
+    <div class="flex flex-col items-end ml-3 flex-shrink-0">
+      <span class="text-gray-400 text-base">{{ date }}</span>
+      <span v-if="time" class="text-gray-400 text-sm">{{ time }}</span>
+    </div>
   </div>
 </template>
 
@@ -38,6 +41,7 @@ const props = defineProps<{
   name: string
   message: string
   date: string
+  time?: string
   avatarColor: string
   avatarUrl?: string | null
   chatId?: number
