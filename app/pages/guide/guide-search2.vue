@@ -22,14 +22,14 @@ function onClose() {
 </script>
 
 <template>
-    <h1 class="fixed top-8 left-1/2 -translate-x-1/2
-         z-[999] text-white text-xl
+    <h1 class="fixed top-6 sm:top-8 left-1/2 -translate-x-1/2
+         z-[999] text-white text-base sm:text-xl
          m-0 p-0 leading-none pointer-events-none">
         ＜使い方＞検索画面
     </h1>
-    <div class="fixed top-0 left-0 translate-y-8 w-full
+    <div class="fixed top-0 left-0 translate-y-6 sm:translate-y-8 w-full
             flex flex-col items-center
-            bg-[#FFF5C9] px-4 pb-4 pt-10
+            bg-[#FFF5C9] px-2 sm:px-4 pb-2 sm:pb-4 pt-8 sm:pt-10
             z-40 border-b-2 border-[#3c938b]">
 
         <div
@@ -50,11 +50,11 @@ function onClose() {
         </div>
     </div>
     <!-- メイン（見た目完全固定） -->
-    <main class="bg-[#FFF5C9] h-screen pt-[160px] pb-24 overflow-hidden">
+    <main class="bg-[#FFF5C9] h-screen pt-[140px] sm:pt-[160px] pb-20 sm:pb-24 overflow-hidden">
         <div class="fixed inset-0 bg-black/70 z-40 pointer-events-none"></div>
 
         <!-- 中央コンテンツ（高さ固定） -->
-        <div class="mx-auto max-w-md p-4 space-y-2 overflow-hidden relative">
+        <div class="mx-auto max-w-md p-2 sm:p-4 space-y-2 overflow-hidden relative">
             <!-- ★ 明るくしたい1つ目 -->
             <div class="relative z-50">
                 <GuideSearchUser />
