@@ -372,7 +372,7 @@ Test: テストの追加・修正
   - [@mikimiki1207](https://github.com/mikimiki1207) - Miki Fujita
 - **バックエンド**: 
   - [@X13467980](https://github.com/X13467980) - Youta Yano
-  - Fukachang
+  - [@Fukachang](https://github.com/Fukachang) - Ren Sameshima
 
 ## ライセンス
 
