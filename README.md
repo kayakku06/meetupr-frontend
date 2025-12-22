@@ -365,8 +365,14 @@ Test: テストの追加・修正
 
 ## 開発体制
 
-- **フロントエンド**: 秋田／ゆいちゃん／ゆいゆい／みきちゃん
-- **バックエンド**: さめ／よーた
+- **フロントエンド**: 
+  - [@kayakku06](https://github.com/kayakku06) - Yuto Akita
+  - [@yui949](https://github.com/yui949) - Yui Nishimura
+  - [@yui-119](https://github.com/yui-119) - Yui Shimamoto
+  - [@mikimiki1207](https://github.com/mikimiki1207) - Miki Fujita
+- **バックエンド**: 
+  - [@X13467980](https://github.com/X13467980) - Youta Yano
+  - さめ
 
 ## ライセンス
 
