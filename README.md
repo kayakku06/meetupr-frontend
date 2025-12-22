@@ -29,7 +29,7 @@ OIC（立命館大学大阪いばらきキャンパス）の学生間、特に�
 
 <div align="center">
 
-![Nuxt](https://img.shields.io/badge/Nuxt-4-00DC82?style=for-the-badge&logo=nuxt.js&logoColor=white)
+![Nuxt](https://img.shields.io/badge/Nuxt-4-00DC82?style=for-the-badge&logo=nuxtdotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D?style=for-the-badge&logo=vue.js&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
@@ -50,7 +50,7 @@ OIC（立命館大学大阪いばらきキャンパス）の学生間、特に�
 - **アイコン**: Lucide Vue Next
 - **国旗表示**: Flag Icons
 - **PWA対応**: @vite-pwa/nuxt
-- **デプロイ**: Vercel（予定）
+- **デプロイ**: Vercel
 
 ## セットアップ
 
